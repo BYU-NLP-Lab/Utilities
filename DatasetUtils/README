@@ -1,0 +1,12 @@
+A number of byu nlp code projects depend on a corpus of possibly labeled data. 
+This repository provides a java representation of data instances along with 
+their associated labels, continuous metadata values, and annotation values. 
+Also routines for IO from common document corpus formats. 
+
+Historically, similar code was (re)created in each project. This project 
+is an attempt to unify all such code, thereby decreasing code duplication 
+and allowing projects to be more interoperable. However, because of 
+this the objects in this code base need to support the union of the 
+features supported by all other code bases and are therefore rather 
+permissive in terms of the number of supported representations.
+
