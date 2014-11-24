@@ -10,12 +10,13 @@ public class SingleRowFeatureMatrix extends OpenMapRealMatrix implements SparseF
 
 	public SingleRowFeatureMatrix(SparseFeatureVector vector){
 		super(1, vector.length());
+		int asd = vector.length();
 		// populate the first row with vector info
 		final OpenMapRealMatrix thismatrix = this;
 		vector.visitSparseEntries(new BasicSparseFeatureVector.EntryVisitor() {
 			@Override
 			public void visitEntry(int index, double value) {
-				thismatrix.setEntry(1, index, value);
+				thismatrix.setEntry(0, index, value);
 			}
 		});
 	}

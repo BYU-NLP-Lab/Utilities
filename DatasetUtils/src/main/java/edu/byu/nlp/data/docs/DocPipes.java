@@ -32,7 +32,7 @@ import edu.byu.nlp.data.pipes.JSONFileToAnnotatedDocumentList;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.pipes.Pipes;
 import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
-import edu.byu.nlp.data.pipes.StatsCalculator;
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
@@ -86,7 +86,7 @@ public class DocPipes {
     // Index the data (words, labels, instances, annotators)
 //    Indexer<String> wordIndex = new WordIndexer<String, String>().processLabeledInstances(src.getLabeledInstances());
 //    Indexer<String> labelIndex = new LabelIndexer<List<String>, String>().processLabeledInstances(src.getLabeledInstances());
-    StatsCalculator<String, String> stats = StatsCalculator.calculate(src.getLabeledInstances());
+    IndexerCalculator<String, String> stats = IndexerCalculator.calculate(src.getLabeledInstances());
     Indexer<String> wordIndex = stats.getWordIndexer();
     Indexer<String> labelIndex = stats.getLabelIndexer();
     Indexer<Long> instanceIdIndexer = stats.getInstanceIdIndexer();
@@ -129,6 +129,6 @@ public class DocPipes {
 	List<FlatInstance<SparseFeatureVector, Integer>> vectors = DataSources.cache(DataSources.connect(src, vectorizer));
 
 	// convert FlatInstances to a Dataset
-	return Datasets.convert(src.getSource(), vectors, wordIndex, labelIndex, instanceIdIndexer, annotatorIdIndexer);
+	return Datasets.convert(src.getSource(), vectors, wordIndex, labelIndex, instanceIdIndexer, annotatorIdIndexer, true);
   }
 }

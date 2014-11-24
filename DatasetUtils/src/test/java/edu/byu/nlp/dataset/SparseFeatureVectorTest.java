@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.byu.nlp.data;
+package edu.byu.nlp.dataset;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;

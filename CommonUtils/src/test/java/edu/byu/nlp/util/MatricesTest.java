@@ -15,7 +15,7 @@
  */
 package edu.byu.nlp.util;
 
-import static edu.byu.nlp.test.MoreAsserts.assertMatrixEquals;
+import static edu.byu.nlp.MoreAsserts.assertMatrixEquals;
 import static java.lang.Math.log;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;

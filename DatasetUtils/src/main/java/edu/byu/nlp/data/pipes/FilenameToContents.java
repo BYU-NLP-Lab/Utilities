@@ -42,7 +42,7 @@ public class FilenameToContents implements Function<FlatInstance<String,String>,
 			FileObject file = basedir.resolveFile(filename);
 			return new FlatLabeledInstance<String,String>(
 					AnnotationInterfaceJavaUtils.<String,String>newLabeledInstance(
-							Files2.toString(file, charset), null, file.getName().getPath()));
+							Files2.toString(file, charset), label.getLabel(), file.getName().getPath()));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.annotationinterface.AutomaticAnnotation;
 
-public class FlatLabeledInstance<D,L> implements FlatInstance<D, L> {
+public class FlatLabeledInstance<D,L> extends AbstractFlatInstance<D, L> {
 
 	public static long NULL_ANNOTATOR = -1;
 	

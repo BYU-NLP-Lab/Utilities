@@ -15,7 +15,7 @@
  */
 package edu.byu.nlp.util;
 
-import static edu.byu.nlp.test.MoreMatchers.hasSameElementsAs;
+import static edu.byu.nlp.MoreMatchers.hasSameElementsAs;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

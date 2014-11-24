@@ -1,4 +1,4 @@
-package edu.byu.nlp.data;
+package edu.byu.nlp.dataset;
 
 import java.util.List;
 

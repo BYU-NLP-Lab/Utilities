@@ -16,15 +16,14 @@
 package edu.byu.nlp.data.util;
 
 import java.util.Map;
-import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.types.Dataset;
+import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 
@@ -32,58 +31,53 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
  * @author pfelt
  *
  */
-public class EmpiricalAnnotations<L,D> {
-
-	// TODO: decide on best representation given api changes
-//  public static EmpiricalAnnotations<SparseFeatureVector, Integer> stripAnnotations(Iterable<FlatInstance<SparseFeatureVector, Integer>> instances){
-//    Map<SparseFeatureVector,Multimap<Long, TimedAnnotation<Integer>>> annotations = Maps.newIdentityHashMap();
-//    Set<Long> annotators = Sets.newHashSet();
-//    
-//    for (DatasetInstance inst: dataset){
-//      // accumulate a set of annotators
-//      annotators.addAll(inst.getAnnotations().keySet());
-//      // record copy of annotations
-//      annotations.put(inst.getData(), HashMultimap.create(inst.getAnnotations()));
-//      // strip annotations
-//      inst.getAnnotations().clear();
-//    }
-//    
-//    Integer nullLabel = dataset.getLabelIndex().indexOf(null);
-//    
-//    return new EmpiricalAnnotations<SparseFeatureVector, Integer>(annotations, annotators, nullLabel);
-//  }
-//
-//  
-//  
-//  private Map<D,Multimap<Long, TimedAnnotation<L>>> dataAnnotationMap;
-//  private Set<Long> annotators;
-//  private L nullLabel;
-//  
-//  public EmpiricalAnnotations(Map<D,Multimap<Long, TimedAnnotation<L>>> dataAnnotationMap,
-//       Set<Long> annotators, L nullLabel){
-//    this.dataAnnotationMap=dataAnnotationMap;
-//    this.annotators=annotators;
-//    this.nullLabel=nullLabel;
-//  }
-//  
-//  public Multimap<Long, TimedAnnotation<L>> getAnnotationsFor(D data){
-//    if (dataAnnotationMap.containsKey(data)){
-//      return dataAnnotationMap.get(data);
-//    }
-//    return HashMultimap.create();
-//  }
-//  
-//  public long getNumAnnotators(){
-//    for (int i=0; i<annotators.size(); i++){
-//      if (!annotators.contains((long)i)){
-//        throw new RuntimeException();
-//      }
-//    }
-//    return annotators.size();
-//  }
-//  
-//  public L getNullLabel(){
-//    return nullLabel;
-//  }
+public class EmpiricalAnnotations<D,L> {
   
+  private Map<D, Multimap<Long, FlatInstance<D, L>>> annotations;
+  private DatasetInfo info;
+  
+  public EmpiricalAnnotations(Map<D, Multimap<Long, FlatInstance<D, L>>> annotations,
+       DatasetInfo info){
+    this.annotations=annotations;
+    this.info=info;
+  }
+  
+  public Multimap<Long, FlatInstance<D, L>> getAnnotationsFor(D data){
+    if (annotations.containsKey(data)){
+      return annotations.get(data);
+    }
+    return HashMultimap.create();
+  }
+  
+  public DatasetInfo getDataInfo(){
+    return info;
+  }
+  
+  
+
+  /**
+   * Create a collection of Empirical annotations of <SparseFeatureVector, Integer> 
+   * indexed by <instanceIndex,annotatorIndex>  
+   */
+  public static EmpiricalAnnotations<SparseFeatureVector, Integer> fromDataset(Dataset dataset){
+	Map<SparseFeatureVector, Multimap<Long, FlatInstance<SparseFeatureVector, Integer>>> annotations = Maps.newIdentityHashMap();
+    
+    for (DatasetInstance inst: dataset){
+    
+      SparseFeatureVector data = inst.asFeatureVector();
+      // make sure an annotation multimap exists, if this instance has any annotations
+      if (inst.getInfo().getNumAnnotations()>0 && !annotations.containsKey(data)){
+        annotations.put(data, HashMultimap.<Long, FlatInstance<SparseFeatureVector, Integer>>create());
+      }
+    	
+      // add all annotations to the table, indexed by annotator
+      for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+        annotations.get(data).put(ann.getAnnotator(), ann);
+      }
+    	
+    }
+    
+    return new EmpiricalAnnotations<SparseFeatureVector, Integer>(annotations, dataset.getInfo());
+  }
+
 }

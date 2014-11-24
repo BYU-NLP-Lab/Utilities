@@ -15,7 +15,7 @@
  */
 package edu.byu.nlp.util;
 
-import static edu.byu.nlp.test.MoreMatchers.hasSameElementsAs;
+import static edu.byu.nlp.MoreMatchers.hasSameElementsAs;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.test.MoreAsserts;
+import edu.byu.nlp.MoreAsserts;
 import edu.byu.nlp.util.Heap.HeapIterator;
 
 /**

@@ -175,7 +175,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 				transformedAnnotations.add(new FlatAnnotatedInstance<String,String>(
 						AnnotationInterfaceJavaUtils.newAnnotatedInstance(
 								ann.annotator, ann.annotation, ann.startTime * 1000 * 1000, ann.endTime * 1000 * 1000, 
-								instData, ann.source)));
+								ann.source, instData)));
 			}
 
 			// add an instance

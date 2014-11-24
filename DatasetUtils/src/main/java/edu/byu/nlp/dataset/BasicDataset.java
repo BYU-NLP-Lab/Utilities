@@ -1,12 +1,14 @@
 package edu.byu.nlp.dataset;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
@@ -15,6 +17,7 @@ import edu.byu.nlp.util.Collections3;
 import edu.byu.nlp.util.Indexer;
 
 public class BasicDataset implements Dataset {
+	private static final Logger logger = Logger.getLogger(BasicDataset.class.getName());
 
 	private List<DatasetInstance> instances;
 	private DatasetInfo info;
@@ -24,12 +27,12 @@ public class BasicDataset implements Dataset {
 		this.info = other.getInfo();
 	}
 
-	public BasicDataset(String source, Collection<DatasetInstance> instances, 
-		int numTokens, Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
-		this(instances, new Info(source, instances.size(), numTokens, annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer));
+	public BasicDataset(String source, Iterable<DatasetInstance> instances, int numDocuments, int numLabeledDocuments, 
+		int numTokens, int numLabeledTokens, Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
+		this(instances, new Info(source, numDocuments, numLabeledDocuments, numTokens, numLabeledTokens, annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer));
 	}
 	
-	public BasicDataset(Collection<DatasetInstance> instances, DatasetInfo info){
+	public BasicDataset(Iterable<DatasetInstance> instances, DatasetInfo info){
 		this.instances = Lists.newArrayList(instances);
 		this.info=info;
 	}
@@ -58,7 +61,9 @@ public class BasicDataset implements Dataset {
 
 		private String source;
 		private int numDocuments;
+		private int numLabeledDocuments;
 		private int numTokens;
+		private int numLabeledTokens;
 		private int numFeatures;
 		private int numClasses;
 		private Indexer<String> featureIndexer;
@@ -66,10 +71,13 @@ public class BasicDataset implements Dataset {
 		private Indexer<Long> annotatorIdIndex;
 		private Indexer<Long> instanceIdIndexer;
 
-		public Info(String source, int numDocuments, int numTokens, Indexer<Long> annotatorIdIndex, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
+		public Info(String source, int numDocuments, int numLabeledDocuments, int numTokens, int numLabeledTokens, 
+				Indexer<Long> annotatorIdIndex, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
 			this.source=source;
 			this.numDocuments=numDocuments;
+			this.numLabeledDocuments=numLabeledDocuments;
 			this.numTokens=numTokens;
+			this.numLabeledTokens=numLabeledTokens;
 			this.numFeatures=featureIndexer.size();
 			this.numClasses=labelIndexer.size();
 			this.featureIndexer=featureIndexer;
@@ -86,6 +94,16 @@ public class BasicDataset implements Dataset {
 		@Override
 		public int getNumDocuments() {
 			return numDocuments;
+		}
+
+		@Override
+		public int getNumLabeledDocuments() {
+			return numLabeledDocuments;
+		}
+
+		@Override
+		public int getNumUnlabeledDocuments() {
+			return numDocuments-numLabeledDocuments;
 		}
 
 		@Override
@@ -119,6 +137,16 @@ public class BasicDataset implements Dataset {
 		}
 
 		@Override
+		public int getNumLabeledTokens() {
+			return numLabeledTokens;
+		}
+
+		@Override
+		public int getNumUnlabeledTokens() {
+			return numTokens - numLabeledTokens;
+		}
+
+		@Override
 		public Indexer<Long> getInstanceIdIndexer() {
 			return instanceIdIndexer;
 		}
@@ -126,6 +154,36 @@ public class BasicDataset implements Dataset {
 		public String toString() {
 			return "numdocs="+numDocuments+" numtok="+numTokens+" numfeat="+numFeatures+" numclass="+numClasses+" src="+source;
 		}
+
+		@Override
+		public int getNullLabel() {
+			return labelIndexer.indexOf(null);
+		}
+
+		@Override
+		public int getNumAnnotators() {
+			return annotatorIdIndex.size();
+		}
 	}
+
+	/**
+	 * Cached instances lookups. The cache is not copied when a dataset is 
+	 * copied or combined with another. This leads to some inefficiency by 
+	 * allowing us to avoid lots of messy bookkeeping. We never need to 
+	 * update our cache since datasets are immutable (at least wrt instances).
+	 */
+	private Map<Long,DatasetInstance> instanceMap = null; // cache indices
+	@Override
+	public synchronized DatasetInstance lookupInstance(long instanceId) {
+		if (this.instanceMap==null){
+			logger.info("regenerating instance lookup cache for dataset "+getInfo().getSource());
+			this.instanceMap = Maps.newHashMap();
+			for (DatasetInstance inst: this){
+				instanceMap.put(inst.getInfo().getInstanceId(), inst);
+			}
+		}
+		return this.instanceMap.get(instanceId);
+	}
+
 	
 }

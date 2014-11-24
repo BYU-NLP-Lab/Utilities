@@ -12,7 +12,9 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 
 import edu.byu.nlp.annotationinterface.Instance;
+import edu.byu.nlp.data.AbstractFlatInstance;
 import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.types.DatasetInstance;
 
 /**
  * @author robbie
@@ -92,7 +94,7 @@ public class Instances {
 	public interface TransformedLabeledInstanceFunction<ID, IL, OD, OL> extends Function<FlatInstance<ID, IL>, FlatInstance<OD, OL>> {
 	}
 	
-	private static abstract class AbstractTransformedFlatInstance<ID, IL, OD, OL> implements FlatInstance<OD,OL> {
+	private static abstract class AbstractTransformedFlatInstance<ID, IL, OD, OL> extends AbstractFlatInstance<OD,OL> {
 		private FlatInstance<ID,IL> delegate;
 		public AbstractTransformedFlatInstance(FlatInstance<ID,IL> delegate){
 			this.delegate=delegate;
@@ -328,16 +330,6 @@ public class Instances {
 //
 //	
 //
-//	private static class LabelGetter<L> implements Function<TimedAnnotation<L>, L> {
-//		@Override
-//		public L apply(TimedAnnotation<L> ta) {
-//			return ta.getAnnotation();
-//		}
-//	}
-//	
-//	public static <L> LabelGetter<L> labelGetter() {
-//		return new LabelGetter<L>();
-//	}
 //	
 //	private static class AnnotationTransformer<IL, OL> implements Function<TimedAnnotation<IL>, TimedAnnotation<OL>> {
 //		
@@ -453,4 +445,16 @@ public class Instances {
 //		};
 //	}
 
+
+	private static class LabelGetter implements Function<DatasetInstance, Integer> {
+		@Override
+		public Integer apply(DatasetInstance ta) {
+			return ta.getLabel();
+		}
+	}
+	
+	public static <L> LabelGetter labelGetter() {
+		return new LabelGetter();
+	}
+	
 }

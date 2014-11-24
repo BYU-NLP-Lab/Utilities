@@ -7,8 +7,16 @@ public interface DatasetInfo {
 	String getSource();
 	
 	int getNumDocuments();
-	
+
+	int getNumLabeledDocuments();
+
+	int getNumUnlabeledDocuments();
+
 	int getNumTokens();
+
+	int getNumLabeledTokens();
+
+	int getNumUnlabeledTokens();
 	
 	int getNumFeatures();
 	
@@ -21,5 +29,9 @@ public interface DatasetInfo {
 	Indexer<String> getLabelIndexer();
 	
 	Indexer<String> getFeatureIndexer();
+	
+	int getNullLabel();
+	
+	int getNumAnnotators();
 	
 }

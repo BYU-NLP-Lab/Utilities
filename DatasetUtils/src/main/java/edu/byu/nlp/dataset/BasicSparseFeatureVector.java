@@ -359,8 +359,8 @@ public class BasicSparseFeatureVector implements SparseFeatureVector {
 	@Override
 	public int length(){
 //		// TODO: ensure indices are sorted and then do:
-//		return indices[indices.length-1];
-		return IntArrays.max(indices);
+//		return indices[indices.length-1]+1;
+		return IntArrays.max(indices)+1;
 	}
 
 	public static Comparator<Entry> valueComparator() {

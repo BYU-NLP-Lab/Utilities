@@ -17,6 +17,7 @@ package edu.byu.nlp.math;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.RealVectorPreservingVisitor;
 
 import com.google.common.base.Preconditions;
 
@@ -163,4 +164,26 @@ public class RealVectors {
 		v.setEntry(index, v.getEntry(index) - 1);
 	}
 	
+	public static double sum(RealVector v){
+		if (v==null){
+			return 0;
+		}
+		if (v.getDimension()==0){
+			return 0;
+		}
+		return v.walkInOptimizedOrder(new RealVectorPreservingVisitor() {
+			private double total = 0;
+			@Override
+			public void visit(int index, double value) {
+				total += value;
+			}
+			@Override
+			public void start(int dimension, int start, int end) {
+			}
+			@Override
+			public double end() {
+				return total;
+			}
+		});
+	}
 }

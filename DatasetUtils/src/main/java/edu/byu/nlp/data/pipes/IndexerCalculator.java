@@ -5,14 +5,14 @@ import java.util.List;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.util.Indexer;
 
-public class StatsCalculator<D, L>  {
+public class IndexerCalculator<D, L>  {
 
 	private Indexer<D> wordIndexer;
 	private Indexer<L> labelIndexer;
 	private Indexer<Long> annotatorIndexer;
 	private Indexer<Long> instanceIndexer;
 	
-	public StatsCalculator(Indexer<D> wordIndexer, Indexer<L> labelIndexer, 
+	public IndexerCalculator(Indexer<D> wordIndexer, Indexer<L> labelIndexer, 
 			Indexer<Long> instanceIndexer, Indexer<Long> annotatorIndexer){
 		this.wordIndexer=wordIndexer;
 		this.labelIndexer=labelIndexer;
@@ -36,22 +36,29 @@ public class StatsCalculator<D, L>  {
 		return annotatorIndexer;
 	}
 	
-	public static <D,L> StatsCalculator<D,L> calculate(Iterable<FlatInstance<List<D>, L>> data) {
+	public static <D,L> IndexerCalculator<D,L> calculate(Iterable<FlatInstance<List<D>, L>> data) {
 		Indexer<D> wordIndexer = new Indexer<D>();
 		Indexer<L> labelIndexer = new Indexer<L>();
 		Indexer<Long> annotatorIndexer = new Indexer<Long>();
 		Indexer<Long> instanceIndexer = new Indexer<Long>();
 		
 		for (FlatInstance<List<D>, L> inst: data){
+			// only record annotation id of annotations
+			// (this avoids adding automatic annotator to the indexer)
+			if (inst.isAnnotation()){
+				annotatorIndexer.add(inst.getAnnotator());
+			}
+
 			for (D word: inst.getData()){
 				wordIndexer.add(word);
 			}
 			labelIndexer.add(inst.getLabel());
-			annotatorIndexer.add(inst.getAnnotator());
 			instanceIndexer.add(inst.getInstanceId());
 		}
 		
-		return new StatsCalculator<D,L>(wordIndexer, labelIndexer, instanceIndexer, annotatorIndexer);
+		// remove the special 
+		
+		return new IndexerCalculator<D,L>(wordIndexer, labelIndexer, instanceIndexer, annotatorIndexer);
 	}
 
 }

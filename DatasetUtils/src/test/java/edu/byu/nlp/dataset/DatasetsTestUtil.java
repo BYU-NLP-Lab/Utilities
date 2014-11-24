@@ -1,4 +1,4 @@
-package edu.byu.nlp.data;
+package edu.byu.nlp.dataset;
 
 import java.util.List;
 
@@ -7,6 +7,9 @@ import com.google.common.base.Functions;
 import com.google.common.collect.Lists;
 
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
+import edu.byu.nlp.data.FlatAnnotatedInstance;
+import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.pipes.FieldIndexer;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.pipes.Pipes;
@@ -51,19 +54,19 @@ public class DatasetsTestUtil {
 
 		// add data 
 		SparseFeatureVector data1 = new BasicSparseFeatureVector(
-				new int[]{1,2,3,5}, new double[]{8,4,2,1});
+				new int[]{0,1,2,4}, new double[]{8,4,2,1});
 		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.newLabeledInstance(data1, "ClassA", "dummy source 1")));
 
 		// add data 
 		SparseFeatureVector data2 = new BasicSparseFeatureVector(
-				new int[]{1,3,4,5}, new double[]{18,14,12,1});
+				new int[]{0,2,3,4}, new double[]{18,14,12,1});
 		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.newLabeledInstance(data2, "ClassB", "dummy source 2")));
 
 		// add data 
 		SparseFeatureVector data3 = new BasicSparseFeatureVector(
-				new int[]{1,2,3,4,5}, new double[]{0,1,28,24,22});
+				new int[]{0,1,2,3,4}, new double[]{0,1,28,24,22});
 		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.newLabeledInstance(data3, "ClassA", "dummy source 3")));
 
@@ -71,22 +74,22 @@ public class DatasetsTestUtil {
 		// add annotation
 		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("john", "ClassA", "dummy source 1")));
+				newAnnotatedInstance("john", "ClassA", "dummy source 1", null)));
 
 		// add annotation
 		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("john", "ClassB", "dummy source 1")));
+				newAnnotatedInstance("john", "ClassB", "dummy source 1", null)));
 
 		// add annotation
 		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("john", "ClassB", "dummy source 2")));
+				newAnnotatedInstance("john", "ClassB", "dummy source 2", null)));
 		
 		// add annotation
 		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
 				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("penny", "ClassA", "dummy source 3")));
+				newAnnotatedInstance("penny", "ClassA", "dummy source 3", null)));
 		
 		// populate indices
 		String datasetSource = "dummy source";
@@ -141,7 +144,7 @@ public class DatasetsTestUtil {
 				annotatorIdFieldIndexer);
 		Iterable<FlatInstance<SparseFeatureVector, Integer>> indexTransformedInstances = indexingPipe.apply(labels);
 		
-		return Datasets.convert(datasetSource, indexTransformedInstances, featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex);
+		return Datasets.convert(datasetSource, indexTransformedInstances, featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex, true);
 	}
 	
 	

@@ -1,29 +1,55 @@
 package edu.byu.nlp.dataset;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
+import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.DatasetInstanceInfo;
 import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
+import edu.byu.nlp.math.SparseRealMatrices;
+import edu.byu.nlp.util.DoubleArrays;
+import edu.byu.nlp.util.Doubles;
+import edu.byu.nlp.util.Enumeration;
 import edu.byu.nlp.util.Indexer;
+import edu.byu.nlp.util.Indexers;
+import edu.byu.nlp.util.IntArrays;
+import edu.byu.nlp.util.Iterables2;
+import edu.byu.nlp.util.Multisets2;
 import edu.byu.nlp.util.Pair;
 import edu.byu.nlp.util.TableCounter;
 
 public class Datasets {
-
-//	private static final Logger logger = Logger.getLogger(Datasets.class.getName());
+	private static final Logger logger = Logger.getLogger(Datasets.class.getName());
 
 	private Datasets() {
 	}
@@ -91,233 +117,10 @@ public class Datasets {
 //		return counts;
 //	}
 //
-//	public static double[] countDocSizes(Dataset data) {
-//		ArrayList<Instance<Integer, SparseFeatureVector>> instances = Lists
-//				.newArrayList(data.allInstances());
-//		double[] sizes = new double[instances.size()];
-//		for (int i = 0; i < sizes.length; i++) {
-//			sizes[i] = instances.get(i).getData().sum();
-//		}
-//		return sizes;
-//	}
 //
-//	public static void writeLabeled2Mallet(Dataset dataset, String outPath)
-//			throws IOException {
-//		final BufferedWriter bw = Files.newBufferedWriter(Paths.get(outPath),
-//				Charsets.UTF_8);
 //
-//		final Indexer<String> wordIndex = dataset.getWordIndex();
-//		final Indexer<String> labelIndex = dataset.getLabelIndex();
-//		for (Instance<Integer, SparseFeatureVector> inst : dataset
-//				.labeledData()) {
-//			// name
-//			bw.write(inst.getSource());
-//			bw.write(' ');
 //
-//			// label
-//			bw.write(labelIndex.get(inst.getLabel()));
-//			bw.write(' ');
 //
-//			// features id1:count1 id2:count2 etc.
-//			SparseFeatureVector dat = inst.getData();
-//			dat.visitSparseEntries(new EntryVisitor() {
-//				@Override
-//				public void visitEntry(int index, double value) {
-//					try {
-//						bw.write(wordIndex.get(index) + ":" + value);
-//						bw.write(' ');
-//					} catch (IOException e) {
-//						throw new IllegalStateException("unable to write", e);
-//					}
-//				}
-//			});
-//			bw.write("\n");
-//		}
-//		bw.close();
-//	}
-//
-//	public static Dataset readMallet2Labeled(String inPath) throws IOException {
-//		return readMallet2Labeled(inPath, null, null);
-//	}
-//
-//	public static Dataset readMallet2Labeled(String inPath,
-//			Indexer<String> labelIndex, Indexer<String> wordIndex)
-//			throws IOException {
-//		final BufferedReader br = Files.newBufferedReader(Paths.get(inPath),
-//				Charsets.UTF_8);
-//
-//		if (wordIndex == null) {
-//			wordIndex = new Indexer<String>();
-//		}
-//		if (labelIndex == null) {
-//			labelIndex = new Indexer<String>();
-//		}
-//		Collection<Instance<Integer, SparseFeatureVector>> instances = Lists
-//				.newArrayList();
-//
-//		for (String line = br.readLine(); line != null; line = br.readLine()) {
-//			String[] parts = line.split(" ");
-//			String source = parts[0];
-//			String label = parts[1];
-//			labelIndex.add(label); // index label
-//			// feature string -> SparseFeatureVector
-//			int[] indices = new int[parts.length - 2];
-//			double[] values = new double[parts.length - 2];
-//			for (int i = 2; i < parts.length; i++) {
-//				String[] keyval = parts[i].split(":");
-//				String feature = keyval[0];
-//				String count = keyval[1];
-//				wordIndex.add(feature); // index feature
-//				indices[i - 2] = wordIndex.indexOf(feature);
-//				values[i - 2] = Double.parseDouble(count);
-//			}
-//			SparseFeatureVector data = new SparseFeatureVector(indices, values);
-//			// record instance
-//			instances.add(new BasicInstance<Integer, SparseFeatureVector>(
-//					labelIndex.indexOf(label), false, TimedEvent.Zeros(),
-//					source, data, null));
-//		}
-//
-//		br.close();
-//
-//		return new Dataset(instances,
-//				Collections
-//						.<Instance<Integer, SparseFeatureVector>> emptyList(),
-//				wordIndex, labelIndex);
-//	}
-//
-//	/**
-//	 * Extract an array of labels in the order specified by instanceIndices.
-//	 * Instances that don't exist in instanceIndices are ignored. Any gaps in
-//	 * the returned array are filled with -1 values.
-//	 */
-//	public static int[] labels(Dataset data,
-//			final Map<String, Integer> instanceIndices) {
-//		// all instances
-//		ArrayList<Instance<Integer, SparseFeatureVector>> instances = Lists
-//				.newArrayList(data.allInstances());
-//
-//		// ensure there are no instances NOT in the index map
-//		for (int i = instances.size() - 1; i >= 0; i--) {
-//			Preconditions
-//					.checkArgument(instanceIndices.containsKey(instances.get(i)
-//							.getSource()),
-//							"Something is wrong. All instances must be in the instance index map.");
-//		}
-//
-//		// extract labels (in order defined by instanceIndices)
-//		int[] gold = IntArrays.repeat(-1, instances.size());
-//		for (Instance<Integer, SparseFeatureVector> inst : instances) {
-//			gold[instanceIndices.get(inst.getSource())] = inst.getLabel();
-//		}
-//
-//		return gold;
-//	}
-//
-//	/**
-//	 * Creates a map from an instance (identity) to that instance's index in the
-//	 * dataset. This is mainly useful for mapping multi-annotator model
-//	 * predictions back to instances that may be presented in a different order
-//	 * than that assumed by the model. Because the multiannotators are
-//	 * transductive models, we infer labels only for instances that we
-//	 * specifically ran inference on. Of course, model parameters MAY be used to
-//	 * generate predictions for unseen instances based on feature values, but
-//	 * that is a post-hoc process that is different from directly inferring a
-//	 * label.
-//	 */
-//	public static Map<String, Integer> instanceIndices(Dataset data) {
-//		Map<String, Integer> map = Maps.newHashMap();
-//		int i = 0;
-//		for (Instance<Integer, SparseFeatureVector> instance : data
-//				.allInstances()) {
-//			Preconditions
-//					.checkState(
-//							!map.containsKey(instance.getSource()),
-//							"Dataset contains the same instance (same instance source) twice. This is not allowed!");
-//			map.put(instance.getSource(), i++);
-//		}
-//		return map;
-//	}
-//
-//	public static Dataset removeUnannotatedData(Dataset data) {
-//		// all labeled items come along. Labels are gold truth (as opposed to
-//		// annotations)
-//		Collection<Instance<Integer, SparseFeatureVector>> labeledData = Lists
-//				.newArrayList(data.labeledData());
-//		// only unlabeled instances with annotations come along
-//		Collection<Instance<Integer, SparseFeatureVector>> unlabeledData = Lists
-//				.newArrayList();
-//		for (Instance<Integer, SparseFeatureVector> item : data
-//				.unlabeledInstances()) {
-//			if (item.getAnnotations().size() > 0) {
-//				unlabeledData.add(item);
-//			}
-//		}
-//		return new Dataset(labeledData, unlabeledData, data.getWordIndex(),
-//				data.getLabelIndex());
-//	}
-//
-//	/**
-//	 * Remove documents from the collection with duplicate sources. In all cases
-//	 * keep only the first item.
-//	 */
-//	public static Dataset removeDuplicateSources(Dataset data) {
-//		Set<String> docSources = Sets.newHashSet();
-//
-//		// labeled
-//		Collection<Instance<Integer, SparseFeatureVector>> labeledData = Lists
-//				.newArrayList();
-//		for (Instance<Integer, SparseFeatureVector> item : data.labeledData()) {
-//			if (docSources.contains(item.getSource())) {
-//				logger.warning("Repeated data item " + item.getSource());
-//			} else {
-//				labeledData.add(item);
-//				docSources.add(item.getSource());
-//			}
-//		}
-//		// unlabeled instances
-//		Collection<Instance<Integer, SparseFeatureVector>> unlabeledData = Lists
-//				.newArrayList();
-//		for (Instance<Integer, SparseFeatureVector> item : data
-//				.unlabeledInstances()) {
-//			if (docSources.contains(item.getSource())) {
-//				logger.warning("Repeated data item " + item.getSource());
-//			} else {
-//				unlabeledData.add(item);
-//				docSources.add(item.getSource());
-//			}
-//		}
-//		return new Dataset(labeledData, unlabeledData, data.getWordIndex(),
-//				data.getLabelIndex());
-//	}
-//
-//	/**
-//	 * @param trainingData
-//	 */
-//	public static Dataset removeAnnotations(Dataset data) {
-//
-//		Collection<Instance<Integer, SparseFeatureVector>> labeledData = Lists
-//				.newArrayList();
-//		for (Instance<Integer, SparseFeatureVector> inst : data.labeledData()) {
-//			Instance<Integer, SparseFeatureVector> bareinst = BasicInstance.of(
-//					inst.getLabel(), inst.isLabelObserved(), inst.getSource(),
-//					inst.getData());
-//			labeledData.add(bareinst);
-//		}
-//
-//		Collection<Instance<Integer, SparseFeatureVector>> unlabeledData = Lists
-//				.newArrayList();
-//		for (Instance<Integer, SparseFeatureVector> inst : data
-//				.unlabeledInstances()) {
-//			Instance<Integer, SparseFeatureVector> bareinst = BasicInstance.of(
-//					inst.getLabel(), inst.isLabelObserved(), inst.getSource(),
-//					inst.getData());
-//			unlabeledData.add(bareinst);
-//		}
-//
-//		return new Dataset(labeledData, unlabeledData, data.getWordIndex(),
-//				data.getLabelIndex());
-//	}
 //
 //	public static Collection<Instance<Integer, SparseFeatureVector>> concat(
 //			Collection<Instance<Integer, SparseFeatureVector>> inst1,
@@ -406,240 +209,10 @@ public class Datasets {
 //		return annotators;
 //	}
 //
-//	/**
-//	 * Move all but N labels per annotator (if that many labeled annotations per
-//	 * annotator exist) from labeledData into unlabeledInstances. Greedy; no
-//	 * optimality guarantee.
-//	 * 
-//	 * N.B. This method is EXTREMELY inefficient!
-//	 */
-//	public static Dataset hideAllLabelsButNPerAnnotator(Dataset data,
-//			int numObservedLabelsPerAnnotator) {
-//		int numAnnotators = getAnnotators(data).size();
-//		Collection<Instance<Integer, SparseFeatureVector>> unlabeled = Lists
-//				.newArrayList();
-//		// include labeled instances (we'll move these to the labeled set
-//		// incrementally)
-//		unlabeled.addAll(data.labeledData());
 //
-//		Collection<Instance<Integer, SparseFeatureVector>> labeled = Lists
-//				.newArrayList();
-//		Multiset<Long> annotatorCounts = HashMultiset.create();
 //
-//		// greedily choose a set of labeled data such that at least
-//		// K=numObservedLabelsPerAnnotator
-//		// instances have been annotated per annotator.
-//		while (annotatorCounts.elementSet().size() < numAnnotators
-//				|| annotatorCounts.count(Multisets2.minCount(annotatorCounts)) < numObservedLabelsPerAnnotator) {
-//			// find instance with the most needed annotators to contribute
-//			Instance<Integer, SparseFeatureVector> argmax = null;
-//			int max = 0; // only consider adding items w/ positive contributions
-//			for (Instance<Integer, SparseFeatureVector> inst : unlabeled) {
-//				// aggregate annotators for this instance
-//				Multiset<Long> instanceAnnotatorCounts = HashMultiset.create();
-//				for (Entry<Long, TimedAnnotation<Integer>> ann : inst
-//						.getAnnotations().entries()) {
-//					instanceAnnotatorCounts.add(ann.getKey());
-//				}
-//				// calculate useful contributions for this instance
-//				int numContributions = 0;
-//				for (Long annotator : instanceAnnotatorCounts.elementSet()) {
-//					// only count contributions that are going to get us closer
-//					// to fulfilling numObservedLabelsPerAnnotator
-//					int maxContrib = Math.max(0, numObservedLabelsPerAnnotator
-//							- annotatorCounts.count(annotator));
-//					numContributions += Math.min(maxContrib,
-//							instanceAnnotatorCounts.count(annotator));
-//				}
-//				if (numContributions > max) {
-//					argmax = inst;
-//					max = numContributions;
-//				}
-//			}
-//			// found nothing that will contribute (impossible goal given data)
-//			if (argmax == null) {
-//				logger.warning("Unable to find "
-//						+ numObservedLabelsPerAnnotator
-//						+ " labeled instances for each annotator. Stopping early\n\t"
-//						+ annotatorCounts);
-//				break;
-//			}
-//			// move from unlabeled to labeled data
-//			else {
-//				unlabeled.remove(argmax);
-//				labeled.add(argmax);
-//				for (Entry<Long, TimedAnnotation<Integer>> ann : argmax
-//						.getAnnotations().entries()) {
-//					annotatorCounts.add(ann.getKey());
-//				}
-//			}
-//		}
-//		unlabeled.addAll(data.unlabeledInstances()); // include unlabeled
-//														// instances
-//		return new Dataset(labeled, unlabeled, data.getWordIndex(),
-//				data.getLabelIndex());
-//	}
 //
-//	/**
-//	 * Move all but N labels per class (if that many labeled annotations per
-//	 * class exist) from labeledData into unlabeledInstances.
-//	 */
-//	public static Dataset hideAllLabelsButNPerClass(Dataset data,
-//			int numObservedLabelsPerClass, RandomGenerator rnd) {
-//		int numClasses = data.getNumLabels();
-//		List<Instance<Integer, SparseFeatureVector>> unlabeled = Lists
-//				.newArrayList();
-//		unlabeled.addAll(data.labeledData()); // include labeled instances (for
-//												// now)
 //
-//		Collection<Instance<Integer, SparseFeatureVector>> labeled = Lists
-//				.newArrayList();
-//		Multiset<Integer> classCounts = HashMultiset.create();
-//
-//		// greedily choose a set of labeled data such that at least
-//		// K=numObservedLabelsPerAnnotator
-//		// instances have been annotated per annotator.
-//		while (classCounts.elementSet().size() < numClasses
-//				|| Multisets2.minCount(classCounts) < numObservedLabelsPerClass) {
-//
-//			// assemble a list of instances that have a class we need AND have
-//			// at least one annotation
-//			List<Instance<Integer, SparseFeatureVector>> candidates = Lists
-//					.newArrayList();
-//			for (Instance<Integer, SparseFeatureVector> cand : unlabeled) {
-//				if (classCounts.count(cand.getLabel()) < numObservedLabelsPerClass
-//						&& cand.getAnnotations().size() > 0) {
-//					candidates.add(cand);
-//				}
-//			}
-//			// if we have to, add items that don't have any annotations
-//			if (candidates.size() == 0) {
-//				for (Instance<Integer, SparseFeatureVector> cand : unlabeled) {
-//					if (classCounts.count(cand.getLabel()) < numObservedLabelsPerClass) {
-//						candidates.add(cand);
-//					}
-//				}
-//			}
-//			// found nothing that will contribute (impossible goal given data)
-//			if (candidates.size() == 0) {
-//				logger.warning("Unable to find "
-//						+ numObservedLabelsPerClass
-//						+ " labeled instances for each class. Stopping early\n\t"
-//						+ classCounts);
-//				break;
-//			}
-//
-//			// choose at random among candidates
-//			Instance<Integer, SparseFeatureVector> chosen = candidates.get(rnd
-//					.nextInt(candidates.size()));
-//			unlabeled.remove(chosen);
-//			labeled.add(chosen);
-//			classCounts.add(chosen.getLabel());
-//		}
-//		unlabeled.addAll(data.unlabeledInstances()); // include originally
-//														// unlabeled instances
-//		return new Dataset(labeled, unlabeled, data.getWordIndex(),
-//				data.getLabelIndex());
-//
-//	}
-//
-//	public static Dataset hideAllLabelsButEmpiricallyObserved(Dataset data) {
-//		List<Instance<Integer, SparseFeatureVector>> labeled = Lists
-//				.newArrayList();
-//		List<Instance<Integer, SparseFeatureVector>> unlabeled = Lists
-//				.newArrayList();
-//
-//		for (Instance<Integer, SparseFeatureVector> inst : data.labeledData()) {
-//			if (inst.isLabelObserved()) {
-//				labeled.add(inst);
-//			} else {
-//				unlabeled.add(inst);
-//			}
-//		}
-//
-//		unlabeled.addAll(data.unlabeledInstances()); // include originally
-//														// unlabeled instances
-//		return new Dataset(labeled, unlabeled, data.getWordIndex(),
-//				data.getLabelIndex());
-//	}
-//
-//	/**
-//	 * convert a dataset to the following simplified array form:
-//	 * result=double[num_instances][num_features] so that result[i][f] returns
-//	 * the count of feature f in document i.
-//	 * 
-//	 * Note: all side information such as annotations, labels, and data source
-//	 * is lost.
-//	 */
-//	public static double[][] toFeatureArray(Dataset data) {
-//		double[][] countOfXandF = new double[data.allInstances().size()][];
-//		int docIndex = 0;
-//		for (Instance<Integer, SparseFeatureVector> instance : data
-//				.allInstances()) {
-//			countOfXandF[docIndex] = toFeatureArray(instance,
-//					data.getNumFeatures());
-//			++docIndex;
-//		}
-//		return countOfXandF;
-//	}
-//
-//	public static double[] toFeatureArray(
-//			Instance<Integer, SparseFeatureVector> instance, int numFeatures) {
-//		double[] countOfXandF = new double[numFeatures];
-//		instance.getData().addTo(countOfXandF);
-//		return countOfXandF;
-//	}
-//
-//	public static List<Map<Integer, Double>> toSparseFeatureArray(Dataset data) {
-//		List<Map<Integer, Double>> retval = Lists.newArrayList();
-//		for (Instance<Integer, SparseFeatureVector> inst : data.allInstances()) {
-//			retval.add(toSparseFeatureArray(inst));
-//		}
-//		return retval;
-//	}
-//
-//	public static Map<Integer, Double> toSparseFeatureArray(
-//			Instance<Integer, SparseFeatureVector> instance) {
-//		final Map<Integer, Double> sparseFeatures = Maps.newHashMap();
-//		instance.getData().visitSparseEntries(new EntryVisitor() {
-//			@Override
-//			public void visitEntry(int index, double value) {
-//				sparseFeatures.put(index, value);
-//			}
-//		});
-//		return sparseFeatures;
-//	}
-//
-//	/**
-//	 * convert annotations in a dataset into an int tensor
-//	 * a[num_instances][num_annotators][num_classes] where entry a[i][j][k] is
-//	 * the number of times annotations annotator j annotatoted instance i with
-//	 * class k.
-//	 */
-//	public static int[][][] annotations(
-//			Iterable<Instance<Integer, SparseFeatureVector>> instances,
-//			int numInstances, int numLabels, int numAnnotators) {
-//		int[][][] a = new int[numInstances][0][];
-//		for (Enumeration<Instance<Integer, SparseFeatureVector>> e : Iterables2
-//				.enumerate(instances)) {
-//			a[e.getIndex()] = annotations(e.getElement(), numLabels,
-//					numAnnotators);
-//		}
-//		return a;
-//	}
-//
-//	public static int[][] annotations(
-//			Instance<Integer, SparseFeatureVector> instance, int numLabels,
-//			int numAnnotators) {
-//		int[][] annotations = new int[numAnnotators][numLabels];
-//		Collection<Entry<Long, TimedAnnotation<Integer>>> entries = instance
-//				.getAnnotations().entries();
-//		for (Entry<Long, TimedAnnotation<Integer>> entry : entries) {
-//			annotations[entry.getKey().intValue()][entry.getValue()
-//					.getAnnotation()] += 1;
-//		}
-//		return annotations;
-//	}
 //	
 //	public static List<Dataset> split(int items) {
 //		// Guava's Iterables.partition would be nice to use, but has a few
@@ -676,6 +249,55 @@ public class Datasets {
 //        }
 //	    return sample;
 //	}
+
+	/**
+	 * Split by percents
+	 * 
+	 * sum(splitPercents) must be 1
+	 */
+	public static List<Dataset> split(Dataset dataset, double[] splitPercents){
+		Preconditions.checkArgument(Doubles.equals(DoubleArrays.sum(splitPercents),1.0,1e-6),
+				"splitPercents must sum to 1");
+		
+		int numDocs = dataset.getInfo().getNumDocuments();
+		int[] sizes = new int[splitPercents.length];
+		for (int i=0; i<splitPercents.length; i++){
+			// intentional trucating cast (math.floor)
+			sizes[i] = (int) (splitPercents[i] * numDocs);
+		}
+		
+		// make up the difference between the numdocs and sum(sizes)
+		int i=0;
+		while (IntArrays.sum(sizes) < dataset.getInfo().getNumDocuments()){
+			sizes[i]++;
+			i = (i+1)%splitPercents.length;
+		}
+		
+		return split(dataset, sizes);
+	}
+	
+	/**
+	 * Split by sizes
+	 * 
+	 * sum(splitSizes) must equal numdocs
+	 */
+	public static List<Dataset> split(Dataset dataset, int[] splitSizes){
+		Preconditions.checkArgument(IntArrays.sum(splitSizes)==dataset.getInfo().getNumDocuments(), 
+				"split sizes must sum to dataset.numdocs");
+
+		List<Dataset> splits = Lists.newArrayList();
+		Iterator<DatasetInstance> itr = dataset.iterator();
+		
+		for (int size: splitSizes){
+			List<DatasetInstance> instances = Lists.newArrayList();
+			for (int i=0; i<size; i++){
+				instances.add(itr.next());
+			}
+			splits.add(new BasicDataset(instances, infoWithUpdatedCounts(instances, dataset.getInfo())));
+		}
+		
+		return splits;
+	}
 	
 	public static Dataset shuffled(Dataset dataset, RandomGenerator rnd){
 		Dataset copy = new BasicDataset(dataset);
@@ -690,38 +312,47 @@ public class Datasets {
 	 * featureIndex, labelIndex, instanceIdIndex, and annotatorIdIndex. 
 	 * These are only kept around in order to be available to index new 
 	 * data in terms of the dataset.
+	 * 
+	 * TODO: add support for regressand annotations
 	 */
 	public static Dataset convert(
 			String datasetSource,
 			Iterable<FlatInstance<SparseFeatureVector, Integer>> labeledInstances,
 			Indexer<String> featureIndex, Indexer<String> labelIndex, 
-			Indexer<Long> instanceIdIndex, Indexer<Long> annotatorIdIndex) {
+			Indexer<Long> instanceIdIndex, Indexer<Long> annotatorIdIndex, 
+			boolean preserveRawAnnotations) {
 		
 		TableCounter<Long, Long, Integer> annotationCounter = TableCounter.create();
+		Multimap<Long, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create();
 		Set<Long> instanceIndices = Sets.newHashSet();
 		Map<Long,Integer> labelMap = Maps.newHashMap();
 		Map<Long,String> sourceMap = Maps.newHashMap();
 		Map<Long,SparseFeatureVector> featureMap = Maps.newHashMap();
-		int numTokens = 0;
 		
-		// pre-calculate quantities 
+		// calculate maps in order to aggregate FlatInstances into a Dataset
+		// in the FlatInstance representation, a whole list of annotations could be 
+		// referring to the same instance. In a Dataset object, all of these are 
+		// aggregated into a single instance.
 		for (FlatInstance<SparseFeatureVector, Integer> inst: labeledInstances){
 			// anotations
 			if (inst.isAnnotation()){
-				long instanceId = inst.getInstanceId();
-				long annotatorId = inst.getAnnotator();
+				long instanceIndex = inst.getInstanceId();
+				long annotatorIndex = inst.getAnnotator();
 				
-				instanceIndices.add(instanceId);
+				instanceIndices.add(instanceIndex);
 				// record instance features (in case this is a previously-unseen instance)
 				if (inst.getData()!=null){
-					featureMap.put(instanceId, inst.getData());
+					featureMap.put(instanceIndex, inst.getData());
 				}
 				// record instance source
 				if (inst.getSource()!=null){
-					sourceMap.put(instanceId, inst.getSource());
+					sourceMap.put(instanceIndex, inst.getSource());
 				}
 				// record annotation
-				annotationCounter.incrementCount(instanceId, annotatorId, inst.getLabel());
+				annotationCounter.incrementCount(instanceIndex, annotatorIndex, inst.getLabel());
+				if (preserveRawAnnotations){
+					rawAnnotationMap.put(instanceIndex, inst);
+				}
 			}
 			// labels
 			else{
@@ -745,28 +376,49 @@ public class Datasets {
 		List<DatasetInstance> instances = Lists.newArrayList();
 		for (long instanceIndex: instanceIndices){
 			Preconditions.checkState(featureMap.containsKey(instanceIndex),"one instance had no associated data: "+instanceIndex);
-			numTokens += featureMap.get(instanceIndex).sum();
 			
+			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
-					instanceIndex, annotatorIdIndex.size(), labelIndex.size(), annotationCounter);
+					instanceIndex, annotatorIdIndex.size(), labelIndex.size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
+			AnnotationSet as2 = BasicAnnotationSet.fromCountTable(
+					instanceIndex, annotatorIdIndex.size(), labelIndex.size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
 			
-			instances.add(new BasicDatasetInstance(
+			// dataset instance
+			DatasetInstance inst = new BasicDatasetInstance(
 					featureMap.get(instanceIndex), 
 					labelMap.get(instanceIndex), 
 					null, // regressand
-					annotationSet , 
+					annotationSet, 
+					instanceIndex, 
 					sourceMap.get(instanceIndex),
-					labelIndex));
+					labelIndex);
+			
+			instances.add(inst);
+			
 		}
 		
-		// annotations
-		return new BasicDataset(datasetSource, instances, numTokens, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
+		// info without counts
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0, 0, 0, 0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
+		
+		// dataset with correct counts
+		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
 	}
 
 	public static Pair<? extends Dataset, ? extends Dataset> divideLabeledFromUnlabeled(Dataset dataset){
+		// take a shortcut if all the data is labeled or unlabeled
+		if (dataset.getInfo().getNumUnlabeledDocuments()==0){
+			return Pair.of(
+					dataset, // labeled data
+					emptyDataset(dataset.getInfo())); // no unlabeled data
+		}
+		else if (dataset.getInfo().getNumLabeledDocuments()==0){
+			return Pair.of(
+					emptyDataset(dataset.getInfo()), // no labeled data
+					dataset); // unlabeled
+		}
+		
 		List<DatasetInstance> labeledData = Lists.newArrayList();
 		List<DatasetInstance> unlabeledData = Lists.newArrayList();
-		
 		for (DatasetInstance inst: dataset){
 			if (inst.hasLabel()){
 				labeledData.add(inst);
@@ -776,27 +428,555 @@ public class Datasets {
 			}
 		}
 		
-		return Pair.of(new BasicDataset(labeledData, recalulateInfo(labeledData, dataset.getInfo())),
-				new BasicDataset(unlabeledData, recalulateInfo(unlabeledData, dataset.getInfo())));
+		return Pair.of(new BasicDataset(labeledData, infoWithUpdatedCounts(labeledData, dataset.getInfo())),
+				new BasicDataset(unlabeledData, infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
+	}
+
+	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
+			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
+			Indexer<Long> instanceIdIndexer){
+		BasicDataset.Info info = new BasicDataset.Info(source, 0, 0, 0, 0, 
+				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer);
+		return infoWithUpdatedCounts(instances, info);
 	}
 	
-	public static DatasetInfo recalulateInfo(List<DatasetInstance> instances, DatasetInfo previousInfo){
+	public static DatasetInfo infoWithUpdatedCounts(Iterable<DatasetInstance> instances, DatasetInfo previousInfo){
+
+		int numDocuments = 0, numLabeledDocuments = 0, numTokens = 0, numLabeledTokens = 0;
+		for (DatasetInstance inst: instances){
+			double numTokensInCurrentDocument = inst.asFeatureVector().sum(); 
+			
+			numDocuments++;
+			numTokens += numTokensInCurrentDocument;
+			if (inst.hasLabel()){
+				numLabeledDocuments++;
+				numLabeledTokens += numTokensInCurrentDocument;
+			}
+		}
+		
 		return new BasicDataset.Info(
 				previousInfo.getSource(), 
-				instances.size(), 
-				numTokens(instances), 
+				numDocuments, 
+				numLabeledDocuments,
+				numTokens,
+				numLabeledTokens,
 				previousInfo.getAnnotatorIdIndexer(), 
 				previousInfo.getFeatureIndexer(), 
 				previousInfo.getLabelIndexer(), 
 				previousInfo.getInstanceIdIndexer());
 	}
 
-	public static int numTokens(List<DatasetInstance> instances){
-		int total = 0;
-		for (DatasetInstance inst: instances){
-			total += inst.asFeatureVector().sum();
+	public static Dataset join(Dataset... datasets){
+		int totalDocs = 0, totalLabeledDocs = 0, totalTokens = 0, totalLabeledTokens = 0;
+		DatasetInfo info = null;
+		for (Dataset dataset: datasets){
+			info = dataset.getInfo();
+			totalDocs += dataset.getInfo().getNumDocuments();
+			totalLabeledDocs += dataset.getInfo().getNumLabeledDocuments();
+			totalTokens += dataset.getInfo().getNumTokens();
+			totalLabeledTokens += dataset.getInfo().getNumLabeledTokens();
 		}
-		return total;
+		
+		Iterable<DatasetInstance> instances = Iterables.concat(datasets);
+		
+		return new BasicDataset(instances, new BasicDataset.Info(
+				info.getSource(), 
+				totalDocs, totalLabeledDocs, totalTokens, totalLabeledTokens, 
+				info.getAnnotatorIdIndexer(), info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
+	}
+	
+
+	/**
+	 * Remove documents from the collection with duplicate sources. In all cases
+	 * keep only the first item.
+	 */
+	public static Dataset removeDuplicateSources(Dataset data) {
+		Set<String> docSources = Sets.newHashSet();
+
+		List<DatasetInstance> instances = Lists.newArrayList();
+		for (DatasetInstance inst: data){
+			if (docSources.contains(inst.getInfo().getSource())){
+				logger.warning("Repeated data item " + inst.getInfo().getSource());
+			}
+			else{
+				instances.add(inst);
+				docSources.add(inst.getInfo().getSource());
+			}
+		}
+		
+		return new BasicDataset(instances, infoWithUpdatedCounts(instances, data.getInfo()));
+	}
+
+
+	/**
+	 * @param trainingData
+	 */
+	public static Dataset removeAnnotations(Dataset data) {
+		List<DatasetInstance> instances = Lists.newArrayList();
+		for (DatasetInstance inst: data){
+			// info without annotations
+			DatasetInstanceInfo instInfo = new BasicDatasetInstance.InstanceInfo(
+					inst.getInfo().getInstanceId(), inst.getInfo().getSource(), inst.getInfo().getNumAnnotators(), 0);
+			// instance without annotations
+			instances.add(new BasicDatasetInstance(
+					inst.asFeatureVector(), null, inst.getConcealedLabel(), inst.getConcealedRegressand(), 
+					Datasets.emptyAnnotationSet(data.getInfo()), instInfo, data.getInfo().getLabelIndexer()));
+		}
+		
+		return new BasicDataset(instances, data.getInfo());
+		
+	}
+	
+	private static AnnotationSet emptyAnnotationSet(DatasetInfo info) {
+		return new BasicAnnotationSet(info.getNumAnnotators(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector, Integer>>newArrayList());
+	}
+
+	/**
+	 * Returns a dataset in which only instances with either a 
+	 * label or at least one annotation are retained. 
+	 */
+	public static Dataset removeUnlabeledUnannotatedData(Dataset data) {
+		List<DatasetInstance> instances = Lists.newArrayList();
+
+		for (DatasetInstance inst: data){
+			// only keep instance with more than 0 annotations
+			if (inst.hasLabel() || inst.getInfo().getNumAnnotations()>0){
+				instances.add(inst);
+			}
+		}
+		
+		return new BasicDataset(instances, infoWithUpdatedCounts(instances, data.getInfo()));
+	}
+
+	/**
+	 * This method attempt to do the minimum amount of work necessary to 
+	 * add a new annotation to an existing dataset. 
+	 * 
+	 * It is assumed that the annotations were generated by an InstanceManager 
+	 * that was drawing instances from the Dataset in question. Therefore, 
+	 * all quantities in the annotation are already indexed. The instance id 
+	 * in the annotation corresponds to an instanceid in the dataset. The label 
+	 * must be an integer generated from the labelIndexer of the dataset. The 
+	 * annotatorId must be an int from the annotatorIdIndexer of the 
+	 * datset.
+	 * 
+	 */
+	public static synchronized void addAnnotationToDataset(
+			Dataset dataset, FlatInstance<SparseFeatureVector, Integer> ann){
+		// check that values are indexed values
+		Preconditions.checkArgument(ann.getInstanceId() < dataset.getInfo().getInstanceIdIndexer().size(),
+				"cannot add annotation with invalid instance id "+ann.getInstanceId()+"."
+						+ " Must be between 0 and "+dataset.getInfo().getInstanceIdIndexer().size());
+		Preconditions.checkArgument(ann.getAnnotator() < dataset.getInfo().getAnnotatorIdIndexer().size(),
+				"cannot add annotation with invalid annotator id "+ann.getAnnotator()+"."
+						+ " Must be between 0 and "+dataset.getInfo().getAnnotatorIdIndexer().size());
+		Preconditions.checkArgument(ann.getLabel() < dataset.getInfo().getLabelIndexer().size(),
+				"cannot add annotation with invalid label "+ann.getLabel()+"."
+						+ " Must be between 0 and "+dataset.getInfo().getLabelIndexer().size());
+		
+		DatasetInstance inst = dataset.lookupInstance(ann.getInstanceId());
+		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getInstanceId()+" "
+				+ "that is unknown to the dataset recorder (not in the dataset).");
+		
+		// increment previous annotation value for this annotator
+		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
+				(int)ann.getAnnotator(), ann.getLabel(), 1);
+	}
+	
+	public static synchronized void addAnnotationsToDataset(
+			Dataset dataset, Iterable<FlatInstance<SparseFeatureVector, Integer>> annotations){
+		for (FlatInstance<SparseFeatureVector, Integer> ann: annotations){
+			addAnnotationToDataset(dataset, ann);
+		}
+	}
+
+	public static List<FlatInstance<SparseFeatureVector, Integer>> instancesIn(Dataset dataset) {
+		List<FlatInstance<SparseFeatureVector, Integer>> instances = Lists.newArrayList();
+		for (DatasetInstance inst: dataset){
+			instances.add(new FlatLabeledInstance<SparseFeatureVector, Integer>(
+				AnnotationInterfaceJavaUtils.newLabeledInstance(
+						inst.asFeatureVector(), inst.getLabel(), inst.getInfo().getInstanceId(), inst.getInfo().getSource())
+				));
+		}
+		return instances;
+	}
+	
+	public static List<FlatInstance<SparseFeatureVector, Integer>> annotationsIn(Dataset dataset) {
+		List<FlatInstance<SparseFeatureVector, Integer>> annotations = Lists.newArrayList();
+		for (DatasetInstance inst: dataset){
+			annotations.addAll(Lists.newArrayList(inst.getAnnotations().getRawLabelAnnotations()));
+		}
+		return annotations;
+	}
+
+	/**
+	 * Extract an array of labels in the order specified by instanceIndices.
+	 * Instances that don't exist in instanceIndices are ignored. Any gaps in
+	 * the returned array are filled with -1 values.
+	 */
+	public static int[] labels(Dataset data,
+			final Map<String, Integer> instanceIndices) {
+		// all instances
+		List<DatasetInstance> instances = Lists.newArrayList(data);
+
+		// ensure there are no instances NOT in the index map
+		for (int i = instances.size() - 1; i >= 0; i--) {
+			Preconditions.checkArgument(instanceIndices.containsKey(instances.get(i).getInfo().getSource()),
+							"Something is wrong. All instances must be in the instance index map.");
+		}
+
+		// extract labels (in order defined by instanceIndices)
+		int[] gold = IntArrays.repeat(-1, instances.size());
+		for (DatasetInstance inst : instances) {
+			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getLabel();
+		}
+
+		return gold;
+	}
+	
+
+	public static void writeLabeled2Mallet(Dataset dataset, String outPath)
+			throws IOException {
+		final BufferedWriter bw = Files.newBufferedWriter(Paths.get(outPath),
+				Charsets.UTF_8);
+		
+		Dataset labeledData = divideLabeledFromUnlabeled(dataset).getFirst();
+
+		final Indexer<String> wordIndex = dataset.getInfo().getFeatureIndexer();
+		final Indexer<String> labelIndex = dataset.getInfo().getLabelIndexer();
+		for (DatasetInstance inst : labeledData) {
+			// name
+			bw.write(inst.getInfo().getSource());
+			bw.write(' ');
+
+			// label
+			bw.write(labelIndex.get(inst.getLabel()));
+			bw.write(' ');
+
+			// features id1:count1 id2:count2 etc.
+			SparseFeatureVector dat = inst.asFeatureVector();
+			dat.visitSparseEntries(new EntryVisitor() {
+				@Override
+				public void visitEntry(int index, double value) {
+					try {
+						bw.write(wordIndex.get(index) + ":" + value);
+						bw.write(' ');
+					} catch (IOException e) {
+						throw new IllegalStateException("unable to write", e);
+					}
+				}
+			});
+			bw.write("\n");
+		}
+		bw.close();
+	}
+
+	public static Dataset readMallet2Labeled(String inPath) throws IOException {
+		return readMallet2Labeled(inPath, null, null, null, null);
+	}
+
+	public static Dataset readMallet2Labeled(String inPath,
+			Indexer<String> labelIndex, Indexer<String> wordIndex, 
+			Indexer<Long> instanceIdIndexer, Indexer<Long> annotatorIdIndexer)
+			throws IOException {
+		final BufferedReader br = Files.newBufferedReader(Paths.get(inPath),
+				Charsets.UTF_8);
+
+		if (wordIndex == null) {
+			wordIndex = new Indexer<String>();
+		}
+		if (labelIndex == null) {
+			labelIndex = new Indexer<String>();
+		}
+		if (instanceIdIndexer == null) {
+			instanceIdIndexer = new Indexer<Long>();
+		}
+		if (annotatorIdIndexer == null) {
+			annotatorIdIndexer = new Indexer<Long>();
+		}
+		Collection<DatasetInstance> instances = Lists
+				.newArrayList();
+
+		int lineNumber=0;
+		for (String line = br.readLine(); line != null; line = br.readLine()) {
+			String[] parts = line.split(" ");
+			String source = parts[0];
+			String label = parts[1];
+			labelIndex.add(label); // index label
+			// feature string -> SparseFeatureVector
+			int[] indices = new int[parts.length - 2];
+			double[] values = new double[parts.length - 2];
+			for (int i = 2; i < parts.length; i++) {
+				String[] keyval = parts[i].split(":");
+				String feature = keyval[0];
+				String count = keyval[1];
+				wordIndex.add(feature); // index feature
+				indices[i - 2] = wordIndex.indexOf(feature);
+				values[i - 2] = Double.parseDouble(count);
+			}
+			SparseFeatureVector data = new BasicSparseFeatureVector(indices, values);
+			Double regressand = null;
+			AnnotationSet annotations = null;
+			int instanceId = lineNumber++;
+			// record instance
+			instances.add(new BasicDatasetInstance(
+					data, labelIndex.indexOf(label), regressand, annotations, instanceId, source, labelIndex));
+		}
+		br.close();
+
+		String source = inPath;
+		DatasetInfo info = infoWithCalculatedCounts(instances, 
+				source, annotatorIdIndexer, wordIndex, labelIndex, instanceIdIndexer);
+		return new BasicDataset(instances, info);
+	}
+
+	/**
+	 * convert annotations in a dataset into an int tensor
+	 * a[num_instances][num_annotators][num_classes] where entry a[i][j][k] is
+	 * the number of times annotations annotator j annotatoted instance i with
+	 * class k.
+
+	 * TODO: use sparse annotation representation instead
+	 */
+	@Deprecated
+	public static int[][][] compileDenseAnnotations(Dataset dataset) {
+		int[][][] a = new int[dataset.getInfo().getNumDocuments()][0][];
+		for (Enumeration<DatasetInstance> e : Iterables2.enumerate(dataset)) {
+			a[e.getIndex()] = compileDenseAnnotations(
+					e.getElement(), dataset.getInfo().getNumClasses(), e.getElement().getInfo().getNumAnnotators());
+		}
+		return a;
+	}
+
+	@Deprecated
+	public static int[][] compileDenseAnnotations(
+			DatasetInstance instance, int numLabels, int numAnnotators) {
+		final int[][] annotations = new int[numAnnotators][numLabels];
+		instance.getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new RealMatrixPreservingVisitor() {
+			@Override
+			public void visit(int row, int column, double value) {
+				annotations[row][column] = (int)Doubles.longFrom(value, 1e-10);
+			}
+			@Override
+			public void start(int rows, int columns, int startRow, int endRow,
+					int startColumn, int endColumn) {
+			}
+			@Override
+			public double end() {
+				return 0;
+			}
+		});
+		return annotations;
+	}
+	
+	public static Dataset emptyDataset(DatasetInfo info){
+		return new BasicDataset( // full labeled data
+				Lists.<DatasetInstance>newArrayList(), 
+				infoWithUpdatedCounts(Lists.<DatasetInstance>newArrayList(), info));
+	}
+
+	public static double[] countDocSizes(Dataset data) {
+		List<FlatInstance<SparseFeatureVector, Integer>> instances = Datasets.instancesIn(data);
+		double[] sizes = new double[instances.size()];
+		for (int i = 0; i < sizes.length; i++) {
+			sizes[i] = instances.get(i).getData().sum();
+		}
+		return sizes;
+	}
+	
+
+	/**
+	 * convert a dataset to the following simplified array form:
+	 * result=double[num_instances][num_features] so that result[i][f] returns
+	 * the count of feature f in document i.
+	 * 
+	 * Note: all side information such as annotations, labels, and data source
+	 * is lost.
+	 * 
+	 */
+	public static double[][] toFeatureArray(Dataset data) {
+		double[][] countOfXandF = new double[data.getInfo().getNumDocuments()][];
+		int docIndex = 0;
+		for (DatasetInstance instance : data) {
+			countOfXandF[docIndex] = toFeatureArray(instance,
+					data.getInfo().getNumFeatures());
+			++docIndex;
+		}
+		return countOfXandF;
+	}
+
+	public static double[] toFeatureArray(
+			DatasetInstance instance, int numFeatures) {
+		double[] countOfXandF = new double[numFeatures];
+		instance.asFeatureVector().addTo(countOfXandF);
+		return countOfXandF;
+	}
+	
+	
+	public static List<Map<Integer, Double>> toSparseFeatureArray(Dataset data) {
+		List<Map<Integer, Double>> retval = Lists.newArrayList();
+		for (DatasetInstance inst : data) {
+			retval.add(toSparseFeatureArray(inst));
+		}
+		return retval;
+	}
+
+	public static Map<Integer, Double> toSparseFeatureArray(
+			DatasetInstance instance) {
+		final Map<Integer, Double> sparseFeatures = Maps.newHashMap();
+		instance.asFeatureVector().visitSparseEntries(new EntryVisitor() {
+			@Override
+			public void visitEntry(int index, double value) {
+				sparseFeatures.put(index, value);
+			}
+		});
+		return sparseFeatures;
+	}
+
+	
+
+	/**
+	 * Creates a map from an instance (identity) to that instance's index in the
+	 * dataset. This is mainly useful for mapping multi-annotator model
+	 * predictions back to instances that may be presented in a different order
+	 * than that assumed by the model. Because the multiannotators are
+	 * transductive models, we infer labels only for instances that we
+	 * specifically ran inference on. Of course, model parameters MAY be used to
+	 * generate predictions for unseen instances based on feature values, but
+	 * that is a post-hoc process that is different from directly inferring a
+	 * label.
+	 */
+	public static Map<String, Integer> instanceIndices(Dataset data) {
+		Map<String, Integer> map = Maps.newHashMap();
+		int i = 0;
+		for (DatasetInstance instance : data) {
+			Preconditions.checkState(
+							!map.containsKey(instance.getInfo().getSource()),
+							"Dataset contains the same instance (same instance source) twice. This is not allowed!");
+			map.put(instance.getInfo().getSource(), i++);
+		}
+		return map;
+	}
+
+	
+	
+
+	/**
+	 * Move all but N labels per class (if that many labeled annotations per
+	 * class exist) from labeledData into unlabeledInstances.
+	 */
+	public static Dataset hideAllLabelsButNPerClass(Dataset data,
+			int numObservedLabelsPerClass, RandomGenerator rnd) {
+		Pair<? extends Dataset, ? extends Dataset> dataSplits = divideLabeledFromUnlabeled(data);
+		Dataset labeledData = dataSplits.getFirst();
+		Dataset unlabeledData = dataSplits.getSecond();
+		
+		List<DatasetInstance> unlabeled = Lists.newArrayList(labeledData); // include labeled instances (for now)
+		Collection<DatasetInstance> labeled = Lists.newArrayList();
+		Multiset<Integer> classCounts = HashMultiset.create();
+
+		// greedily choose a set of labeled data such that at least
+		// K=numObservedLabelsPerClass
+		// instances have been annotated per class.
+		while (classCounts.elementSet().size() < data.getInfo().getNumClasses()
+				|| Multisets2.minCount(classCounts) < numObservedLabelsPerClass) {
+
+			// assemble a list of instances that have a class we need AND have
+			// at least one annotation
+			List<DatasetInstance> candidates = Lists.newArrayList();
+			for (DatasetInstance cand : unlabeled) {
+				if (classCounts.count(cand.getLabel()) < numObservedLabelsPerClass
+						&& cand.hasAnnotations()) {
+					candidates.add(cand);
+				}
+			}
+			// if we have to, add items that don't have any annotations
+			if (candidates.size() == 0) {
+				for (DatasetInstance cand : unlabeled) {
+					if (classCounts.count(cand.getLabel()) < numObservedLabelsPerClass) {
+						candidates.add(cand);
+					}
+				}
+			}
+			// found nothing that will contribute (impossible goal given data)
+			if (candidates.size() == 0) {
+				logger.warning("Unable to find "
+						+ numObservedLabelsPerClass
+						+ " labeled instances for each class. Stopping early\n\t"
+						+ classCounts);
+				break;
+			}
+
+			// choose at random among candidates
+			DatasetInstance chosen = candidates.get(rnd.nextInt(candidates.size()));
+			unlabeled.remove(chosen);
+			labeled.add(chosen);
+			classCounts.add(chosen.getLabel());
+		}
+		Iterables.addAll(unlabeled, unlabeledData);	// include originally
+													// unlabeled instances
+		
+		// enforce label hiding / revealing
+		for (DatasetInstance labeledInst: labeled){
+			labeledInst.setLabelConcealed(false);
+		}
+		for (DatasetInstance unlabeledInst: unlabeled){
+			unlabeledInst.setLabelConcealed(true);
+		}
+		
+		return new BasicDataset(Iterables.concat(labeled, unlabeled), Datasets.infoWithUpdatedCounts(unlabeled, data.getInfo()));
+
+	}
+
+	public static Dataset hideAllLabelsButEmpiricallyObserved(Dataset data) {
+		Pair<? extends Dataset, ? extends Dataset> dataSplits = divideLabeledFromUnlabeled(data);
+		Dataset labeledData = dataSplits.getFirst();
+		Dataset unlabeledData = dataSplits.getSecond();
+		
+		List<DatasetInstance> labeled = Lists.newArrayList();
+		List<DatasetInstance> unlabeled = Lists.newArrayList();
+
+		for (DatasetInstance inst : labeledData) {
+			if (inst.hasLabel()) {
+				labeled.add(inst);
+			} else {
+				unlabeled.add(inst);
+			}
+		}
+
+		Iterables.addAll(unlabeled, unlabeledData);	// include originally
+													// unlabeled instances
+		return new BasicDataset(Iterables.concat(labeled, unlabeled), Datasets.infoWithUpdatedCounts(unlabeled, data.getInfo()));
+	}
+	
+	/**
+	 * Get a dataset that's been transformed to accomodate a larger (or smaller) set 
+	 * of annotators, determined by annotatoridIndexer. It is assumed that although 
+	 * there may be more of fewer annotators in annotatorIdIndexer than in the dataset, 
+	 * existing annotator identity has not changed. That is, the 0th annotator 
+	 * in the dataset must be the 0th in the annotatorIdIndexer, etc. 
+	 */
+	public static Dataset withNewAnnotators(Dataset dataset, Indexer<Long> annotatorIdIndexer){
+		Preconditions.checkArgument(Indexers.agree(dataset.getInfo().getAnnotatorIdIndexer(), annotatorIdIndexer),
+				"Annotator id indexers conflict");
+		
+		DatasetInfo info = dataset.getInfo();
+		List<DatasetInstance> instances = Lists.newArrayList();
+		
+		for (DatasetInstance inst: dataset){
+			// copy all instances but with an annotationset with more annotators
+			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), inst.getAnnotations().getRawLabelAnnotations());
+			SparseRealMatrices.copyOnto(inst.getAnnotations().getLabelAnnotations(), annotationSet.getLabelAnnotations());
+			// instance with the new annotationset
+			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), inst.getLabel(), inst.getRegressand(), 
+					annotationSet, inst.getInfo().getInstanceId(), inst.getInfo().getSource(), dataset.getInfo().getLabelIndexer()));
+		}
+		
+		// dataset with the new instances and the new annotatorIdIndexer
+		return new BasicDataset(instances, 
+				new BasicDataset.Info(info.getSource(), info.getNumDocuments(), info.getNumLabeledDocuments(), 
+						info.getNumTokens(), info.getNumLabeledDocuments(), annotatorIdIndexer, 
+						info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
 	}
 	
 }

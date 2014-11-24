@@ -38,7 +38,6 @@ import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.dataset.Datasets;
-import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Pair;
 
 /**
@@ -97,7 +96,7 @@ public class JSONDocumentTest {
     JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source",jsonReader, docTransform, tokenizerPipe, tokenTransform , featureSelectorFactory, featureNormalizationConstant, rnd );
     return builder.dataset();
   }
-  
+
   /**
    * Test method for {@link edu.byu.nlp.data.pipes.StopWordRemover#apply(java.util.List)}.
    * @throws FileNotFoundException 
@@ -105,6 +104,9 @@ public class JSONDocumentTest {
   @Test
   public void testBuildDataset() throws FileNotFoundException {
     Dataset dataset = buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Assertions.assertThat(dataset.getInfo().getNumLabeledDocuments()).isEqualTo(3);
+    Assertions.assertThat(dataset.getInfo().getNumUnlabeledDocuments()).isEqualTo(5);
+    Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
     
     Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideLabeledFromUnlabeled(dataset);
     Dataset labeledData = partitions.getFirst();
@@ -134,9 +136,6 @@ public class JSONDocumentTest {
           );
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
-      Integer qewr = inst.getLabel();
-      Indexer<String> dexer = dataset.getInfo().getLabelIndexer();
-      int ey = dataset.getInfo().getLabelIndexer().indexOf(null); 
       Assertions.assertThat(inst.getLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       
     }

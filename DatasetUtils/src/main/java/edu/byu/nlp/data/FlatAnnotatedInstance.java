@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import edu.byu.nlp.annotationinterface.java.Annotation;
 import edu.byu.nlp.middleware.TimelineEvent;
 
-public class FlatAnnotatedInstance<D,L> implements FlatInstance<D, L> {
+public class FlatAnnotatedInstance<D,L> extends AbstractFlatInstance<D, L> {
 
 	public static long NULL_TIMESTAMP = -1;
 	

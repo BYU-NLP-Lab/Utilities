@@ -8,6 +8,7 @@ import edu.byu.nlp.data.types.DatasetInstanceInfo;
 import edu.byu.nlp.data.types.SparseFeatureMatrix;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.math.SparseRealMatrices;
+import edu.byu.nlp.math.SparseRealVectors;
 import edu.byu.nlp.util.Indexer;
 
 public class BasicDatasetInstance implements DatasetInstance {
@@ -30,23 +31,24 @@ public class BasicDatasetInstance implements DatasetInstance {
 	private Indexer<String> labelIndexer;
 
 	public BasicDatasetInstance(SparseFeatureVector vector, 
-			Integer label, Double regressand, AnnotationSet annotations, String source, Indexer<String> labelIndexer){
-		this(vector, null, label, regressand, annotations, source, labelIndexer);
+			Integer label, Double regressand, AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
+		this(vector, null, label, regressand, annotations, instanceId, source, labelIndexer);
 	}
 	
 	public BasicDatasetInstance(SparseFeatureMatrix matrix, 
-			Integer label, Double regressand, AnnotationSet annotations, String source, Indexer<String> labelIndexer){
-		this(null, matrix, label, regressand, annotations, source, labelIndexer);
+			Integer label, Double regressand, AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
+		this(null, matrix, label, regressand, annotations, instanceId, source, labelIndexer);
 	}
 
 	public BasicDatasetInstance(SparseFeatureVector vector, SparseFeatureMatrix matrix, 
-			Integer label, Double regressand, AnnotationSet annotations, String source, Indexer<String> labelIndexer){
+			Integer label, Double regressand, AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
 		this(vector,matrix,label,regressand,annotations,
 				new InstanceInfo(
-						source, annotations.getLabelAnnotations().getRowDimension(), 
+						instanceId, source, annotations.getLabelAnnotations().getRowDimension(), 
 						(int) SparseRealMatrices.sum(annotations.getLabelAnnotations())),
 				labelIndexer);
 	}
+	
 	
 	public BasicDatasetInstance(SparseFeatureVector vector, SparseFeatureMatrix matrix, 
 			Integer label, Double regressand, AnnotationSet annotations, DatasetInstanceInfo info, Indexer<String> labelIndexer){
@@ -143,11 +145,13 @@ public class BasicDatasetInstance implements DatasetInstance {
 		private String source;
 		private int numAnnotations;
 		private int numAnnotators;
+		private long instanceId;
 
-		public InstanceInfo(String source, int numAnnotators, int numAnnotations){
+		public InstanceInfo(long instanceId, String source, int numAnnotators, int numAnnotations){
 			this.numAnnotations=numAnnotations;
 			this.numAnnotators=numAnnotators;
 			this.source=source;
+			this.instanceId=instanceId;
 		}
 		
 		@Override
@@ -169,7 +173,19 @@ public class BasicDatasetInstance implements DatasetInstance {
 		public String toString() {
 			return "src="+source+" numannotators="+numAnnotators+" numannotations="+numAnnotations;
 		}
+
+		@Override
+		public long getInstanceId() {
+			return instanceId;
+		}
 		
+	}
+
+
+	@Override
+	public boolean hasAnnotations() {
+		return SparseRealMatrices.sum(getAnnotations().getLabelAnnotations())>0 ||
+				SparseRealVectors.sum(getAnnotations().getRegressandAnnotationMeans())>0;
 	}
 
 }

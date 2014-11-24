@@ -18,7 +18,7 @@ public interface DatasetInstance {
 	 * or some other kind of structured prediction (trees). 
 	 */
 	SparseFeatureMatrix asFeatureMatrix();
-		
+	
 	/**
 	 * Get information associated with this instance. 
 	 */
@@ -76,4 +76,9 @@ public interface DatasetInstance {
 	 */
 	AnnotationSet getAnnotations();
 	
+	/**
+	 * Does this instance have any annotations of any kind? 
+	 */
+	boolean hasAnnotations();
+
 }
