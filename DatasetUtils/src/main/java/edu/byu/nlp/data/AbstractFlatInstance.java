@@ -9,19 +9,6 @@ public abstract class AbstractFlatInstance<D,L> implements FlatInstance<D,L> {
 				", ann="+getAnnotator()+", start="+getStartTimestamp()+", stop="+getEndTimestamp()+"]";
 	}
 	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean equals(Object obj) {
-		if (obj==null || !(obj instanceof FlatInstance)){
-			return false;
-		}
-		return ((FlatInstance<D,L>)obj).getInstanceId() == getInstanceId();
-	}
-	
-	@Override
-	public int hashCode() {
-		return (int) getInstanceId();
-	}
 	
 	/**
 	 * By default, sort by order of arrival (endtimestamp)

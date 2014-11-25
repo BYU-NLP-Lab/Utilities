@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Random;
 
 import org.apache.commons.math3.random.MersenneTwister;
-import org.apache.commons.math3.stat.inference.TestUtils;
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 
@@ -30,8 +29,10 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.dataset.DatasetsTestUtil;
 import edu.byu.nlp.util.DoubleArrays;
@@ -84,6 +85,29 @@ public class DatasetsTest {
     
   }
 
+  // a few extra annotations
+  public static String jsonInstances2(long seed){ 
+    List<String> jsonInstances = Lists.newArrayList(
+        // "1" has 2 annotations + label
+      "{\"batch\": 1, \"data\":\"ABC\", \"endTime\":1, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
+      
+      // "2" has 2 annotations + label
+      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":5, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":\"2\", \"startTime\":0 }", // annotation
+
+      // "4"
+      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":9, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation
+
+      // "six"
+      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":9, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":\"six\",     \"startTime\":0 }", // annotation
+      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":9, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":\"six\",     \"startTime\":0 }", // annotation
+      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":9, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":\"six\",     \"startTime\":0 }" // annotation
+    );
+    Random rand = new Random(seed);
+    Collections.shuffle(jsonInstances, rand); // try different orderings
+    return "[ \n"+ Joiner.on(", \n").join(jsonInstances) +"]";
+    
+  }
+
   private static void assertAllLabeledDataAnnotated(Dataset data){
 	Dataset labeledData = Datasets.divideLabeledFromUnlabeled(data).getFirst();
     for (DatasetInstance inst: labeledData){
@@ -109,25 +133,28 @@ public class DatasetsTest {
     // check labeled data
     Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
     for (DatasetInstance inst: labeledData){
-      Assertions.assertThat(Sets.newHashSet("1","2","4","five").contains(inst.getInfo().getSource()));
+      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getSource());
       Assertions.assertThat(
           (inst.getInfo().getSource().equals("1") && inst.getInfo().getNumAnnotations()==2) ||
           (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==2) ||
-          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==2) ||
-          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1)  
-          );
+          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==2) 
+          ).isTrue();
       Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasLabel()).isTrue();
+      Assertions.assertThat(inst.getConcealedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasConcealedLabel()).isTrue();
     }
     // check unlabeled data
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
     for (DatasetInstance inst: unlabeledData){
-      Assertions.assertThat(Sets.newHashSet("3","six","7","8").contains(inst.getInfo().getSource()));
+      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getSource());
       Assertions.assertThat(
-          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
           (inst.getInfo().getSource().equals("six") && inst.getInfo().getNumAnnotations()==0) ||
           (inst.getInfo().getSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
           (inst.getInfo().getSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
-          );
+          ).isTrue();
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
       Assertions.assertThat(inst.getLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
@@ -222,6 +249,56 @@ public class DatasetsTest {
       
     }
     
+  }
+  
+  @Test
+  public void testAddAnnotation() throws FileNotFoundException{
+	// base dataset
+    Dataset dataset = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    // annotations
+    List<FlatInstance<SparseFeatureVector, Integer>> annotations = Datasets.annotationsIn(JSONDocumentTest.buildTestDatasetFromJson(jsonInstances2(System.currentTimeMillis())));
+    // add them
+    Datasets.addAnnotationsToDataset(dataset, annotations);
+    
+    // labeled vs unlabeled shouldn't change
+    Assertions.assertThat(dataset.getInfo().getNumLabeledDocuments()).isEqualTo(4);
+    Assertions.assertThat(dataset.getInfo().getNumUnlabeledDocuments()).isEqualTo(4);
+    Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
+    
+    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideLabeledFromUnlabeled(dataset);
+    Dataset labeledData = partitions.getFirst();
+    Dataset unlabeledData = partitions.getSecond();
+    
+    // check labeled data
+    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
+    for (DatasetInstance inst: labeledData){
+      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getSource());
+      Assertions.assertThat(
+          (inst.getInfo().getSource().equals("1") && inst.getInfo().getNumAnnotations()==3) ||
+          (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==3) ||
+          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==3) 
+          ).isTrue();
+      Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasLabel()).isTrue();
+      Assertions.assertThat(inst.getConcealedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasConcealedLabel()).isTrue();
+    }
+    // check unlabeled data
+    Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
+    for (DatasetInstance inst: unlabeledData){
+      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getSource());
+      Assertions.assertThat(
+          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
+          (inst.getInfo().getSource().equals("six") && inst.getInfo().getNumAnnotations()==3) ||
+          (inst.getInfo().getSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
+          (inst.getInfo().getSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
+          ).isTrue();;
+      
+      Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
+      Assertions.assertThat(inst.getLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      
+    }
   }
   
 }

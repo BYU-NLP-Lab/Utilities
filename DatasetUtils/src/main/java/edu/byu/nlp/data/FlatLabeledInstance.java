@@ -57,5 +57,28 @@ public class FlatLabeledInstance<D,L> extends AbstractFlatInstance<D, L> {
 	public long getInstanceId() {
 		return labeledInstance.getInstance().getId();
 	}
+
+	@Override
+	public L getAutomaticLabel() {
+		return getLabel();
+	}
+
+	@Override
+	public long getAutomaticLabelerId() {
+		return labeledInstance.getModel().getId();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object obj) {
+		if (obj==null || !(obj instanceof FlatInstance)){
+			return false;
+		}
+		return ((FlatInstance<D,L>)obj).getInstanceId() == getInstanceId();
+	}
 	
+	@Override
+	public int hashCode() {
+		return (int) getInstanceId();
+	}
 }

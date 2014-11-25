@@ -122,6 +122,9 @@ public class JSONDocumentTest {
           (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0)  
           );
       Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasLabel()).isTrue();
+      Assertions.assertThat(inst.getConcealedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasConcealedLabel()).isTrue();
     }
     // check unlabeled data
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(5);

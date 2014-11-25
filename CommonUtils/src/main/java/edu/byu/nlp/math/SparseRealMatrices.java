@@ -6,6 +6,7 @@ import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealMatrixChangingVisitor;
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.SparseRealMatrix;
 
@@ -110,7 +111,7 @@ public class SparseRealMatrices {
 	public static void incrementValueAt(SparseRealMatrix matrix, int row, int column, double value){
 		Preconditions.checkArgument(row<matrix.getRowDimension());
 		Preconditions.checkArgument(column<matrix.getColumnDimension());
-		matrix.setEntry(row, column, matrix.getEntry(row, column)+1);
+		matrix.setEntry(row, column, matrix.getEntry(row, column)+value);
 	}
 	
 	/**
@@ -126,6 +127,24 @@ public class SparseRealMatrices {
 				else{
 					logger.warning("matrix entry out of bounds while copying. Losing entry ["+row+","+column+"]");
 				}
+			}
+		});
+	}
+
+	public static void clear(SparseRealMatrix labelAnnotations) {
+		labelAnnotations.walkInOptimizedOrder(new RealMatrixChangingVisitor() {
+			@Override
+			public double visit(int row, int column, double value) {
+				// this sets each entry to 0
+				return 0;
+			}
+			@Override
+			public void start(int rows, int columns, int startRow, int endRow,
+					int startColumn, int endColumn) {
+			}
+			@Override
+			public double end() {
+				return 0;
 			}
 		});
 	}

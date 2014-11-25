@@ -84,6 +84,11 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 		private long startTime, endTime;
 		private boolean labelobserved;
 
+		@Override
+		public String toString() {
+			return getClass().getName()+" src="+source;
+		}
+		
 		@SuppressWarnings("unused")
 		public JSONAnnotation() {
 		}
@@ -93,6 +98,10 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 		private List<JSONAnnotation> annotations = Lists.newArrayList();
 		private String label, data, source, datapath;
 		private boolean labelobserved;
+		@Override
+		public String toString() {
+			return getClass().getName()+" src="+source;
+		}
 	}
 
 	@Override
@@ -170,7 +179,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 				instData = Strings.join(lines, "\n");
 			}
 			
-			// add annotations
+			// add annotated instances
 			for (JSONAnnotation ann : pojo.annotations) {
 				transformedAnnotations.add(new FlatAnnotatedInstance<String,String>(
 						AnnotationInterfaceJavaUtils.newAnnotatedInstance(
@@ -178,9 +187,9 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 								ann.source, instData)));
 			}
 
-			// add an instance
+			// add a labeled instance
 			transformedInstances.add(new FlatLabeledInstance<String,String>(
-					AnnotationInterfaceJavaUtils.newLabeledInstance(instData, pojo.label, pojo.source)));
+					AnnotationInterfaceJavaUtils.newLabeledInstance(instData, pojo.label, pojo.source, !pojo.labelobserved)));
 			
 		}
 		

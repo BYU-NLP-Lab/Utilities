@@ -16,6 +16,7 @@ import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
@@ -26,6 +27,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
+import edu.byu.nlp.annotationinterface.Constants;
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
@@ -317,7 +319,7 @@ public class Datasets {
 	 */
 	public static Dataset convert(
 			String datasetSource,
-			Iterable<FlatInstance<SparseFeatureVector, Integer>> labeledInstances,
+			Iterable<FlatInstance<SparseFeatureVector, Integer>> flatInstances,
 			Indexer<String> featureIndex, Indexer<String> labelIndex, 
 			Indexer<Long> instanceIdIndex, Indexer<Long> annotatorIdIndex, 
 			boolean preserveRawAnnotations) {
@@ -325,6 +327,7 @@ public class Datasets {
 		TableCounter<Long, Long, Integer> annotationCounter = TableCounter.create();
 		Multimap<Long, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create();
 		Set<Long> instanceIndices = Sets.newHashSet();
+		Set<Long> indicesWithConcealedLabel = Sets.newHashSet();
 		Map<Long,Integer> labelMap = Maps.newHashMap();
 		Map<Long,String> sourceMap = Maps.newHashMap();
 		Map<Long,SparseFeatureVector> featureMap = Maps.newHashMap();
@@ -333,7 +336,7 @@ public class Datasets {
 		// in the FlatInstance representation, a whole list of annotations could be 
 		// referring to the same instance. In a Dataset object, all of these are 
 		// aggregated into a single instance.
-		for (FlatInstance<SparseFeatureVector, Integer> inst: labeledInstances){
+		for (FlatInstance<SparseFeatureVector, Integer> inst: flatInstances){
 			// anotations
 			if (inst.isAnnotation()){
 				long instanceIndex = inst.getInstanceId();
@@ -361,6 +364,9 @@ public class Datasets {
 				instanceIndices.add(instanceId);
 				// record label
 				labelMap.put(instanceId, inst.getLabel());
+				if (inst.getAnnotator() == Constants.CONCEALED_GOLD_AUTOMATIC_ANNOTATOR){
+					indicesWithConcealedLabel.add(inst.getInstanceId());
+				}
 				// record instance features
 				if (inst.getData()!=null){
 					featureMap.put(instanceId, inst.getData());
@@ -380,14 +386,14 @@ public class Datasets {
 			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
 					instanceIndex, annotatorIdIndex.size(), labelIndex.size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
-			AnnotationSet as2 = BasicAnnotationSet.fromCountTable(
-					instanceIndex, annotatorIdIndex.size(), labelIndex.size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
 			
 			// dataset instance
 			DatasetInstance inst = new BasicDatasetInstance(
 					featureMap.get(instanceIndex), 
 					labelMap.get(instanceIndex), 
+					indicesWithConcealedLabel.contains(instanceIdIndex), // is label concealed
 					null, // regressand
+					indicesWithConcealedLabel.contains(instanceIdIndex), // is regressand concealed
 					annotationSet, 
 					instanceIndex, 
 					sourceMap.get(instanceIndex),
@@ -404,6 +410,24 @@ public class Datasets {
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
 	}
 
+	public static Pair<? extends Dataset, ? extends Dataset> divideConcealedLabeledFromUnlabeled(Dataset dataset){
+		// can't take a shortcut here because cached values don't take into account concealed labels into account
+		
+		List<DatasetInstance> labeledData = Lists.newArrayList();
+		List<DatasetInstance> unlabeledData = Lists.newArrayList();
+		for (DatasetInstance inst: dataset){
+			if (inst.hasConcealedLabel()){
+				labeledData.add(inst);
+			}
+			else{
+				unlabeledData.add(inst);
+			}
+		}
+		
+		return Pair.of(new BasicDataset(labeledData, infoWithUpdatedCounts(labeledData, dataset.getInfo())),
+				new BasicDataset(unlabeledData, infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
+	}
+	
 	public static Pair<? extends Dataset, ? extends Dataset> divideLabeledFromUnlabeled(Dataset dataset){
 		// take a shortcut if all the data is labeled or unlabeled
 		if (dataset.getInfo().getNumUnlabeledDocuments()==0){
@@ -467,22 +491,13 @@ public class Datasets {
 	}
 
 	public static Dataset join(Dataset... datasets){
-		int totalDocs = 0, totalLabeledDocs = 0, totalTokens = 0, totalLabeledTokens = 0;
-		DatasetInfo info = null;
-		for (Dataset dataset: datasets){
-			info = dataset.getInfo();
-			totalDocs += dataset.getInfo().getNumDocuments();
-			totalLabeledDocs += dataset.getInfo().getNumLabeledDocuments();
-			totalTokens += dataset.getInfo().getNumTokens();
-			totalLabeledTokens += dataset.getInfo().getNumLabeledTokens();
-		}
+		Preconditions.checkNotNull(datasets);
+		Preconditions.checkArgument(datasets.length>0);
 		
 		Iterable<DatasetInstance> instances = Iterables.concat(datasets);
 		
-		return new BasicDataset(instances, new BasicDataset.Info(
-				info.getSource(), 
-				totalDocs, totalLabeledDocs, totalTokens, totalLabeledTokens, 
-				info.getAnnotatorIdIndexer(), info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
+		return new BasicDataset(instances, 
+				infoWithUpdatedCounts(instances, datasets[0].getInfo()));
 	}
 	
 
@@ -509,27 +524,20 @@ public class Datasets {
 
 
 	/**
-	 * @param trainingData
+	 * Mutates the dataset by clearing all annotation matrices
 	 */
-	public static Dataset removeAnnotations(Dataset data) {
-		List<DatasetInstance> instances = Lists.newArrayList();
-		for (DatasetInstance inst: data){
-			// info without annotations
-			DatasetInstanceInfo instInfo = new BasicDatasetInstance.InstanceInfo(
-					inst.getInfo().getInstanceId(), inst.getInfo().getSource(), inst.getInfo().getNumAnnotators(), 0);
-			// instance without annotations
-			instances.add(new BasicDatasetInstance(
-					inst.asFeatureVector(), null, inst.getConcealedLabel(), inst.getConcealedRegressand(), 
-					Datasets.emptyAnnotationSet(data.getInfo()), instInfo, data.getInfo().getLabelIndexer()));
-		}
+	public static void clearAnnotations(Dataset data) {
 		
-		return new BasicDataset(instances, data.getInfo());
+		for (DatasetInstance inst: data){
+			SparseRealMatrices.clear(inst.getAnnotations().getLabelAnnotations());
+			inst.getInfo().updateAnnotationInfo();
+		}
 		
 	}
 	
-	private static AnnotationSet emptyAnnotationSet(DatasetInfo info) {
-		return new BasicAnnotationSet(info.getNumAnnotators(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector, Integer>>newArrayList());
-	}
+//	private static AnnotationSet emptyAnnotationSet(DatasetInfo info) {
+//		return new BasicAnnotationSet(info.getNumAnnotators(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector, Integer>>newArrayList());
+//	}
 
 	/**
 	 * Returns a dataset in which only instances with either a 
@@ -548,6 +556,15 @@ public class Datasets {
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, data.getInfo()));
 	}
 
+	public static DatasetInstance copy(DatasetInstance inst){
+		return new BasicDatasetInstance(inst.asFeatureVector(), 
+				inst.getConcealedLabel(), DatasetInstances.isLabelConcealed(inst), 
+				inst.getConcealedRegressand(), DatasetInstances.isRegressandConcealed(inst), 
+				inst.getAnnotations(), inst.getInfo().getInstanceId(), inst.getInfo().getSource(), inst.getInfo().getLabelIndexer());
+	}
+	
+	
+	
 	/**
 	 * This method attempt to do the minimum amount of work necessary to 
 	 * add a new annotation to an existing dataset. 
@@ -558,7 +575,7 @@ public class Datasets {
 	 * in the annotation corresponds to an instanceid in the dataset. The label 
 	 * must be an integer generated from the labelIndexer of the dataset. The 
 	 * annotatorId must be an int from the annotatorIdIndexer of the 
-	 * datset.
+	 * dataset.
 	 * 
 	 */
 	public static synchronized void addAnnotationToDataset(
@@ -574,13 +591,19 @@ public class Datasets {
 				"cannot add annotation with invalid label "+ann.getLabel()+"."
 						+ " Must be between 0 and "+dataset.getInfo().getLabelIndexer().size());
 		
-		DatasetInstance inst = dataset.lookupInstance(ann.getInstanceId());
+		DatasetInstance inst = dataset.lookupInstance(ann.getSource());
 		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getInstanceId()+" "
 				+ "that is unknown to the dataset recorder (not in the dataset).");
+		Preconditions.checkState(Objects.equal(inst.getInfo().getSource(),ann.getSource()), 
+				"The source of the instance that was looked up ("+inst.getInfo().getSource()+
+				") doesn't match the src of the annotation ("+ann.getSource()+").");
 		
 		// increment previous annotation value for this annotator
 		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
 				(int)ann.getAnnotator(), ann.getLabel(), 1);
+
+		// update instance info
+		inst.getInfo().updateAnnotationInfo();
 	}
 	
 	public static synchronized void addAnnotationsToDataset(
@@ -589,13 +612,16 @@ public class Datasets {
 			addAnnotationToDataset(dataset, ann);
 		}
 	}
+			
 
 	public static List<FlatInstance<SparseFeatureVector, Integer>> instancesIn(Dataset dataset) {
 		List<FlatInstance<SparseFeatureVector, Integer>> instances = Lists.newArrayList();
 		for (DatasetInstance inst: dataset){
 			instances.add(new FlatLabeledInstance<SparseFeatureVector, Integer>(
 				AnnotationInterfaceJavaUtils.newLabeledInstance(
-						inst.asFeatureVector(), inst.getLabel(), inst.getInfo().getInstanceId(), inst.getInfo().getSource())
+						inst.asFeatureVector(), inst.getConcealedLabel(), 
+						inst.getInfo().getInstanceId(), inst.getInfo().getSource(), 
+						DatasetInstances.isLabelConcealed(inst))
 				));
 		}
 		return instances;
@@ -609,6 +635,31 @@ public class Datasets {
 		return annotations;
 	}
 
+	/**
+	 * Extract an array of labels in the order specified by instanceIndices.
+	 * Instances that don't exist in instanceIndices are ignored. Any gaps in
+	 * the returned array are filled with -1 values.
+	 */
+	public static int[] concealedLabels(Dataset data,
+			final Map<String, Integer> instanceIndices) {
+		// all instances
+		List<DatasetInstance> instances = Lists.newArrayList(data);
+
+		// ensure there are no instances NOT in the index map
+		for (int i = instances.size() - 1; i >= 0; i--) {
+			Preconditions.checkArgument(instanceIndices.containsKey(instances.get(i).getInfo().getSource()),
+							"Something is wrong. All instances must be in the instance index map.");
+		}
+
+		// extract labels (in order defined by instanceIndices)
+		int[] gold = IntArrays.repeat(-1, instances.size());
+		for (DatasetInstance inst : instances) {
+			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getConcealedLabel();
+		}
+
+		return gold;
+	}
+	
 	/**
 	 * Extract an array of labels in the order specified by instanceIndices.
 	 * Instances that don't exist in instanceIndices are ignored. Any gaps in
@@ -720,14 +771,15 @@ public class Datasets {
 			int instanceId = lineNumber++;
 			// record instance
 			instances.add(new BasicDatasetInstance(
-					data, labelIndex.indexOf(label), regressand, annotations, instanceId, source, labelIndex));
+					data, labelIndex.indexOf(label), false,  
+					regressand, false, 
+					annotations, instanceId, source, labelIndex));
 		}
 		br.close();
 
 		String source = inPath;
-		DatasetInfo info = infoWithCalculatedCounts(instances, 
-				source, annotatorIdIndexer, wordIndex, labelIndex, instanceIdIndexer);
-		return new BasicDataset(instances, info);
+		return new BasicDataset(instances, infoWithCalculatedCounts(instances, 
+		        source, annotatorIdIndexer, wordIndex, labelIndex, instanceIdIndexer));
 	}
 
 	/**
@@ -867,33 +919,34 @@ public class Datasets {
 	 */
 	public static Dataset hideAllLabelsButNPerClass(Dataset data,
 			int numObservedLabelsPerClass, RandomGenerator rnd) {
-		Pair<? extends Dataset, ? extends Dataset> dataSplits = divideLabeledFromUnlabeled(data);
-		Dataset labeledData = dataSplits.getFirst();
-		Dataset unlabeledData = dataSplits.getSecond();
+		Preconditions.checkArgument(numObservedLabelsPerClass>=0,
+				"numObservedLabelsPerClass must be non-negative");
 		
-		List<DatasetInstance> unlabeled = Lists.newArrayList(labeledData); // include labeled instances (for now)
-		Collection<DatasetInstance> labeled = Lists.newArrayList();
+		Dataset labeledData = Datasets.divideLabeledFromUnlabeled(data).getFirst();
 		Multiset<Integer> classCounts = HashMultiset.create();
-
+		Set<Long> chosenInstanceIds = Sets.newHashSet();
+		
 		// greedily choose a set of labeled data such that at least
 		// K=numObservedLabelsPerClass
 		// instances have been annotated per class.
 		while (classCounts.elementSet().size() < data.getInfo().getNumClasses()
 				|| Multisets2.minCount(classCounts) < numObservedLabelsPerClass) {
 
-			// assemble a list of instances that have a class we need AND have
-			// at least one annotation
+			// assemble a list of instances that have a class we need.
+			// Also, prefer items with at least one annotation
 			List<DatasetInstance> candidates = Lists.newArrayList();
-			for (DatasetInstance cand : unlabeled) {
-				if (classCounts.count(cand.getLabel()) < numObservedLabelsPerClass
-						&& cand.hasAnnotations()) {
+			for (DatasetInstance cand : labeledData) {
+				if (!chosenInstanceIds.contains(cand.getInfo().getInstanceId()) && // haven't already chosen this
+						classCounts.count(cand.getConcealedLabel()) < numObservedLabelsPerClass // still need this label
+						&& cand.hasAnnotations()) { // prefer if it has annotations
 					candidates.add(cand);
 				}
 			}
 			// if we have to, add items that don't have any annotations
 			if (candidates.size() == 0) {
-				for (DatasetInstance cand : unlabeled) {
-					if (classCounts.count(cand.getLabel()) < numObservedLabelsPerClass) {
+				for (DatasetInstance cand : data) {
+					if (!chosenInstanceIds.contains(cand.getInfo().getInstanceId()) && // haven't already chosen this
+							classCounts.count(cand.getConcealedLabel()) < numObservedLabelsPerClass) { // still need this label
 						candidates.add(cand);
 					}
 				}
@@ -909,45 +962,25 @@ public class Datasets {
 
 			// choose at random among candidates
 			DatasetInstance chosen = candidates.get(rnd.nextInt(candidates.size()));
-			unlabeled.remove(chosen);
-			labeled.add(chosen);
-			classCounts.add(chosen.getLabel());
+			classCounts.add(chosen.getConcealedLabel());
+			chosenInstanceIds.add(chosen.getInfo().getInstanceId());
 		}
-		Iterables.addAll(unlabeled, unlabeledData);	// include originally
-													// unlabeled instances
 		
 		// enforce label hiding / revealing
-		for (DatasetInstance labeledInst: labeled){
-			labeledInst.setLabelConcealed(false);
-		}
-		for (DatasetInstance unlabeledInst: unlabeled){
-			unlabeledInst.setLabelConcealed(true);
-		}
-		
-		return new BasicDataset(Iterables.concat(labeled, unlabeled), Datasets.infoWithUpdatedCounts(unlabeled, data.getInfo()));
-
-	}
-
-	public static Dataset hideAllLabelsButEmpiricallyObserved(Dataset data) {
-		Pair<? extends Dataset, ? extends Dataset> dataSplits = divideLabeledFromUnlabeled(data);
-		Dataset labeledData = dataSplits.getFirst();
-		Dataset unlabeledData = dataSplits.getSecond();
-		
-		List<DatasetInstance> labeled = Lists.newArrayList();
-		List<DatasetInstance> unlabeled = Lists.newArrayList();
-
-		for (DatasetInstance inst : labeledData) {
-			if (inst.hasLabel()) {
-				labeled.add(inst);
-			} else {
-				unlabeled.add(inst);
+		List<DatasetInstance> instances = Lists.newArrayList(); // include labeled instances (for now)
+		for (DatasetInstance inst: data){
+			if (chosenInstanceIds.contains(inst.getInfo().getInstanceId())){
+				instances.add(DatasetInstances.instanceWithObservedTruth(inst));
+			}
+			else{
+				instances.add(DatasetInstances.instanceWithConcealedTruth(inst));
 			}
 		}
+		
+		return new BasicDataset(instances, Datasets.infoWithUpdatedCounts(instances, data.getInfo()));
 
-		Iterables.addAll(unlabeled, unlabeledData);	// include originally
-													// unlabeled instances
-		return new BasicDataset(Iterables.concat(labeled, unlabeled), Datasets.infoWithUpdatedCounts(unlabeled, data.getInfo()));
 	}
+
 	
 	/**
 	 * Get a dataset that's been transformed to accomodate a larger (or smaller) set 
@@ -968,7 +1001,9 @@ public class Datasets {
 			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), inst.getAnnotations().getRawLabelAnnotations());
 			SparseRealMatrices.copyOnto(inst.getAnnotations().getLabelAnnotations(), annotationSet.getLabelAnnotations());
 			// instance with the new annotationset
-			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), inst.getLabel(), inst.getRegressand(), 
+			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
+					inst.getConcealedLabel(), DatasetInstances.isLabelConcealed(inst), 
+					inst.getConcealedRegressand(), DatasetInstances.isRegressandConcealed(inst), 
 					annotationSet, inst.getInfo().getInstanceId(), inst.getInfo().getSource(), dataset.getInfo().getLabelIndexer()));
 		}
 		

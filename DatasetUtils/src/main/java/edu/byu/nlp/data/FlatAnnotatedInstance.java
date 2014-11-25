@@ -6,8 +6,6 @@ import edu.byu.nlp.annotationinterface.java.Annotation;
 import edu.byu.nlp.middleware.TimelineEvent;
 
 public class FlatAnnotatedInstance<D,L> extends AbstractFlatInstance<D, L> {
-
-	public static long NULL_TIMESTAMP = -1;
 	
 	private Annotation<D, L> annotatedInstance;
 	private final long startTs;
@@ -73,5 +71,22 @@ public class FlatAnnotatedInstance<D,L> extends AbstractFlatInstance<D, L> {
 	public long getInstanceId() {
 		return annotatedInstance.getAnnotationInstance().getInstance().getId();
 	}
+
+	@Override
+	public L getAutomaticLabel() {
+		if (annotatedInstance.getAnnotationInstance()==null){
+			return null;
+		}
+		return annotatedInstance.getAnnotationInstance().getAutomaticAnnotation().getValue();
+	}
+
+	@Override
+	public long getAutomaticLabelerId() {
+		if (annotatedInstance.getAnnotationInstance()==null){
+			return NULL_ID;
+		}
+		return annotatedInstance.getAnnotationInstance().getAutomaticAnnotation().getModel().getId();
+	}
+
 	
 }

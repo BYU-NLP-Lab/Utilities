@@ -1,5 +1,7 @@
 package edu.byu.nlp.data.types;
 
+import edu.byu.nlp.util.Indexer;
+
 public interface DatasetInstanceInfo {
 
 	/**
@@ -19,4 +21,8 @@ public interface DatasetInstanceInfo {
 	int getNumAnnotators();
 	
 	int getNumAnnotations();
+	
+	Indexer<String> getLabelIndexer();
+	
+	void updateAnnotationInfo();
 }

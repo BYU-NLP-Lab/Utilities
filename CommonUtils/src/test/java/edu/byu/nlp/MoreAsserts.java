@@ -19,8 +19,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.math3.linear.SparseRealMatrix;
+import org.fest.assertions.Assertions;
 import org.junit.Assert;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 /**
@@ -72,5 +75,23 @@ public class MoreAsserts {
 		List<E> sortedActual = Lists.newArrayList(actual);
 		Collections.sort(sortedActual);
 		Assert.assertEquals(sortedExpected, sortedActual);
+	}
+
+	public static void assertSparseMatricesEqual(final SparseRealMatrix actual, final SparseRealMatrix expected){
+		Preconditions.checkNotNull(actual);
+		Preconditions.checkNotNull(expected);
+		Preconditions.checkArgument(actual.getRowDimension()==expected.getRowDimension());
+		
+		// check densely--this doesn't need to be fast
+		for (int r=0; r<actual.getRowDimension(); r++){
+			for (int c=0; c<actual.getColumnDimension(); c++){
+				double act = actual.getEntry(r, c);
+				double exp = expected.getEntry(r, c); 
+				if (act!=exp){
+					System.err.println("actual["+r+"]["+c+"]="+act+" does not match expected["+r+"]["+c+"]="+exp);
+				}
+				Assertions.assertThat(act).isEqualTo(exp);
+			}
+		}
 	}
 }

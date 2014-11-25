@@ -53,7 +53,7 @@ public class DirectoryReader implements DataSource<String, String> {
 			try {
 				String indexFilename = directory.getName().getRelativeName(files[i++].getName());
 				return new FlatLabeledInstance<String,String>(AnnotationInterfaceJavaUtils.<String,String>newLabeledInstance(
-						indexFilename, indexFilename, directory.getName().getPath()));
+						indexFilename, indexFilename, directory.getName().getPath(), false));
 			} catch (FileSystemException e) {
 				throw new RuntimeException(e);
 			}

@@ -57,7 +57,7 @@ public class IndexFileToLabeledFileList implements OneToManyLabeledInstanceFunct
 				@Override
 				public FlatInstance<String, String> apply(String filedata) {
 					return new FlatLabeledInstance<String,String>(
-							AnnotationInterfaceJavaUtils.newLabeledInstance(filedata, label, source));
+							AnnotationInterfaceJavaUtils.newLabeledInstance(filedata, label, source, false));
 				}
 
 			});

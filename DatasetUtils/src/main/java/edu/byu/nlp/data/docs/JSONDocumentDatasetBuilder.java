@@ -148,7 +148,7 @@ private String source;
     // prime the pump: start the pipe with a dummy instance 
     DataSource<String, String> jsonSource = DataSources.<String,String>from(source, Collections.singletonList(
     		(FlatInstance<String,String>) new FlatLabeledInstance<String,String>(
-    				AnnotationInterfaceJavaUtils.newLabeledInstance("", "", ""))));
+    				AnnotationInterfaceJavaUtils.newLabeledInstance("", "", "", false))));
     // connect the rest of the pipe
     DataSource<List<String>, String> docSource = DataSources.connect(jsonSource, combinedPipe);
     

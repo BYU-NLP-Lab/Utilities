@@ -5,17 +5,16 @@ import java.util.logging.Logger;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.DatasetInstanceInfo;
-import edu.byu.nlp.data.types.SparseFeatureMatrix;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.math.SparseRealMatrices;
 import edu.byu.nlp.math.SparseRealVectors;
+import edu.byu.nlp.util.Doubles;
 import edu.byu.nlp.util.Indexer;
 
 public class BasicDatasetInstance implements DatasetInstance {
 
 	private static final Logger logger = Logger.getLogger(BasicDatasetInstance.class.getName());
 	  
-	private SparseFeatureMatrix featureMatrix;
 	private SparseFeatureVector featureVector;
 
 	private Integer label;
@@ -28,37 +27,28 @@ public class BasicDatasetInstance implements DatasetInstance {
 
 	private DatasetInstanceInfo info;
 
-	private Indexer<String> labelIndexer;
-
-	public BasicDatasetInstance(SparseFeatureVector vector, 
-			Integer label, Double regressand, AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
-		this(vector, null, label, regressand, annotations, instanceId, source, labelIndexer);
-	}
 	
-	public BasicDatasetInstance(SparseFeatureMatrix matrix, 
-			Integer label, Double regressand, AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
-		this(null, matrix, label, regressand, annotations, instanceId, source, labelIndexer);
-	}
-
-	public BasicDatasetInstance(SparseFeatureVector vector, SparseFeatureMatrix matrix, 
-			Integer label, Double regressand, AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
-		this(vector,matrix,label,regressand,annotations,
+	public BasicDatasetInstance(SparseFeatureVector vector,  
+			Integer label, boolean isLabelConcealed, Double regressand, boolean isRegressandConcealed, 
+			AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
+		this(vector,label,isLabelConcealed,regressand,isRegressandConcealed,annotations,
 				new InstanceInfo(
-						instanceId, source, annotations.getLabelAnnotations().getRowDimension(), 
-						(int) SparseRealMatrices.sum(annotations.getLabelAnnotations())),
-				labelIndexer);
+						instanceId, source, annotations, 
+						(int) Doubles.longFrom(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10),
+						labelIndexer));
 	}
 	
 	
-	public BasicDatasetInstance(SparseFeatureVector vector, SparseFeatureMatrix matrix, 
-			Integer label, Double regressand, AnnotationSet annotations, DatasetInstanceInfo info, Indexer<String> labelIndexer){
+	public BasicDatasetInstance(SparseFeatureVector vector, 
+			Integer label, boolean isLabelConcealed, Double regressand, boolean isRegressandConcealed, 
+			AnnotationSet annotations, DatasetInstanceInfo info){
 		this.featureVector = vector;
-		this.featureMatrix=matrix;
 		this.label=label;
+		this.isLabelConcealed=isLabelConcealed;
 		this.regressand=regressand;
+		this.isRegressandConcealed=isRegressandConcealed;
 		this.annotations=annotations;
 		this.info=info;
-		this.labelIndexer=labelIndexer;
 	}
 	
 	@Override
@@ -73,35 +63,18 @@ public class BasicDatasetInstance implements DatasetInstance {
 	}
 
 	@Override
-	public SparseFeatureMatrix asFeatureMatrix() {
-		if (featureMatrix!=null){
-			return featureMatrix;
-		}
-		else{
-			logger.warning("Asked an instance defined as a feature vector to be returned as a feature matrix. "
-					+ "Complying, but it's possible that this is a mistake.");
-			return new SingleRowFeatureMatrix(featureVector);
-		}
-	}
-
-	@Override
 	public DatasetInstanceInfo getInfo() {
 		return info;
 	}
 
 	@Override
 	public boolean hasLabel() {
-		return label!=null && !label.equals(labelIndexer.indexOf(null)) && !isLabelConcealed;
+		return hasConcealedLabel() && !isLabelConcealed;
 	}
 
 	@Override
 	public Integer getLabel() {
 		return label; 
-	}
-
-	@Override
-	public void setLabelConcealed(boolean concealed) {
-		this.isLabelConcealed = concealed;
 	}
 
 	@Override
@@ -111,17 +84,12 @@ public class BasicDatasetInstance implements DatasetInstance {
 
 	@Override
 	public boolean hasRegressand() {
-		return regressand!=null && !isRegressandConcealed;
+		return hasConcealedLabel() && !isRegressandConcealed;
 	}
 
 	@Override
 	public Double getRegressand() {
 		return (hasRegressand())? regressand: null;
-	}
-
-	@Override
-	public void setRegressandConcealed(boolean concealed) {
-		this.isRegressandConcealed = concealed;
 	}
 
 	@Override
@@ -141,51 +109,64 @@ public class BasicDatasetInstance implements DatasetInstance {
 	
 	
 	public static class InstanceInfo implements DatasetInstanceInfo{
-
 		private String source;
 		private int numAnnotations;
-		private int numAnnotators;
 		private long instanceId;
+		private Indexer<String> labelIndexer;
+		private AnnotationSet annotations;
 
-		public InstanceInfo(long instanceId, String source, int numAnnotators, int numAnnotations){
+		public InstanceInfo(long instanceId, String source, AnnotationSet annotations, int numAnnotations, Indexer<String> labelIndexer){
 			this.numAnnotations=numAnnotations;
-			this.numAnnotators=numAnnotators;
+			this.annotations=annotations;
 			this.source=source;
 			this.instanceId=instanceId;
+			this.labelIndexer=labelIndexer;
 		}
-		
 		@Override
 		public String getSource() {
 			return source;
 		}
-
 		@Override
 		public int getNumAnnotators() {
-			return numAnnotators;
+			return annotations.getLabelAnnotations().getRowDimension();
 		}
-
 		@Override
 		public int getNumAnnotations() {
 			return numAnnotations;
 		}
-		
 		@Override
 		public String toString() {
-			return "src="+source+" numannotators="+numAnnotators+" numannotations="+numAnnotations;
+			return "id="+getInstanceId()+" src="+source+" numannotators="+getNumAnnotators()+" numannotations="+numAnnotations;
 		}
-
 		@Override
 		public long getInstanceId() {
 			return instanceId;
 		}
+		@Override
+		public Indexer<String> getLabelIndexer() {
+			return labelIndexer;
+		}
+		@Override
+		public void updateAnnotationInfo() {
+			this.numAnnotations = (int) Doubles.longFrom(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10);
+		}
 		
 	}
-
 
 	@Override
 	public boolean hasAnnotations() {
 		return SparseRealMatrices.sum(getAnnotations().getLabelAnnotations())>0 ||
 				SparseRealVectors.sum(getAnnotations().getRegressandAnnotationMeans())>0;
+	}
+
+	@Override
+	public boolean hasConcealedLabel() {
+		return label!=null && !label.equals(getInfo().getLabelIndexer().indexOf(null));
+	}
+
+	@Override
+	public boolean hasConcealedRegressand() {
+		return regressand!=null;
 	}
 
 }

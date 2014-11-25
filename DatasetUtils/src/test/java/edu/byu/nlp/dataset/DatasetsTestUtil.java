@@ -56,19 +56,19 @@ public class DatasetsTestUtil {
 		SparseFeatureVector data1 = new BasicSparseFeatureVector(
 				new int[]{0,1,2,4}, new double[]{8,4,2,1});
 		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data1, "ClassA", "dummy source 1")));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data1, "ClassA", "dummy source 1", false)));
 
 		// add data 
 		SparseFeatureVector data2 = new BasicSparseFeatureVector(
 				new int[]{0,2,3,4}, new double[]{18,14,12,1});
 		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data2, "ClassB", "dummy source 2")));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data2, "ClassB", "dummy source 2", false)));
 
 		// add data 
 		SparseFeatureVector data3 = new BasicSparseFeatureVector(
 				new int[]{0,1,2,3,4}, new double[]{0,1,28,24,22});
 		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data3, "ClassA", "dummy source 3")));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data3, "ClassA", "dummy source 3", false)));
 
 		
 		// add annotation

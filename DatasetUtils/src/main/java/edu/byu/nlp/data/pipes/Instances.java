@@ -131,6 +131,14 @@ public class Instances {
 		public long getAnnotator() {
 			return transformAnnotatorId(delegate.getAnnotator());
 		}
+		@Override
+		public OL getAutomaticLabel() {
+			return transformedLabelValue(delegate.getAutomaticLabel());
+		}
+		@Override
+		public long getAutomaticLabelerId() {
+			return delegate.getAutomaticLabelerId();
+		}
 		
 		protected abstract OL transformedLabelValue(IL value);
 		protected abstract OD transformedInstanceValue(ID value);

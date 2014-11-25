@@ -20,9 +20,9 @@ public class InstancesTest {
 		String label = "sports";
 		String source = "dummy source";
 		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
 		
-		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(inst.getSource()).isEqualTo(source);
 		Assertions.assertThat(inst.getLabel()).isEqualTo(label);
@@ -36,7 +36,7 @@ public class InstancesTest {
 		Function<Long, Long> annotatorIdF = Functions.identity();
 		FlatInstance<String, String> tinst = Instances.transformedLabeledInstance(inst, dataF, labelF, sourceF, instanceIdF, annotatorIdF);
 
-		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(tinst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(tinst.getSource()).isEqualTo(source);
 		Assertions.assertThat(tinst.getLabel()).isEqualTo(label);
@@ -52,10 +52,10 @@ public class InstancesTest {
 		String label = "sports";
 		String source = "dummy source";
 		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
 		
 		// before transform
-		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(inst.getSource()).isEqualTo(source);
 		Assertions.assertThat(inst.getLabel()).isEqualTo(label);
@@ -76,7 +76,7 @@ public class InstancesTest {
 		FlatInstance<String, String> tinst = Instances.transformedLabeledInstance(inst, dataF, labelF, sourceF, instanceIdF, annotatorIdF);
 
 		// after transform
-		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(tinst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(tinst.getSource()).isEqualTo(source);
 		Assertions.assertThat(tinst.getLabel()).isEqualTo(label);
@@ -92,10 +92,10 @@ public class InstancesTest {
 		String label = "sports";
 		String source = "dummy source";
 		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
 		
 		// before transform
-		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(inst.getSource()).isEqualTo(source);
 		Assertions.assertThat(inst.getLabel()).isEqualTo(label);
@@ -116,7 +116,7 @@ public class InstancesTest {
 		FlatInstance<String, String> tinst = Instances.transformedLabeledInstance(inst, dataF, labelF, sourceF, instanceIdF, annotatorIdF);
 
 		// after transform
-		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(tinst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(tinst.getSource()).isEqualTo(source);
 		Assertions.assertThat(tinst.getLabel()).isEqualTo("transformed");
@@ -131,10 +131,10 @@ public class InstancesTest {
 		String label = "sports";
 		String source = "dummy source";
 		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
 		
 		// before transform
-		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(inst.getSource()).isEqualTo(source);
 		Assertions.assertThat(inst.getLabel()).isEqualTo(label);
@@ -155,7 +155,7 @@ public class InstancesTest {
 		FlatInstance<String, String> tinst = Instances.transformedLabeledInstance(inst, dataF, labelF, sourceF, instanceIdF, annotatorIdF);
 
 		// after transform
-		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(tinst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(tinst.getSource()).isEqualTo("transformed");
 		Assertions.assertThat(tinst.getLabel()).isEqualTo(label);
@@ -170,10 +170,10 @@ public class InstancesTest {
 		String label = "sports";
 		String source = "dummy source";
 		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
 		
 		// before transform
-		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(inst.getSource()).isEqualTo(source);
 		Assertions.assertThat(inst.getLabel()).isEqualTo(label);
@@ -194,7 +194,7 @@ public class InstancesTest {
 		FlatInstance<String, String> tinst = Instances.transformedLabeledInstance(inst, dataF, labelF, sourceF, instanceIdF, annotatorIdF);
 
 		// after transform
-		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(tinst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 		Assertions.assertThat(tinst.getInstanceId()).isEqualTo(42);
 		Assertions.assertThat(tinst.getSource()).isEqualTo(source);
 		Assertions.assertThat(tinst.getLabel()).isEqualTo(label);
@@ -210,10 +210,10 @@ public class InstancesTest {
 		String label = "sports";
 		String source = "dummy source";
 		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source));
+				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
 		
 		// before transform
-		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.GOLD_AUTOMATIC_ANNOTATOR_ID);
+		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);
 		Assertions.assertThat(inst.getSource()).isEqualTo(source);
 		Assertions.assertThat(inst.getLabel()).isEqualTo(label);

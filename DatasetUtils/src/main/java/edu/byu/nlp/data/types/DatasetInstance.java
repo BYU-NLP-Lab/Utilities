@@ -12,14 +12,6 @@ public interface DatasetInstance {
 	SparseFeatureVector asFeatureVector();
 	
 	/**
-	 * Get the features associated with this instance 
-	 * as a matrix. This representation is usually 
-	 * suitable for modeling sequences (tagging) 
-	 * or some other kind of structured prediction (trees). 
-	 */
-	SparseFeatureMatrix asFeatureMatrix();
-	
-	/**
 	 * Get information associated with this instance. 
 	 */
 	DatasetInstanceInfo getInfo();
@@ -30,15 +22,14 @@ public interface DatasetInstance {
 	boolean hasLabel();
 
 	/**
+	 * Does this instance have a concealed gold-standard label? 
+	 */
+	boolean hasConcealedLabel();
+
+	/**
 	 * Get the known gold-standard label. Returns null if none. 
 	 */
 	Integer getLabel();
-	
-	/**
-	 * Conceal the gold-standard label. For the purposes 
-	 * of training algorithms, this removes the label. 
-	 */
-	void setLabelConcealed(boolean concealed);
 	
 	/**
 	 * Get a concealed gold-standard label. Training algorithms 
@@ -58,17 +49,16 @@ public interface DatasetInstance {
 	Double getRegressand();
 
 	/**
-	 * Conceal the gold-standard regressand. For the purposes 
-	 * of training algorithms, this removes the label. 
-	 */
-	void setRegressandConcealed(boolean concealed);
-
-	/**
 	 * Get a concealed gold-standard label. Training algorithms 
 	 * are NOT allowed to do this. Only evaluation code should 
 	 * access a concealed value.  
 	 */
 	Double getConcealedRegressand();
+
+	/**
+	 * Does this instance have a concealed gold-standard regressand? 
+	 */
+	boolean hasConcealedRegressand();
 	
 	/**
 	 * Get the human-generated imperfect annotations associated 

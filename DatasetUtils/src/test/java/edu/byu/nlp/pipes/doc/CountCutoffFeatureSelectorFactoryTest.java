@@ -23,7 +23,6 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.annotationinterface.java.BasicInstance;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
@@ -41,10 +40,10 @@ public class CountCutoffFeatureSelectorFactoryTest {
     ImmutableList.Builder<FlatInstance<SparseFeatureVector, String>> builder = ImmutableList.builder();
     builder.add(new FlatLabeledInstance<SparseFeatureVector, String>(
     		AnnotationInterfaceJavaUtils.newLabeledInstance(
-    				(SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 1, 2}, new double[] {1.0, 0.0, 2.0}), "a", "dummy source")));
+    				(SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 1, 2}, new double[] {1.0, 0.0, 2.0}), "a", "dummy source", false)));
     builder.add(new FlatLabeledInstance<SparseFeatureVector, String>(
     		AnnotationInterfaceJavaUtils.newLabeledInstance(
-    				(SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 3, 4}, new double[] {1.0, 1.0, 1.0}), "a", "dummy source")));
+    				(SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 3, 4}, new double[] {1.0, 1.0, 1.0}), "a", "dummy source", false)));
     return builder.build();
   }
   
