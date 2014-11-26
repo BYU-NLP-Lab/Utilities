@@ -14,6 +14,7 @@
 package edu.byu.nlp.data.docs;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.vfs2.FileObject;
@@ -132,11 +133,9 @@ public class DocumentDatasetBuilder {
 
     // Cache the data to avoid multiple disk reads
     List<FlatInstance<List<String>, String>> cachedData = DataSources.cache(docSource);
-
-    //
+    
     // Cross-fold validation would create a new pipe factory for each fold.
     // If we have a static test set, we would only do this on the training data
-    //
     return DocPipes.createDataset(DataSources.from(source, cachedData), featureSelectorFactory, featureNormalizationConstant);
   }
 }

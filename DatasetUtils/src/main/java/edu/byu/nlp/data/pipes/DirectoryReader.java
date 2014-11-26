@@ -13,6 +13,8 @@
  */
 package edu.byu.nlp.data.pipes;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 
 import org.apache.commons.vfs2.FileObject;
@@ -20,6 +22,8 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.UnmodifiableIterator;
 
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
@@ -64,7 +68,17 @@ public class DirectoryReader implements DataSource<String, String> {
 		@Override
 		public Iterator<FlatInstance<String, String>> iterator() {
 			try {
-				return new FilesIterator(directory.getChildren());
+				// sort children files before returning them so that 
+				// results are more predictable across API changes, 
+				// architectures, etc.
+				FileObject[] children = directory.getChildren();
+				Arrays.sort(children, new Comparator<FileObject>() {
+					@Override
+					public int compare(FileObject o1, FileObject o2) {
+						return Ordering.natural().compare(o1.toString(), o2.toString());
+					}
+				});
+				return new FilesIterator(children);
 			} catch (FileSystemException e) {
 				throw new RuntimeException(e);
 			}

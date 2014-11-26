@@ -46,12 +46,12 @@ public class IndexFileToLabeledFileList implements OneToManyLabeledInstanceFunct
 	public Iterator<FlatInstance<String, String>> apply(final FlatInstance<String, String> indexFile) {
 		try {
 			String indexFilename = indexFile.getData();
-			String indexSource = indexFile.getSource();
+			String indexFilePath = indexFile.getSource();
 			
 			logger.info("Processing " + indexFilename);
 			
 			final String label = Paths.splitExtension(indexFilename).getFirst();
-			final String source = indexSource + "/" + indexFilename;
+			final String source = indexFilePath + "/" + indexFilename;
 			Iterable<String> lineIterable = Files2.open(basedir.resolveFile(indexFilename), charset);
 			return Iterators.transform(lineIterable.iterator(), new Function<String, FlatInstance<String, String>>() {
 				@Override

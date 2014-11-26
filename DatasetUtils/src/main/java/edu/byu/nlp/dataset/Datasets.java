@@ -35,7 +35,6 @@ import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
-import edu.byu.nlp.data.types.DatasetInstanceInfo;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
 import edu.byu.nlp.math.SparseRealMatrices;
@@ -325,7 +324,7 @@ public class Datasets {
 			boolean preserveRawAnnotations) {
 		
 		TableCounter<Long, Long, Integer> annotationCounter = TableCounter.create();
-		Multimap<Long, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create();
+		Multimap<Long, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
 		Set<Long> instanceIndices = Sets.newHashSet();
 		Set<Long> indicesWithConcealedLabel = Sets.newHashSet();
 		Map<Long,Integer> labelMap = Maps.newHashMap();
