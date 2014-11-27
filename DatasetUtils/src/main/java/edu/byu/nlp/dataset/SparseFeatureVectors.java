@@ -16,6 +16,8 @@
 package edu.byu.nlp.dataset;
 
 import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
+import edu.byu.nlp.util.Integers;
 
 /**
  * @author rah67
@@ -52,6 +54,28 @@ public class SparseFeatureVectors {
         return val*number;
       }
     });
+  }
+  
+  /**
+   * Translate a feature vector into a sequence of 
+   * feature identities. Fails if features 
+   * are not integer-valued. The ordering of the 
+   * returned features is arbitrary.
+   */
+  public static int[] asSequentialIndices(SparseFeatureVector vec){
+    final int[] words = new int[Integers.fromDouble(vec.sum(), 1e-20)];
+    
+    vec.visitSparseEntries(new EntryVisitor() {
+      @Override
+      public void visitEntry(int index, double value) {
+        int numberOfOccurencesOfWord = Integers.fromDouble(value, 1e-20);
+        for (int i=0; i<numberOfOccurencesOfWord; i++){
+          words[i++] = index;
+        }
+      }
+    });
+    
+    return words;
   }
 
 }

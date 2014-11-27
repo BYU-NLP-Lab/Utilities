@@ -14,7 +14,7 @@ import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.util.Counter;
 import edu.byu.nlp.util.DenseCounter;
-import edu.byu.nlp.util.Doubles;
+import edu.byu.nlp.util.Integers;
 
 public class SparseRealMatrices {
 
@@ -57,7 +57,7 @@ public class SparseRealMatrices {
 		matrix.walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
 			@Override
 			public void visit(int row, int column, double value) {
-				counter.incrementCount(column, (int)Doubles.longFrom(value, 1e-10));
+				counter.incrementCount(column, Integers.fromDouble(value, 1e-10));
 			}
 		});
 		return counter;

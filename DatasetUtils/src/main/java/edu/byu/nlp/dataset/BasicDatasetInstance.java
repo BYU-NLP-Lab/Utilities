@@ -8,8 +8,8 @@ import edu.byu.nlp.data.types.DatasetInstanceInfo;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.math.SparseRealMatrices;
 import edu.byu.nlp.math.SparseRealVectors;
-import edu.byu.nlp.util.Doubles;
 import edu.byu.nlp.util.Indexer;
+import edu.byu.nlp.util.Integers;
 
 public class BasicDatasetInstance implements DatasetInstance {
 
@@ -34,7 +34,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		this(vector,label,isLabelConcealed,regressand,isRegressandConcealed,annotations,
 				new InstanceInfo(
 						instanceId, source, annotations, 
-						(int) Doubles.longFrom(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10),
+						Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10),
 						labelIndexer));
 	}
 	
@@ -148,7 +148,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public void updateAnnotationInfo() {
-			this.numAnnotations = (int) Doubles.longFrom(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10);
+			this.numAnnotations = Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10);
 		}
 		
 	}

@@ -44,6 +44,7 @@ import edu.byu.nlp.util.Enumeration;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Indexers;
 import edu.byu.nlp.util.IntArrays;
+import edu.byu.nlp.util.Integers;
 import edu.byu.nlp.util.Iterables2;
 import edu.byu.nlp.util.Multisets2;
 import edu.byu.nlp.util.Pair;
@@ -806,7 +807,7 @@ public class Datasets {
 		instance.getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new RealMatrixPreservingVisitor() {
 			@Override
 			public void visit(int row, int column, double value) {
-				annotations[row][column] = (int)Doubles.longFrom(value, 1e-10);
+				annotations[row][column] = Integers.fromDouble(value, 1e-10);
 			}
 			@Override
 			public void start(int rows, int columns, int startRow, int endRow,
@@ -1011,6 +1012,33 @@ public class Datasets {
 				new BasicDataset.Info(info.getSource(), info.getNumDocuments(), info.getNumLabeledDocuments(), 
 						info.getNumTokens(), info.getNumLabeledDocuments(), annotatorIdIndexer, 
 						info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
+	}
+
+	/**
+	 * Converts the dataset's features vectors into sequence representations, 
+	 * returning a ragged array indexed by [document][feature_position].
+	 * E.g., If features are words, then array[2][7] is the identity (index) of the
+	 * word 7 in document 2. Feature ordering within the sequence is arbitrary since 
+	 * it is not preserved in the Dataset's feature vectors. 
+	 */
+	public static int[][] featureVectors2FeatureSequences(Dataset data){
+	      int[][] documents = new int[data.getInfo().getNumDocuments()][];
+	      for (Enumeration<DatasetInstance> inst: Iterables2.enumerate(data)){
+	    	  documents[inst.getIndex()] = SparseFeatureVectors.asSequentialIndices(inst.getElement().asFeatureVector());
+	      }
+	      return documents;
+	}
+	
+	/**
+	 * Returns the sizes of each document assuming that all features are integer-valued. 
+	 * If features are not integer-valued, fails.
+	 */
+	public static int[] integerValuedInstanceSizes(Dataset data){
+	      int[] docSizes = new int[data.getInfo().getNumDocuments()];
+	      for (Enumeration<DatasetInstance> inst: Iterables2.enumerate(data)){
+	    	  docSizes[inst.getIndex()] = Integers.fromDouble(inst.getElement().asFeatureVector().sum(), 1e-20);
+	      }
+	      return docSizes;
 	}
 	
 }
