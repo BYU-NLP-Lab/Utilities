@@ -34,7 +34,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		this(vector,label,isLabelConcealed,regressand,isRegressandConcealed,annotations,
 				new InstanceInfo(
 						instanceId, source, annotations, 
-						Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10),
+						Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), Datasets.INT_CAST_THRESHOLD),
 						labelIndexer));
 	}
 	
@@ -148,7 +148,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public void updateAnnotationInfo() {
-			this.numAnnotations = Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), 1e-10);
+			this.numAnnotations = Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), Datasets.INT_CAST_THRESHOLD);
 		}
 		
 	}

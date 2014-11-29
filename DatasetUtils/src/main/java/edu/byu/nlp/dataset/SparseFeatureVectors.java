@@ -63,12 +63,12 @@ public class SparseFeatureVectors {
    * returned features is arbitrary.
    */
   public static int[] asSequentialIndices(SparseFeatureVector vec){
-    final int[] words = new int[Integers.fromDouble(vec.sum(), 1e-20)];
+    final int[] words = new int[Integers.fromDouble(vec.sum(), Datasets.INT_CAST_THRESHOLD)];
     
     vec.visitSparseEntries(new EntryVisitor() {
       @Override
       public void visitEntry(int index, double value) {
-        int numberOfOccurencesOfWord = Integers.fromDouble(value, 1e-20);
+        int numberOfOccurencesOfWord = Integers.fromDouble(value, Datasets.INT_CAST_THRESHOLD);
         for (int i=0; i<numberOfOccurencesOfWord; i++){
           words[i++] = index;
         }

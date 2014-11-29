@@ -52,12 +52,12 @@ public class SparseRealMatrices {
 		return RealVectors.sum(matrix.getRowVector(row));
 	}
 	
-	public static Counter<Integer> countColumns(SparseRealMatrix matrix){
+	public static Counter<Integer> countColumns(SparseRealMatrix matrix, final double threshold){
 		final Counter<Integer> counter = new DenseCounter(matrix.getColumnDimension());
 		matrix.walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
 			@Override
 			public void visit(int row, int column, double value) {
-				counter.incrementCount(column, Integers.fromDouble(value, 1e-10));
+				counter.incrementCount(column, Integers.fromDouble(value, threshold));
 			}
 		});
 		return counter;

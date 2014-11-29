@@ -53,6 +53,9 @@ import edu.byu.nlp.util.TableCounter;
 public class Datasets {
 	private static final Logger logger = Logger.getLogger(Datasets.class.getName());
 
+	// distance from a double to the nearest integer to cast to int without failing?
+	public static final double INT_CAST_THRESHOLD = 1e-10;
+	
 	private Datasets() {
 	}
 
@@ -807,7 +810,7 @@ public class Datasets {
 		instance.getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new RealMatrixPreservingVisitor() {
 			@Override
 			public void visit(int row, int column, double value) {
-				annotations[row][column] = Integers.fromDouble(value, 1e-10);
+				annotations[row][column] = Integers.fromDouble(value, INT_CAST_THRESHOLD);
 			}
 			@Override
 			public void start(int rows, int columns, int startRow, int endRow,
@@ -1036,7 +1039,7 @@ public class Datasets {
 	public static int[] integerValuedInstanceSizes(Dataset data){
 	      int[] docSizes = new int[data.getInfo().getNumDocuments()];
 	      for (Enumeration<DatasetInstance> inst: Iterables2.enumerate(data)){
-	    	  docSizes[inst.getIndex()] = Integers.fromDouble(inst.getElement().asFeatureVector().sum(), 1e-20);
+	    	  docSizes[inst.getIndex()] = Integers.fromDouble(inst.getElement().asFeatureVector().sum(), INT_CAST_THRESHOLD);
 	      }
 	      return docSizes;
 	}
