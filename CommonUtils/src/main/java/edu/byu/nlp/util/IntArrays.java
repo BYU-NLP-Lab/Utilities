@@ -170,13 +170,24 @@ public class IntArrays {
 	/**
 	 * Calculates a dense histogram of the values contained in arr.
 	 */
-	public static int[] denseCounterOf(int[] arr) {
-		int maxValue = max(arr);
-		int[] hist = new int[maxValue];
+	public static int[] denseCounterOf(int[] arr, int numOfOutcomes) {
+		int[] hist = new int[numOfOutcomes];
 		for (int val : arr) {
 			hist[val] += 1;
 		}
 		return hist;
 	}
-  
+
+	public static void multiplyAndRoundToSelf(int[][] arr, double value){
+		for (int i=0; i<arr.length; i++){
+			multiplyAndRoundToSelf(arr[i], value);
+		}
+	}
+	
+	public static void multiplyAndRoundToSelf(int[] arr, double value){
+		for (int i=0; i<arr.length; i++){
+			arr[i] = (int)Math.round(arr[i]*value);
+		}
+	}
+	
 }

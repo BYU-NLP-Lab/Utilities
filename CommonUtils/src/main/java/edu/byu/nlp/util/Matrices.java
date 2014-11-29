@@ -776,7 +776,7 @@ public class Matrices {
 
     public static void multiplyToSelf(double[][][] tensor, double value){
     	for (int r=0; r<tensor.length; r++){
-    		multiplyToSelf(tensor, value);
+    		multiplyToSelf(tensor[r], value);
     	}
     }
     

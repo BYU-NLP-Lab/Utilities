@@ -169,7 +169,7 @@ public class DoubleArrays {
 				index1++, index2++) {
 			arr1[index1] -= arr2[index2];
 		}
-		return min(min(arr1.length - startIndex1, arr2.length - startIndex2), length);
+		return Math.min(Math.min(arr1.length - startIndex1, arr2.length - startIndex2), length);
 	}
 
 	/**
@@ -544,6 +544,14 @@ public class DoubleArrays {
         retval[i] = list.get(i);
       }
       return retval;
+    }
+    
+    public static double min(double[] arr){
+    	double min = Double.POSITIVE_INFINITY;
+    	for (int i=0; i<arr.length; i++){
+    		min = Math.min(min, arr[i]);
+    	}
+    	return min;
     }
     
 }
