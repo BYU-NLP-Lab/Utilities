@@ -42,7 +42,7 @@ import edu.byu.nlp.math.Math2;
 public class Matrices {
 
 	private Matrices() { }
-
+	
 	public static void addToSelf(double[][] mat, double beta) {
 		for (int i = 0; i < mat.length; i++) {
 			for (int j = 0; j < mat[i].length; j++) {
@@ -51,6 +51,12 @@ public class Matrices {
 		}
 	}
 
+  public static void addToSelf(double[][][] mat, double[][][] other) {
+	  for (int i=0; i<mat.length; i++){
+		  addToSelf(mat[i], other[i]);
+	  }
+  }
+	  
   public static void addToSelf(double[][] mat, double[][] other) {
     Preconditions.checkNotNull(mat);
     Preconditions.checkNotNull(other);
@@ -767,4 +773,19 @@ public class Matrices {
       }
       return result;
     }
+
+    public static void multiplyToSelf(double[][][] tensor, double value){
+    	for (int r=0; r<tensor.length; r++){
+    		multiplyToSelf(tensor, value);
+    	}
+    }
+    
+    public static void multiplyToSelf(double[][] mat, double value){
+    	for (int r=0; r<mat.length; r++){
+    		for (int c=0; c<mat[r].length; c++){
+    			mat[r][c] *= value;
+    		}
+    	}
+    }
+    
 }

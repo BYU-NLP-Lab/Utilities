@@ -345,4 +345,18 @@ public class RandomGenerators {
 		}
 	}
 	
+	/**
+	 * Returns an array with the specified size where each element 
+	 * has been assigned an integer value between 0 (inclusive) and 
+	 * max (exclusive) with uniform random probability for each 
+	 * independent assignment. 
+	 */
+	public static int[] nextUniformIndependentIntArray(int size, int max, RandomGenerator rnd){
+		int[] result = new int[size];
+		for (int i=0; i<size; i++){
+			result[i] = rnd.nextInt(max);
+		}
+		return result;
+	}
+	
 }

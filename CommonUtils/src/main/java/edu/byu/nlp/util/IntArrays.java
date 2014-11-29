@@ -166,5 +166,17 @@ public class IntArrays {
     }
     return retval;
   }
+
+	/**
+	 * Calculates a dense histogram of the values contained in arr.
+	 */
+	public static int[] denseCounterOf(int[] arr) {
+		int maxValue = max(arr);
+		int[] hist = new int[maxValue];
+		for (int val : arr) {
+			hist[val] += 1;
+		}
+		return hist;
+	}
   
 }
