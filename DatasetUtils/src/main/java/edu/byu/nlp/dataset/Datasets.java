@@ -404,9 +404,9 @@ public class Datasets {
 			DatasetInstance inst = new BasicDatasetInstance(
 					featureMap.get(instanceIndex), 
 					labelMap.get(instanceIndex), 
-					!indicesWithObservedLabel.contains(instanceIdIndex), // is label concealed
+					!indicesWithObservedLabel.contains(instanceIndex), // is label concealed
 					null, // regressand
-					!indicesWithObservedLabel.contains(instanceIdIndex), // is regressand concealed
+					!indicesWithObservedLabel.contains(instanceIndex), // is regressand concealed
 					annotationSet, 
 					instanceIndex, 
 					sourceMap.get(instanceIndex),
