@@ -104,11 +104,11 @@ public class JSONDocumentTest {
   @Test
   public void testBuildDataset() throws FileNotFoundException {
     Dataset dataset = buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
-    Assertions.assertThat(dataset.getInfo().getNumLabeledDocuments()).isEqualTo(3);
-    Assertions.assertThat(dataset.getInfo().getNumUnlabeledDocuments()).isEqualTo(5);
+    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(3);
+    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(5);
     Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
     
-    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideLabeledFromUnlabeled(dataset);
+    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
     Dataset labeledData = partitions.getFirst();
     Dataset unlabeledData = partitions.getSecond();
     
@@ -121,10 +121,10 @@ public class JSONDocumentTest {
           (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==0) ||
           (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0)  
           );
+      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
       Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       Assertions.assertThat(inst.hasLabel()).isTrue();
-      Assertions.assertThat(inst.getConcealedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
-      Assertions.assertThat(inst.hasConcealedLabel()).isTrue();
     }
     // check unlabeled data
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(5);
@@ -139,7 +139,7 @@ public class JSONDocumentTest {
           );
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
-      Assertions.assertThat(inst.getLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.getObservedLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       
     }
     

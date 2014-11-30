@@ -417,19 +417,19 @@ public class Datasets {
 		}
 		
 		// info without counts
-		DatasetInfo info = new BasicDataset.Info(datasetSource, 0, 0, 0, 0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
 		
 		// dataset with correct counts
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
 	}
 
-	public static Pair<? extends Dataset, ? extends Dataset> divideConcealedLabeledFromUnlabeled(Dataset dataset){
+	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithLabels(Dataset dataset){
 		// can't take a shortcut here because cached values don't take into account concealed labels into account
 		
 		List<DatasetInstance> labeledData = Lists.newArrayList();
 		List<DatasetInstance> unlabeledData = Lists.newArrayList();
 		for (DatasetInstance inst: dataset){
-			if (inst.hasConcealedLabel()){
+			if (inst.hasLabel()){
 				labeledData.add(inst);
 			}
 			else{
@@ -441,14 +441,14 @@ public class Datasets {
 				new BasicDataset(unlabeledData, infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
 	}
 	
-	public static Pair<? extends Dataset, ? extends Dataset> divideLabeledFromUnlabeled(Dataset dataset){
+	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithObservedLabels(Dataset dataset){
 		// take a shortcut if all the data is labeled or unlabeled
-		if (dataset.getInfo().getNumUnlabeledDocuments()==0){
+		if (dataset.getInfo().getNumDocumentsWithoutObservedLabels()==0){
 			return Pair.of(
 					dataset, // labeled data
 					emptyDataset(dataset.getInfo())); // no unlabeled data
 		}
-		else if (dataset.getInfo().getNumLabeledDocuments()==0){
+		else if (dataset.getInfo().getNumDocumentsWithObservedLabels()==0){
 			return Pair.of(
 					emptyDataset(dataset.getInfo()), // no labeled data
 					dataset); // unlabeled
@@ -457,7 +457,7 @@ public class Datasets {
 		List<DatasetInstance> labeledData = Lists.newArrayList();
 		List<DatasetInstance> unlabeledData = Lists.newArrayList();
 		for (DatasetInstance inst: dataset){
-			if (inst.hasLabel()){
+			if (inst.hasObservedLabel()){
 				labeledData.add(inst);
 			}
 			else{
@@ -472,31 +472,34 @@ public class Datasets {
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
 			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
 			Indexer<Long> instanceIdIndexer){
-		BasicDataset.Info info = new BasicDataset.Info(source, 0, 0, 0, 0, 
+		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0, 
 				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer);
 		return infoWithUpdatedCounts(instances, info);
 	}
 	
 	public static DatasetInfo infoWithUpdatedCounts(Iterable<DatasetInstance> instances, DatasetInfo previousInfo){
 
-		int numDocuments = 0, numLabeledDocuments = 0, numTokens = 0, numLabeledTokens = 0;
+		int numDocuments = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
+		int numTokens = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
 		for (DatasetInstance inst: instances){
 			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;
 			if (inst.hasLabel()){
-				numLabeledDocuments++;
-				numLabeledTokens += numTokensInCurrentDocument;
+				numDocumentsWithLabels++;
+				numTokensWithLabels += numTokensInCurrentDocument;
+			}
+			if (inst.hasObservedLabel()){
+				numDocumentsWithObservedLabels++;
+				numTokensWithObservedLabels += numTokensInCurrentDocument;
 			}
 		}
 		
 		return new BasicDataset.Info(
 				previousInfo.getSource(), 
-				numDocuments, 
-				numLabeledDocuments,
-				numTokens,
-				numLabeledTokens,
+				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels,
+				numTokens, numTokensWithLabels, numTokensWithObservedLabels,
 				previousInfo.getAnnotatorIdIndexer(), 
 				previousInfo.getFeatureIndexer(), 
 				previousInfo.getLabelIndexer(), 
@@ -561,7 +564,7 @@ public class Datasets {
 
 		for (DatasetInstance inst: data){
 			// only keep instance with more than 0 annotations
-			if (inst.hasLabel() || inst.getInfo().getNumAnnotations()>0){
+			if (inst.hasObservedLabel() || inst.getInfo().getNumAnnotations()>0){
 				instances.add(inst);
 			}
 		}
@@ -571,8 +574,8 @@ public class Datasets {
 
 	public static DatasetInstance copy(DatasetInstance inst){
 		return new BasicDatasetInstance(inst.asFeatureVector(), 
-				inst.getConcealedLabel(), DatasetInstances.isLabelConcealed(inst), 
-				inst.getConcealedRegressand(), DatasetInstances.isRegressandConcealed(inst), 
+				inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
+				inst.getRegressand(), DatasetInstances.isRegressandConcealed(inst), 
 				inst.getAnnotations(), inst.getInfo().getInstanceId(), inst.getInfo().getSource(), inst.getInfo().getLabelIndexer());
 	}
 	
@@ -632,7 +635,7 @@ public class Datasets {
 		for (DatasetInstance inst: dataset){
 			instances.add(new FlatLabeledInstance<SparseFeatureVector, Integer>(
 				AnnotationInterfaceJavaUtils.newLabeledInstance(
-						inst.asFeatureVector(), inst.getConcealedLabel(), 
+						inst.asFeatureVector(), inst.getLabel(), 
 						inst.getInfo().getInstanceId(), inst.getInfo().getSource(), 
 						DatasetInstances.isLabelConcealed(inst))
 				));
@@ -667,7 +670,7 @@ public class Datasets {
 		// extract labels (in order defined by instanceIndices)
 		int[] gold = IntArrays.repeat(-1, instances.size());
 		for (DatasetInstance inst : instances) {
-			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getConcealedLabel();
+			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getLabel();
 		}
 
 		return gold;
@@ -692,7 +695,7 @@ public class Datasets {
 		// extract labels (in order defined by instanceIndices)
 		int[] gold = IntArrays.repeat(-1, instances.size());
 		for (DatasetInstance inst : instances) {
-			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getLabel();
+			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getObservedLabel();
 		}
 
 		return gold;
@@ -704,7 +707,7 @@ public class Datasets {
 		final BufferedWriter bw = Files.newBufferedWriter(Paths.get(outPath),
 				Charsets.UTF_8);
 		
-		Dataset labeledData = divideLabeledFromUnlabeled(dataset).getFirst();
+		Dataset labeledData = divideInstancesWithObservedLabels(dataset).getFirst();
 
 		final Indexer<String> wordIndex = dataset.getInfo().getFeatureIndexer();
 		final Indexer<String> labelIndex = dataset.getInfo().getLabelIndexer();
@@ -714,7 +717,7 @@ public class Datasets {
 			bw.write(' ');
 
 			// label
-			bw.write(labelIndex.get(inst.getLabel()));
+			bw.write(labelIndex.get(inst.getObservedLabel()));
 			bw.write(' ');
 
 			// features id1:count1 id2:count2 etc.
@@ -935,7 +938,7 @@ public class Datasets {
 		Preconditions.checkArgument(numObservedLabelsPerClass>=0,
 				"numObservedLabelsPerClass must be non-negative");
 		
-		Dataset labeledData = Datasets.divideLabeledFromUnlabeled(data).getFirst();
+		Dataset labeledData = Datasets.divideInstancesWithObservedLabels(data).getFirst();
 		Multiset<Integer> classCounts = HashMultiset.create();
 		Set<Long> chosenInstanceIds = Sets.newHashSet();
 		
@@ -950,7 +953,7 @@ public class Datasets {
 			List<DatasetInstance> candidates = Lists.newArrayList();
 			for (DatasetInstance cand : labeledData) {
 				if (!chosenInstanceIds.contains(cand.getInfo().getInstanceId()) && // haven't already chosen this
-						classCounts.count(cand.getConcealedLabel()) < numObservedLabelsPerClass // still need this label
+						classCounts.count(cand.getLabel()) < numObservedLabelsPerClass // still need this label
 						&& cand.hasAnnotations()) { // prefer if it has annotations
 					candidates.add(cand);
 				}
@@ -959,7 +962,7 @@ public class Datasets {
 			if (candidates.size() == 0) {
 				for (DatasetInstance cand : data) {
 					if (!chosenInstanceIds.contains(cand.getInfo().getInstanceId()) && // haven't already chosen this
-							classCounts.count(cand.getConcealedLabel()) < numObservedLabelsPerClass) { // still need this label
+							classCounts.count(cand.getLabel()) < numObservedLabelsPerClass) { // still need this label
 						candidates.add(cand);
 					}
 				}
@@ -975,7 +978,7 @@ public class Datasets {
 
 			// choose at random among candidates
 			DatasetInstance chosen = candidates.get(rnd.nextInt(candidates.size()));
-			classCounts.add(chosen.getConcealedLabel());
+			classCounts.add(chosen.getLabel());
 			chosenInstanceIds.add(chosen.getInfo().getInstanceId());
 		}
 		
@@ -1015,16 +1018,17 @@ public class Datasets {
 			SparseRealMatrices.copyOnto(inst.getAnnotations().getLabelAnnotations(), annotationSet.getLabelAnnotations());
 			// instance with the new annotationset
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
-					inst.getConcealedLabel(), DatasetInstances.isLabelConcealed(inst), 
-					inst.getConcealedRegressand(), DatasetInstances.isRegressandConcealed(inst), 
+					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
+					inst.getRegressand(), DatasetInstances.isRegressandConcealed(inst), 
 					annotationSet, inst.getInfo().getInstanceId(), inst.getInfo().getSource(), dataset.getInfo().getLabelIndexer()));
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
 		return new BasicDataset(instances, 
-				new BasicDataset.Info(info.getSource(), info.getNumDocuments(), info.getNumLabeledDocuments(), 
-						info.getNumTokens(), info.getNumLabeledDocuments(), annotatorIdIndexer, 
-						info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
+				new BasicDataset.Info(info.getSource(), 
+						info.getNumDocuments(), info.getNumDocumentsWithLabels(), info.getNumDocumentsWithObservedLabels(), 
+						info.getNumTokens(), info.getNumTokensWithLabels(), info.getNumTokensWithObservedLabels(), 
+						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
 	}
 
 	/**

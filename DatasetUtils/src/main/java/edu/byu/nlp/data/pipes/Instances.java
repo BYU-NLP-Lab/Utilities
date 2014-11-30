@@ -457,7 +457,7 @@ public class Instances {
 	private static class LabelGetter implements Function<DatasetInstance, Integer> {
 		@Override
 		public Integer apply(DatasetInstance ta) {
-			return ta.getLabel();
+			return ta.getObservedLabel();
 		}
 	}
 	

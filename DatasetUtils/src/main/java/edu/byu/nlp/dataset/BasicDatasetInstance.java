@@ -69,32 +69,48 @@ public class BasicDatasetInstance implements DatasetInstance {
 
 	@Override
 	public boolean hasLabel() {
-		return hasConcealedLabel() && !isLabelConcealed;
+		return label!=null && !label.equals(getInfo().getLabelIndexer().indexOf(null));
 	}
 
 	@Override
 	public Integer getLabel() {
-		return label; 
+		return hasLabel()? label: null;
 	}
 
 	@Override
-	public Integer getConcealedLabel() {
-		return label;
+	public boolean hasObservedLabel() {
+		return hasLabel() && !isLabelConcealed;
+	}
+
+	@Override
+	public Integer getObservedLabel() {
+		return hasObservedLabel()? label: null; 
+	}
+
+	@Override
+	public boolean hasObservedRegressand() {
+		return hasLabel() && !isRegressandConcealed;
+	}
+
+	@Override
+	public Double getObservedRegressand() {
+		return (hasObservedRegressand())? regressand: null;
 	}
 
 	@Override
 	public boolean hasRegressand() {
-		return hasConcealedLabel() && !isRegressandConcealed;
+		return regressand!=null;
 	}
-
+	
 	@Override
 	public Double getRegressand() {
-		return (hasRegressand())? regressand: null;
+		return hasRegressand()? regressand: null;
 	}
 
 	@Override
-	public Double getConcealedRegressand() {
-		return regressand;
+	public boolean hasAnnotations() {
+		return SparseRealMatrices.sum(getAnnotations().getLabelAnnotations())>0 ||
+				SparseRealVectors.sum(getAnnotations().getRegressandAnnotationMeans())>0;
 	}
 
 	@Override
@@ -153,20 +169,5 @@ public class BasicDatasetInstance implements DatasetInstance {
 		
 	}
 
-	@Override
-	public boolean hasAnnotations() {
-		return SparseRealMatrices.sum(getAnnotations().getLabelAnnotations())>0 ||
-				SparseRealVectors.sum(getAnnotations().getRegressandAnnotationMeans())>0;
-	}
-
-	@Override
-	public boolean hasConcealedLabel() {
-		return label!=null && !label.equals(getInfo().getLabelIndexer().indexOf(null));
-	}
-
-	@Override
-	public boolean hasConcealedRegressand() {
-		return regressand!=null;
-	}
 
 }

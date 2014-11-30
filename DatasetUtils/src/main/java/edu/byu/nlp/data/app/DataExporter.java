@@ -88,7 +88,7 @@ public class DataExporter {
 			StringBuilder sb = new StringBuilder();
 			sb.append(instance.getInfo().getSource());
 			sb.append(' ');
-			sb.append(instance.getLabel());
+			sb.append(instance.getObservedLabel());
 			for (Entry entry : instance.asFeatureVector().sparseEntries()) {
 				sb.append(' ');
 				sb.append(entry.getIndex());

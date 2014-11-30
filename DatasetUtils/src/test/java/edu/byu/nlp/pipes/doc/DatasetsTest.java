@@ -109,7 +109,7 @@ public class DatasetsTest {
   }
 
   private static void assertAllLabeledDataAnnotated(Dataset data){
-	Dataset labeledData = Datasets.divideLabeledFromUnlabeled(data).getFirst();
+	Dataset labeledData = Datasets.divideInstancesWithObservedLabels(data).getFirst();
     for (DatasetInstance inst: labeledData){
       Assertions.assertThat(inst.getInfo().getNumAnnotations()).isGreaterThan(0);
     }
@@ -122,11 +122,11 @@ public class DatasetsTest {
   @Test
   public void testBuildDataset() throws FileNotFoundException {
     Dataset dataset = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
-    Assertions.assertThat(dataset.getInfo().getNumLabeledDocuments()).isEqualTo(4);
-    Assertions.assertThat(dataset.getInfo().getNumUnlabeledDocuments()).isEqualTo(4);
+    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
+    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(4);
     Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
     
-    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideLabeledFromUnlabeled(dataset);
+    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
     Dataset labeledData = partitions.getFirst();
     Dataset unlabeledData = partitions.getSecond();
     
@@ -140,10 +140,10 @@ public class DatasetsTest {
           (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
           (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==2) 
           ).isTrue();
+      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
       Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       Assertions.assertThat(inst.hasLabel()).isTrue();
-      Assertions.assertThat(inst.getConcealedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
-      Assertions.assertThat(inst.hasConcealedLabel()).isTrue();
     }
     // check unlabeled data
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
@@ -157,7 +157,7 @@ public class DatasetsTest {
           ).isTrue();
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
-      Assertions.assertThat(inst.getLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.getObservedLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       
     }
     
@@ -169,14 +169,14 @@ public class DatasetsTest {
     Dataset data = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
     
-    Dataset labeledData = Datasets.divideLabeledFromUnlabeled(data).getFirst();
-    Dataset unlabeledData = Datasets.divideLabeledFromUnlabeled(data).getSecond();
+    Dataset labeledData = Datasets.divideInstancesWithObservedLabels(data).getFirst();
+    Dataset unlabeledData = Datasets.divideInstancesWithObservedLabels(data).getSecond();
     
     // 2 trusted labels (one per class) will remain unhidden
     Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(2);
-    Assertions.assertThat(data.getInfo().getNumLabeledDocuments()).isEqualTo(2);
+    Assertions.assertThat(data.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(2);
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(6);
-    Assertions.assertThat(data.getInfo().getNumUnlabeledDocuments()).isEqualTo(6);
+    Assertions.assertThat(data.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(6);
     Assertions.assertThat(data.getInfo().getNumDocuments()).isEqualTo(8);
     assertAllLabeledDataAnnotated(data);
   }
@@ -188,8 +188,8 @@ public class DatasetsTest {
     data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
 
     // 4 trusted labels (2 per class) will remain unhidden
-    Assertions.assertThat(data.getInfo().getNumLabeledDocuments()).isEqualTo(4);
-    Assertions.assertThat(data.getInfo().getNumUnlabeledDocuments()).isEqualTo(8-4);
+    Assertions.assertThat(data.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
+    Assertions.assertThat(data.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(8-4);
     Assertions.assertThat(data.getInfo().getNumDocuments()).isEqualTo(8);
   }
 
@@ -261,11 +261,11 @@ public class DatasetsTest {
     Datasets.addAnnotationsToDataset(dataset, annotations);
     
     // labeled vs unlabeled shouldn't change
-    Assertions.assertThat(dataset.getInfo().getNumLabeledDocuments()).isEqualTo(4);
-    Assertions.assertThat(dataset.getInfo().getNumUnlabeledDocuments()).isEqualTo(4);
+    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
+    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(4);
     Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
     
-    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideLabeledFromUnlabeled(dataset);
+    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
     Dataset labeledData = partitions.getFirst();
     Dataset unlabeledData = partitions.getSecond();
     
@@ -279,10 +279,10 @@ public class DatasetsTest {
           (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
           (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==3) 
           ).isTrue();
+      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
       Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       Assertions.assertThat(inst.hasLabel()).isTrue();
-      Assertions.assertThat(inst.getConcealedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
-      Assertions.assertThat(inst.hasConcealedLabel()).isTrue();
     }
     // check unlabeled data
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
@@ -296,7 +296,7 @@ public class DatasetsTest {
           ).isTrue();;
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
-      Assertions.assertThat(inst.getLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.getObservedLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       
     }
   }

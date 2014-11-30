@@ -8,24 +8,24 @@ import edu.byu.nlp.util.Doubles;
 public class DatasetInstances {
 
 	public static boolean isLabelConcealed(DatasetInstance inst) {
-		return !inst.hasLabel() && inst.hasConcealedLabel(); 
+		return !inst.hasObservedLabel() && inst.hasLabel(); 
 	}
 
 	public static boolean isRegressandConcealed(DatasetInstance inst) {
-		return !inst.hasRegressand() && inst.hasConcealedRegressand(); 
+		return !inst.hasObservedRegressand() && inst.hasRegressand(); 
 	}
 
 	public static DatasetInstance instanceWithConcealedTruth(DatasetInstance inst){
 		return new BasicDatasetInstance(inst.asFeatureVector(), 
-				inst.getConcealedLabel(), true, 
-				inst.getConcealedRegressand(), true, 
+				inst.getLabel(), true, 
+				inst.getRegressand(), true, 
 				inst.getAnnotations(), inst.getInfo());
 	}
 
 	public static DatasetInstance instanceWithObservedTruth(DatasetInstance inst){
 		return new BasicDatasetInstance(inst.asFeatureVector(), 
-				inst.getConcealedLabel(), false, 
-				inst.getConcealedRegressand(), false, 
+				inst.getLabel(), false, 
+				inst.getRegressand(), false, 
 				inst.getAnnotations(), inst.getInfo());
 	}
 	

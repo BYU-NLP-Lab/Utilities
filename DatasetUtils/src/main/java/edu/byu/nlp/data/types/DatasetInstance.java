@@ -19,46 +19,46 @@ public interface DatasetInstance {
 	/**
 	 * Does this instance have a known gold-standard label? 
 	 */
-	boolean hasLabel();
+	boolean hasObservedLabel();
 
 	/**
-	 * Does this instance have a concealed gold-standard label? 
+	 * Does this instance have a gold-standard label (concealed or not)? 
 	 */
-	boolean hasConcealedLabel();
+	boolean hasLabel();
 
 	/**
 	 * Get the known gold-standard label. Returns null if none. 
 	 */
-	Integer getLabel();
+	Integer getObservedLabel();
 	
 	/**
 	 * Get a concealed gold-standard label. Training algorithms 
 	 * are NOT allowed to do this. Only evaluation code should 
 	 * access a concealed value.  
 	 */
-	Integer getConcealedLabel();
+	Integer getLabel();
 	
 	/**
 	 * Does this instance have a known gold-standard regressand? 
 	 */
-	boolean hasRegressand();
+	boolean hasObservedRegressand();
 
 	/**
 	 * Get the known gold-standard regressand. Returns null if none. 
 	 */
-	Double getRegressand();
+	Double getObservedRegressand();
 
 	/**
 	 * Get a concealed gold-standard label. Training algorithms 
 	 * are NOT allowed to do this. Only evaluation code should 
 	 * access a concealed value.  
 	 */
-	Double getConcealedRegressand();
+	Double getRegressand();
 
 	/**
 	 * Does this instance have a concealed gold-standard regressand? 
 	 */
-	boolean hasConcealedRegressand();
+	boolean hasRegressand();
 	
 	/**
 	 * Get the human-generated imperfect annotations associated 
