@@ -330,7 +330,7 @@ public class Datasets {
 		TableCounter<Long, Long, Integer> annotationCounter = TableCounter.create();
 		Multimap<Long, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
 		Set<Long> instanceIndices = Sets.newHashSet();
-		Set<Long> indicesWithConcealedLabel = Sets.newHashSet();
+		Set<Long> indicesWithObservedLabel = Sets.newHashSet();
 		Map<Long,Integer> labelMap = Maps.newHashMap();
 		Map<Long,String> sourceMap = Maps.newHashMap();
 		Map<Long,SparseFeatureVector> featureMap = Maps.newHashMap();
@@ -363,12 +363,22 @@ public class Datasets {
 			// labels
 			else{
 				long instanceId = inst.getInstanceId();
-				
 				instanceIndices.add(instanceId);
+				
 				// record label
-				labelMap.put(instanceId, inst.getLabel());
-				if (inst.getAnnotator() == Constants.CONCEALED_GOLD_AUTOMATIC_ANNOTATOR){
-					indicesWithConcealedLabel.add(inst.getInstanceId());
+				long labelerId = inst.getAutomaticLabelerId();
+				if (labelerId == Constants.CONCEALED_GOLD_AUTOMATIC_ANNOTATOR || 
+						labelerId == Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR){
+					// this is a trusted gold annotation
+					labelMap.put(instanceId, inst.getLabel());
+				}
+				else{
+					logger.warning("untrusted label by labeler "+labelerId+" is being ignored");
+				}
+				
+				if (labelerId == Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR){
+					// this is a publically known annotation (available as training data)
+					indicesWithObservedLabel.add(instanceId);
 				}
 				// record instance features
 				if (inst.getData()!=null){
@@ -394,9 +404,9 @@ public class Datasets {
 			DatasetInstance inst = new BasicDatasetInstance(
 					featureMap.get(instanceIndex), 
 					labelMap.get(instanceIndex), 
-					indicesWithConcealedLabel.contains(instanceIdIndex), // is label concealed
+					!indicesWithObservedLabel.contains(instanceIdIndex), // is label concealed
 					null, // regressand
-					indicesWithConcealedLabel.contains(instanceIdIndex), // is regressand concealed
+					!indicesWithObservedLabel.contains(instanceIdIndex), // is regressand concealed
 					annotationSet, 
 					instanceIndex, 
 					sourceMap.get(instanceIndex),
@@ -471,7 +481,7 @@ public class Datasets {
 
 		int numDocuments = 0, numLabeledDocuments = 0, numTokens = 0, numLabeledTokens = 0;
 		for (DatasetInstance inst: instances){
-			double numTokensInCurrentDocument = inst.asFeatureVector().sum(); 
+			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;

@@ -34,7 +34,10 @@ public class FlatAnnotatedInstance<D,L> extends AbstractFlatInstance<D, L> {
 	
 	@Override
 	public D getData() {
-		return annotatedInstance.getAnnotationInstance().getInstance().getValue();
+		return null;
+		// return null for efficiency and ease of processing. The data will be attached 
+		// only to labeledinstance (of which there will be one per annotation, even if 
+		// the label is unknown.)
 	}
 
 	@Override

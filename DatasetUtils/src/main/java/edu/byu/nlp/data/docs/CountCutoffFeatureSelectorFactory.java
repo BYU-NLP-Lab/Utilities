@@ -61,9 +61,11 @@ public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFact
     private double[] countFeatures(Iterable<FlatInstance<SparseFeatureVector, L>> docs) {
       double[] counts = new double[numFeatures];
       for (FlatInstance<SparseFeatureVector, L> doc : docs) {
-        for (Entry e : doc.getData().sparseEntries()) {
-          counts[e.getIndex()] += e.getValue();
-        }
+    	  if (!doc.isAnnotation()){ // ignore annotations; no data
+	        for (Entry e : doc.getData().sparseEntries()) {
+	          counts[e.getIndex()] += e.getValue();
+	        }
+    	  }
       }
       return counts;
     }

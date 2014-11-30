@@ -14,6 +14,7 @@
 package edu.byu.nlp.data.docs;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -78,7 +79,8 @@ public class JSONDocumentDatasetBuilder {
   private Integer featureNormalizationConstant;
   private Reader jsonReader;
   private RandomGenerator rnd;
-private String source;
+  private String source;
+private String jsonReferencedDataDir;
 
   public JSONDocumentDatasetBuilder(String basedir, String filename,
       @Nullable Function<String, String> docTransform,
@@ -103,7 +105,7 @@ private String source;
       @Nullable Function<List<String>, List<String>> tokenTransform,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant, RandomGenerator rnd) throws FileSystemException, FileNotFoundException {
-    this(basedir+"/"+filename, readerOf(basedir+"/"+filename), 
+    this(basedir+"/"+filename, new File(basedir).getParent(), readerOf(basedir+"/"+filename), 
         docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant, rnd);
   }
   
@@ -113,25 +115,26 @@ private String source;
    * @throws FileSystemException if there is a problem finding the specified directories on the
    *     filesystem.
    */
-  public JSONDocumentDatasetBuilder(String source, Reader jsonReader,
+  public JSONDocumentDatasetBuilder(String source, String jsonReferencedDataDir, Reader jsonReader,
       @Nullable Function<String, String> docTransform,
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant, RandomGenerator rnd) {
-	  this.source=source;
-    this.jsonReader=jsonReader;
-    this.docTransform = docTransform;
-    this.tokenizerPipe = tokenizerPipe;
-    this.tokenTransform=tokenTransform;
-    this.featureSelectorFactory = featureSelectorFactory;
-    this.featureNormalizationConstant=featureNormalizationConstant;
-    this.rnd=rnd;
+		this.source=source;
+		this.jsonReferencedDataDir=jsonReferencedDataDir;
+	    this.jsonReader=jsonReader;
+	    this.docTransform = docTransform;
+	    this.tokenizerPipe = tokenizerPipe;
+	    this.tokenTransform=tokenTransform;
+	    this.featureSelectorFactory = featureSelectorFactory;
+	    this.featureNormalizationConstant=featureNormalizationConstant;
+	    this.rnd=rnd;
   }
 
   public Dataset dataset() throws FileNotFoundException {
     // This pipe leaves data in the form it is expected to be in at test time
-    LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, rnd);
+    LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, jsonReferencedDataDir, rnd);
 
     // Combine the indexToDocPipe, transform (if applicable), and tokenizer.
     SerialLabeledInstancePipeBuilder<String, String, String, String> builder =

@@ -162,7 +162,7 @@ public class Instances {
 					}
 					@Override
 					protected OD transformedInstanceValue(ID value) {
-						return dataF.apply(value);
+						return (value==null)? null: dataF.apply(value);
 					}
 					@Override
 					protected String transformedInstanceSource(String value) {

@@ -15,8 +15,6 @@
  */
 package edu.byu.nlp.util;
 
-import static java.lang.Math.min;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,7 +44,7 @@ public class DoubleArrays {
     if (arr==null || arr.length==0){
       return null;
     }
-    Map<Integer,Double> map = Maps.newIdentityHashMap();
+    Map<Integer,Double> map = Maps.newHashMap();
     for (int i=0; i<arr.length; i++){
       map.put(i, arr[i]);
     }

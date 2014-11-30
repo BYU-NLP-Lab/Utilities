@@ -60,9 +60,9 @@ public class DocPipes {
             .build();
   }
 
-  public static LabeledInstancePipe<String, String, String, String> jsonToDocPipe(Reader jsonReader, RandomGenerator rnd) throws FileNotFoundException {
+  public static LabeledInstancePipe<String, String, String, String> jsonToDocPipe(Reader jsonReader, String jsonReferencedDataDir, RandomGenerator rnd) throws FileNotFoundException {
     return new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-            .add(Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReader, rnd)))
+            .add(Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReader, jsonReferencedDataDir, rnd)))
             .build();
   }
   

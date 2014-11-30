@@ -62,6 +62,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 
 	private Reader jsonReader;
 	private RandomGenerator rnd;
+	private String jsonReferencedDataDir;
 
 	public JSONFileToAnnotatedDocumentList(String basedir, RandomGenerator rnd) throws FileNotFoundException {
 		this(basedir, Charset.defaultCharset(), rnd);
@@ -69,12 +70,15 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 
 	public JSONFileToAnnotatedDocumentList(String jsonFile, Charset charset, RandomGenerator rnd)
 			throws FileNotFoundException {
-		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), rnd);
+		// assume the datadir referred to by json will be relative to the parent folder of the dataset (e.g., if 
+		// jsonFile= /aml/data/plf1/cfgroups/cfgroups1000.json then the basedir should be /aml/data/plf1
+		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), new File(jsonFile).getParentFile().getParent(), rnd);
 	}
 
-	public JSONFileToAnnotatedDocumentList(Reader jsonReader, RandomGenerator rnd) {
+	public JSONFileToAnnotatedDocumentList(Reader jsonReader, String jsonReferencedDataDir, RandomGenerator rnd) {
 		Preconditions.checkNotNull(jsonReader);
 		this.jsonReader = jsonReader;
+		this.jsonReferencedDataDir=jsonReferencedDataDir;
 		this.rnd = rnd;
 	}
 
@@ -166,28 +170,30 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 		
 		// assemble iterators over flatInstances
 		for (InstancePojo pojo: Iterables.concat(observedLabelInstances, labeledInstances, unlabeledInstances)){
-
-			// read data from disk (if necessary)
-			String instData = pojo.data;
-			if (data == null) {
-				List<String> lines;
-				try {
-					lines = Files.readLines(new File(pojo.datapath), Charset.forName("utf-8"));
-				} catch (IOException e) {
-					throw new RuntimeException("unable to read file " + pojo.datapath, e);
-				}
-				instData = Strings.join(lines, "\n");
-			}
 			
 			// add annotated instances
 			for (JSONAnnotation ann : pojo.annotations) {
+				String annotationData = null; // data will be passed on only via the labeledinstance to avoid redundant processing 
 				transformedAnnotations.add(new FlatAnnotatedInstance<String,String>(
 						AnnotationInterfaceJavaUtils.newAnnotatedInstance(
 								ann.annotator, ann.annotation, ann.startTime * 1000 * 1000, ann.endTime * 1000 * 1000, 
-								ann.source, instData)));
+								ann.source, annotationData)));
+			}
+			
+			// read data from disk (if necessary)
+			String instData = pojo.data;
+			if (instData == null) {
+				List<String> lines;
+				File jsonpath = new File(jsonReferencedDataDir, pojo.datapath);
+				try {
+					lines = Files.readLines(jsonpath, Charset.forName("utf-8"));
+				} catch (IOException e) {
+					throw new RuntimeException("unable to read file " + jsonpath.getAbsolutePath(), e);
+				}
+				instData = Strings.join(lines, "\n");
 			}
 
-			// add a labeled instance
+			// add exactly 1 LabeledInstance for each unique source (even if the label is null)
 			transformedInstances.add(new FlatLabeledInstance<String,String>(
 					AnnotationInterfaceJavaUtils.newLabeledInstance(instData, pojo.label, pojo.source, !pojo.labelobserved)));
 			

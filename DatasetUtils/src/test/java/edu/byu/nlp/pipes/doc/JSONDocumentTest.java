@@ -93,7 +93,7 @@ public class JSONDocumentTest {
     Integer featureNormalizationConstant = 1;
     Function<List<String>, List<String>> tokenTransform = null;
     RandomGenerator rnd = Mockito.mock(RandomGenerator.class);
-    JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source",jsonReader, docTransform, tokenizerPipe, tokenTransform , featureSelectorFactory, featureNormalizationConstant, rnd );
+    JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source",null,jsonReader, docTransform, tokenizerPipe, tokenTransform , featureSelectorFactory, featureNormalizationConstant, rnd );
     return builder.dataset();
   }
 

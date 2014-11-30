@@ -33,18 +33,18 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
  */
 public class EmpiricalAnnotations<D,L> {
   
-  private Map<D, Multimap<Long, FlatInstance<D, L>>> annotations;
+  private Map<String, Multimap<Long, FlatInstance<D, L>>> annotations;
   private DatasetInfo info;
   
-  public EmpiricalAnnotations(Map<D, Multimap<Long, FlatInstance<D, L>>> annotations,
+  public EmpiricalAnnotations(Map<String, Multimap<Long, FlatInstance<D, L>>> annotations,
        DatasetInfo info){
     this.annotations=annotations;
     this.info=info;
   }
   
-  public Multimap<Long, FlatInstance<D, L>> getAnnotationsFor(D data){
-    if (annotations.containsKey(data)){
-      return annotations.get(data);
+  public Multimap<Long, FlatInstance<D, L>> getAnnotationsFor(String source, D data){
+    if (annotations.containsKey(source)){
+      return annotations.get(source);
     }
     return HashMultimap.create();
   }
@@ -60,19 +60,19 @@ public class EmpiricalAnnotations<D,L> {
    * indexed by <instanceIndex,annotatorIndex>  
    */
   public static EmpiricalAnnotations<SparseFeatureVector, Integer> fromDataset(Dataset dataset){
-	Map<SparseFeatureVector, Multimap<Long, FlatInstance<SparseFeatureVector, Integer>>> annotations = Maps.newIdentityHashMap();
+	Map<String, Multimap<Long, FlatInstance<SparseFeatureVector, Integer>>> annotations = Maps.newHashMap();
     
     for (DatasetInstance inst: dataset){
     
-      SparseFeatureVector data = inst.asFeatureVector();
       // make sure an annotation multimap exists, if this instance has any annotations
-      if (inst.getInfo().getNumAnnotations()>0 && !annotations.containsKey(data)){
-        annotations.put(data, HashMultimap.<Long, FlatInstance<SparseFeatureVector, Integer>>create());
+    	String source = inst.getInfo().getSource();
+      if (inst.getInfo().getNumAnnotations()>0 && !annotations.containsKey(source)){
+        annotations.put(source, HashMultimap.<Long, FlatInstance<SparseFeatureVector, Integer>>create());
       }
     	
       // add all annotations to the table, indexed by annotator
       for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
-        annotations.get(data).put(ann.getAnnotator(), ann);
+        annotations.get(source).put(ann.getAnnotator(), ann);
       }
     	
     }
