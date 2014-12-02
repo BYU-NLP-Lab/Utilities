@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -417,12 +419,28 @@ public class Datasets {
 		}
 		
 		// info without counts
-		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
 		
 		// dataset with correct counts
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
 	}
 
+	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithAnnotations(Dataset dataset){
+		List<DatasetInstance> annotatedData = Lists.newArrayList();
+		List<DatasetInstance> unannotatedData = Lists.newArrayList();
+		for (DatasetInstance inst: dataset){
+			if (inst.hasAnnotations()){
+				annotatedData.add(inst);
+			}
+			else{
+				unannotatedData.add(inst);
+			}
+		}
+		
+		return Pair.of(new BasicDataset(annotatedData, infoWithUpdatedCounts(annotatedData, dataset.getInfo())),
+				new BasicDataset(unannotatedData, infoWithUpdatedCounts(unannotatedData, dataset.getInfo())));
+	}
+	
 	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithLabels(Dataset dataset){
 		// can't take a shortcut here because cached values don't take into account concealed labels into account
 		
@@ -472,20 +490,24 @@ public class Datasets {
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
 			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
 			Indexer<Long> instanceIdIndexer){
-		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0, 
+		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0,0,0, 
 				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer);
 		return infoWithUpdatedCounts(instances, info);
 	}
 	
 	public static DatasetInfo infoWithUpdatedCounts(Iterable<DatasetInstance> instances, DatasetInfo previousInfo){
 
-		int numDocuments = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
-		int numTokens = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
+		int numDocuments = 0, numDocumentsWithAnnotations = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
+		int numTokens = 0, numTokensWithAnnotations = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
 		for (DatasetInstance inst: instances){
 			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;
+			if (inst.hasAnnotations()){
+				numDocumentsWithAnnotations++;
+				numTokensWithAnnotations += numTokensInCurrentDocument;
+			}
 			if (inst.hasLabel()){
 				numDocumentsWithLabels++;
 				numTokensWithLabels += numTokensInCurrentDocument;
@@ -498,8 +520,8 @@ public class Datasets {
 		
 		return new BasicDataset.Info(
 				previousInfo.getSource(), 
-				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels,
-				numTokens, numTokensWithLabels, numTokensWithObservedLabels,
+				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels,
+				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels,
 				previousInfo.getAnnotatorIdIndexer(), 
 				previousInfo.getFeatureIndexer(), 
 				previousInfo.getLabelIndexer(), 
@@ -559,12 +581,12 @@ public class Datasets {
 	 * Returns a dataset in which only instances with either a 
 	 * label or at least one annotation are retained. 
 	 */
-	public static Dataset removeUnlabeledUnannotatedData(Dataset data) {
+	public static Dataset removeDataWithoutAnnotationsOrObservedLabels(Dataset data) {
 		List<DatasetInstance> instances = Lists.newArrayList();
 
 		for (DatasetInstance inst: data){
 			// only keep instance with more than 0 annotations
-			if (inst.hasObservedLabel() || inst.getInfo().getNumAnnotations()>0){
+			if (inst.hasObservedLabel() || inst.hasAnnotations()){
 				instances.add(inst);
 			}
 		}
@@ -1026,8 +1048,8 @@ public class Datasets {
 		// dataset with the new instances and the new annotatorIdIndexer
 		return new BasicDataset(instances, 
 				new BasicDataset.Info(info.getSource(), 
-						info.getNumDocuments(), info.getNumDocumentsWithLabels(), info.getNumDocumentsWithObservedLabels(), 
-						info.getNumTokens(), info.getNumTokensWithLabels(), info.getNumTokensWithObservedLabels(), 
+						info.getNumDocuments(), info.getNumDocumentsWithAnnotations(), info.getNumDocumentsWithLabels(), info.getNumDocumentsWithObservedLabels(), 
+						info.getNumTokens(), info.getNumTokensWithAnnotations(), info.getNumTokensWithLabels(), info.getNumTokensWithObservedLabels(), 
 						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
 	}
 
@@ -1056,6 +1078,17 @@ public class Datasets {
 	    	  docSizes[inst.getIndex()] = Integers.fromDouble(inst.getElement().asFeatureVector().sum(), INT_CAST_THRESHOLD);
 	      }
 	      return docSizes;
+	}
+	
+	public static Dataset sortedBySource(Dataset data){
+    List<DatasetInstance> instances = Lists.newArrayList(data);
+    Collections.sort(instances, new Comparator<DatasetInstance>() {
+  		@Override
+  		public int compare(DatasetInstance o1, DatasetInstance o2) {
+  			return o1.getInfo().getSource().compareTo(o2.getInfo().getSource());
+  		}
+  	});
+    return new BasicDataset(instances, data.getInfo());
 	}
 	
 }

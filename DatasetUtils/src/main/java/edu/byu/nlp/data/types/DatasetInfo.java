@@ -8,16 +8,24 @@ public interface DatasetInfo {
 	
 	int getNumDocuments();
 
+	int getNumDocumentsWithAnnotations();
+
+	int getNumDocumentsWithoutAnnotations();
+
 	int getNumDocumentsWithLabels();
 
 	int getNumDocumentsWithoutLabels();
-
+	
 	int getNumDocumentsWithObservedLabels();
 
 	int getNumDocumentsWithoutObservedLabels();
 
 	int getNumTokens();
 
+	int getNumTokensWithAnnotations();
+
+	int getNumTokensWithoutAnnotations();
+	
 	int getNumTokensWithObservedLabels();
 
 	int getNumTokensWithoutObservedLabels();

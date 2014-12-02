@@ -29,6 +29,7 @@ import com.google.common.collect.Lists;
 
 /**
  * @author rah67
+ * @author plf1
  *
  */
 public class Counters {
@@ -60,21 +61,32 @@ public class Counters {
 	}
 	
 	/**
-	 * The V type MUST be a subclass of Number. I can't figure out the generics to make that work (pfelt).
+	 * Get the n entries with the largest value based on some comparator. 
+	 * Used by Counter's argMaxList method. 
 	 */
-  public static <E,V> List<E> argMaxList(Set<Entry<E, V>> entrySet, int topn, RandomGenerator rnd) {
+  public static <E,V extends Comparable<V>> List<E> argMaxList(Set<Entry<E, V>> entrySet, int topn, RandomGenerator rnd) {
     topn = (topn>0)? topn: entrySet.size();
     
+    
+    // TODO: The sorting hacks below were intended to simply ensure that 
+    // we matched previous implementations, but when they are removed 
+    // item/mom resp performance tanks. Something is going on! 
+    // (probably related to some indexer?)
     List<Entry<E, V>> entries = Lists.newArrayList(entrySet);
-    if (rnd!=null){
-      Collections.shuffle(entries, new Random(rnd.nextLong()));
-    }
+    Collections.sort(entries, new Comparator<Entry<E, V>>() {
+		@Override
+		public int compare(Entry<E, V> o1, Entry<E, V> o2) {
+			return ((Comparable<E>)o1.getKey()).compareTo(o2.getKey());
+		}
+	});
+    // FIXME: undo this and shuffle again
+//    if (rnd!=null){
+//      Collections.shuffle(entries, new Random(rnd.nextLong()));
+//    }
     Collections.sort(entries,new Comparator<Entry<E, V>>() {
-      @Override
+	@Override
       public int compare(Entry<E, V> o1, Entry<E, V> o2) {
-        double c1 = (o1==null)? 0: ((Number)o1.getValue()).doubleValue();
-        double c2 = (o2==null)? 0: ((Number)o2.getValue()).doubleValue();
-        return Double.compare(c2, c1); // descending order
+    	  return (o2.getValue()).compareTo(o1.getValue()); // descending order
       }
     });
     // pull out the top n values
