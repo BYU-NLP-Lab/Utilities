@@ -672,6 +672,17 @@ public class Datasets {
 		}
 		return annotations;
 	}
+	
+	public static Collection<String> wordsIn(final DatasetInstance inst, final Indexer<String> featureIndexer){
+		final List<String> words = Lists.newArrayList();
+		inst.asFeatureVector().visitSparseEntries(new EntryVisitor() {
+			@Override
+			public void visitEntry(int index, double value) {
+				words.add(featureIndexer.get(index));
+			}
+		});
+		return words;
+	}
 
 	/**
 	 * Extract an array of labels in the order specified by instanceIndices.
@@ -1090,5 +1101,6 @@ public class Datasets {
   	});
     return new BasicDataset(instances, data.getInfo());
 	}
+	
 	
 }

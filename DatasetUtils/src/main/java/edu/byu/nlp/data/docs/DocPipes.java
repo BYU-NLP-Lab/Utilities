@@ -102,12 +102,14 @@ public class DocPipes {
     labelIndex = labelIndex.retain(validLabels);
     int numFeatures = wordIndex.size();
 
-    // Create count vectors
-    Iterable<FlatInstance<SparseFeatureVector, String>> countVectors =
-    		Pipes.<List<String>,SparseFeatureVector,String>labeledInstanceDataTransformingPipe(
-    				new CountVectorizer<String>(wordIndex)).apply(src.getLabeledInstances());
 
     if (featureSelectorFactory != null) {
+    	// Index before feature selection (we'll need to do it again later after deciding which features to keep)
+    	// Create count vectors
+    	Iterable<FlatInstance<SparseFeatureVector, String>> countVectors =
+    			Pipes.<List<String>,SparseFeatureVector,String>labeledInstanceDataTransformingPipe(
+    					new CountVectorizer<String>(wordIndex)).apply(src.getLabeledInstances());
+
       // Feature selection
       BitSet features = featureSelectorFactory.newFeatureSelector(numFeatures).processLabeledInstances(countVectors);
       logger.info("Number of features before selection = " + numFeatures);
@@ -115,7 +117,6 @@ public class DocPipes {
       logger.info("Number of features after selection = " + wordIndex.size());
     }
 
-	// Re-index after feature selection (requires re-creating count vectors)
     LabeledInstancePipe<List<String>, String, SparseFeatureVector, Integer> vectorizer =
         new SerialLabeledInstancePipeBuilder<List<String>, String, List<String>, String>()
             .addLabelTransform(new FieldIndexer<String>(labelIndex))

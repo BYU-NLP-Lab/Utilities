@@ -18,6 +18,8 @@ package edu.byu.nlp.data.docs;
 import java.util.BitSet;
 import java.util.Comparator;
 
+import com.google.common.collect.Iterables;
+
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.pipes.DataSink;
 import edu.byu.nlp.data.pipes.Pipes;
@@ -57,9 +59,10 @@ public class TopNPerDocumentFeatureSelectorFactory<L> implements FeatureSelector
 		@Override
 		public BitSet processLabeledInstances(Iterable<FlatInstance<SparseFeatureVector, L>> docs) {
 			double[] logDf = new LogDocumentFrequency<L>(numFeatures).processLabeledInstances(docs);
+			int numDocuments = Iterables.size(docs); // is there somewhere more efficient to do this naturally? 
 			
 			Iterable<FlatInstance<SparseFeatureVector, L>> tfidfVectors = Pipes.<SparseFeatureVector, SparseFeatureVector, L>labeledInstanceDataTransformingPipe(
-					new CountsToTFIDF<String>(logDf)).apply(docs);
+					new CountsToTFIDF<String>(logDf, numDocuments)).apply(docs);
 //			Iterable<FlatInstance<BasicSparseFeatureVector, L>> tfidfVectors =
 //					Instances.<L, SparseFeatureVector, SparseFeatureVector>transformedLabeledInstance(docs,
 //							new CountsToTFIDF<String>(logDf));

@@ -16,6 +16,7 @@
 package edu.byu.nlp.data.docs;
 
 import com.google.common.base.Function;
+import com.google.common.primitives.Doubles;
 
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.SparseFeatureVectors;
@@ -28,17 +29,22 @@ import edu.byu.nlp.dataset.SparseFeatureVectors.ValueFunction;
 public class CountsToTFIDF<E> implements Function<SparseFeatureVector, SparseFeatureVector> {
 	
 	private final double[] logDf;
+	private double numDocuments;
 	
-	public CountsToTFIDF(double[] logDf) {
+	public CountsToTFIDF(double[] logDf, int numDocuments) {
 		this.logDf = logDf;
+		this.numDocuments = numDocuments;
 	}
 	
 	/** {@inheritDoc} */
 	@Override
 	public SparseFeatureVector apply(SparseFeatureVector features) {
+		final double logNumDocuments = Math.log(numDocuments);
 		return SparseFeatureVectors.transformValues(features, new ValueFunction() {
 			@Override public double apply(int index, double val) {
-				return val / logDf[index];
+				double logIdf = logNumDocuments - logDf[index];
+				assert Doubles.isFinite(val * logIdf);
+				return val  * logIdf;
 			}
 		});
 	}

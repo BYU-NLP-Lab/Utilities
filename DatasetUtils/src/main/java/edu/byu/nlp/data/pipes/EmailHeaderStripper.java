@@ -40,7 +40,8 @@ public class EmailHeaderStripper implements Function<String, String>, Serializab
 	  String subject = "";
 	  for (String line: header.split("\n")){
 	    if (SUBJECT_LINE_PATTERN.matcher(line).find()){
-	      subject = line;
+	      // strip the "subject" portion
+	      subject = line.replaceAll(SUBJECT_LINE_PATTERN.toString(), "");
 	    }
 	  }
 		
