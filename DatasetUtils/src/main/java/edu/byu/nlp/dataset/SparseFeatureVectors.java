@@ -15,8 +15,13 @@
  */
 package edu.byu.nlp.dataset;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
+
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
+import edu.byu.nlp.util.IntArrays;
 import edu.byu.nlp.util.Integers;
 
 /**
@@ -63,19 +68,18 @@ public class SparseFeatureVectors {
    * returned features is arbitrary.
    */
   public static int[] asSequentialIndices(SparseFeatureVector vec){
-    final int[] words = new int[Integers.fromDouble(vec.sum(), Datasets.INT_CAST_THRESHOLD)];
-    
+    final List<Integer> words = Lists.newArrayList();
     vec.visitSparseEntries(new EntryVisitor() {
       @Override
       public void visitEntry(int index, double value) {
         int numberOfOccurencesOfWord = Integers.fromDouble(value, Datasets.INT_CAST_THRESHOLD);
         for (int i=0; i<numberOfOccurencesOfWord; i++){
-          words[i++] = index;
+        	words.add(index);
         }
       }
     });
     
-    return words;
+    return IntArrays.fromList(words);
   }
 
 }
