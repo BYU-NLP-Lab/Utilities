@@ -20,6 +20,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
@@ -538,27 +539,6 @@ public class Datasets {
 				infoWithUpdatedCounts(instances, datasets[0].getInfo()));
 	}
 	
-
-	/**
-	 * Remove documents from the collection with duplicate sources. In all cases
-	 * keep only the first item.
-	 */
-	public static Dataset removeDuplicateSources(Dataset data) {
-		Set<String> docSources = Sets.newHashSet();
-
-		List<DatasetInstance> instances = Lists.newArrayList();
-		for (DatasetInstance inst: data){
-			if (docSources.contains(inst.getInfo().getSource())){
-				logger.warning("Repeated data item " + inst.getInfo().getSource());
-			}
-			else{
-				instances.add(inst);
-				docSources.add(inst.getInfo().getSource());
-			}
-		}
-		
-		return new BasicDataset(instances, infoWithUpdatedCounts(instances, data.getInfo()));
-	}
 
 
 	/**
@@ -1101,6 +1081,48 @@ public class Datasets {
   	});
     return new BasicDataset(instances, data.getInfo());
 	}
+
+	public static Dataset filteredDataset(Dataset data, Predicate<DatasetInstance> predicate) {
+		Iterable<DatasetInstance> filteredInstances = Lists.newArrayList(Iterables.filter(data, predicate));
+		return new BasicDataset(filteredInstances, infoWithUpdatedCounts(filteredInstances, data.getInfo()));
+	}
+
 	
+	public static Predicate<DatasetInstance> filterNonEmpty(){
+		return new Predicate<DatasetInstance>() {
+			@Override
+			public boolean apply(DatasetInstance inst) {
+				if (inst.asFeatureVector().sum()==0){
+					logger.warning("Filtering empty document: " + inst.getInfo().getSource());
+					return false;
+				}
+				else{
+					return true;
+				}
+			}
+		};
+	}
 	
+
+	/**
+	 * This predicate removes documents from the collection with duplicate sources. In all cases
+	 * keep only the first item.
+	 */
+	public static Predicate<DatasetInstance> filterDuplicateSources(){
+		return new Predicate<DatasetInstance>() {
+			Set<String> docSources = Sets.newHashSet();
+			@Override
+			public boolean apply(DatasetInstance inst) {
+				if (docSources.contains(inst.getInfo().getSource())){
+					logger.warning("Filtering repeated data item " + inst.getInfo().getSource());
+					return false;
+				}
+				else{
+					docSources.add(inst.getInfo().getSource());
+					return true;
+				}
+			}
+		};
+	}
+
 }
