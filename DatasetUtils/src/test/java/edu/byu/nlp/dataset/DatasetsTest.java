@@ -59,7 +59,7 @@ public class DatasetsTest {
 	public void testSplitbyPercentException(){
 		Dataset dataset = DatasetsTestUtil.mockDataset();
 		try{
-			Datasets.split(dataset, new double[]{.1,.1,.2});
+			Datasets.split(dataset, new double[]{10,10,20});
 			Fail.fail("should have failed");
 		}
 		catch (Exception e){
@@ -71,7 +71,7 @@ public class DatasetsTest {
 	public void testSplitbyPercent(){
 		Dataset dataset = DatasetsTestUtil.mockDataset();
 		
-		List<Dataset> splits = Datasets.split(dataset, new double[]{.5,.5});
+		List<Dataset> splits = Datasets.split(dataset, new double[]{50,50});
 		Assertions.assertThat(splits.size()).isEqualTo(2);
 		
 		Dataset ds1 = splits.get(0);

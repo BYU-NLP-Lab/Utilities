@@ -261,17 +261,17 @@ public class Datasets {
 	/**
 	 * Split by percents
 	 * 
-	 * sum(splitPercents) must be 1
+	 * sum(splitPercents) must be 100
 	 */
 	public static List<Dataset> split(Dataset dataset, double[] splitPercents){
-		Preconditions.checkArgument(Doubles.equals(DoubleArrays.sum(splitPercents),1.0,1e-6),
-				"splitPercents must sum to 1");
+		Preconditions.checkArgument(Doubles.equals(DoubleArrays.sum(splitPercents),100.0,1e-6),
+				"splitPercents must sum to 100");
 		
 		int numDocs = dataset.getInfo().getNumDocuments();
 		int[] sizes = new int[splitPercents.length];
 		for (int i=0; i<splitPercents.length; i++){
 			// intentional trucating cast (math.floor)
-			sizes[i] = (int) (splitPercents[i] * numDocs);
+			sizes[i] = (int) (splitPercents[i] * numDocs / 100.);
 		}
 		
 		// make up the difference between the numdocs and sum(sizes)
