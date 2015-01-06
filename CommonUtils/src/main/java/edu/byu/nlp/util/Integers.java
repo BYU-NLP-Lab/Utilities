@@ -17,5 +17,20 @@ public class Integers {
 		Preconditions.checkState((int)lng == lng); 
 		return (int)lng;
 	}
+	
+	public static class MutableInteger{
+		private Integer val = null;
+		public static MutableInteger from(Integer val){
+			MutableInteger mint = new MutableInteger();
+			mint.setValue(val);
+			return mint;
+		}
+		public void setValue(Integer val){
+			this.val=val;
+		}
+		public Integer getValue(){
+			return this.val;
+		}
+	}
 
 }
