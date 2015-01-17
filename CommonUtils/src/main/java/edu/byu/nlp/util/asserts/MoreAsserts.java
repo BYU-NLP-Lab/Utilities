@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.byu.nlp;
+package edu.byu.nlp.util.asserts;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.apache.commons.math3.linear.SparseRealMatrix;
 import org.fest.assertions.Assertions;
+import org.fest.assertions.Fail;
 import org.junit.Assert;
 
 import com.google.common.base.Preconditions;
@@ -28,6 +29,7 @@ import com.google.common.collect.Lists;
 
 /**
  * @author rah67
+ * @author plf1
  *
  */
 public class MoreAsserts {
@@ -94,4 +96,22 @@ public class MoreAsserts {
 			}
 		}
 	}
+	
+	public static void assertFails(Runnable runnable, Class<? extends Exception> expectedException){
+		try{
+			runnable.run();
+		}
+		catch(Exception e){
+			
+			if (!expectedException.isInstance(e)){
+				Fail.fail("Threw the wrong kind of exception: "+e.getClass().getName()+" instead of the expected "+expectedException.getName(), e);
+			}
+		
+			return; // good failure
+		}
+		
+		Fail.fail("should have thrown a "+expectedException.getName()+" exception but did not!");
+		
+	}
+	
 }

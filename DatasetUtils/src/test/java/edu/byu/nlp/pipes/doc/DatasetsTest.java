@@ -33,6 +33,7 @@ import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.util.JsonDatasetMocker;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.dataset.DatasetsTestUtil;
 import edu.byu.nlp.util.DoubleArrays;
@@ -47,21 +48,21 @@ public class DatasetsTest {
   public static String jsonInstances(long seed){ 
     List<String> jsonInstances = Lists.newArrayList(
         // "1" has 2 annotations + label
-      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":0, \"label\":\"0\",                           \"source\":1,     \"startTime\":0 }", // labeled 
+      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":0, \"label\":\"0\", \"labelObserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
       "{\"batch\": 1, \"data\":\"ABC\", \"endTime\":1, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
       "{\"batch\": 2, \"data\":\"ABC\", \"endTime\":2, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
       "{\"batch\": 3, \"data\":\"ABC\", \"endTime\":3,                                            \"source\":1,     \"startTime\":0 }", // bare ref to the same doc
       
       // "2" has 2 annotations + label
-      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":4, \"label\":\"1\",                           \"source\":\"2\", \"startTime\":0 }", // labeled
+      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":4, \"label\":\"1\", \"labelObserved\":true,   \"source\":\"2\", \"startTime\":0 }", // labeled
       "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":5, \"annotation\":\"1\", \"annotator\":\"C\", \"source\":\"2\", \"startTime\":0 }", // annotation
       "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":6, \"annotation\":\"0\", \"annotator\":\"C\", \"source\":\"2\", \"startTime\":0 }", // annotation
 
       // "3" has label
-      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":7, \"label\":\"0\",                           \"source\":3,     \"startTime\":0 }", // labeled
+      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":7, \"label\":\"0\", \"labelObserved\":true,   \"source\":3,     \"startTime\":0 }", // labeled
 
       // "4" has 2 annotations + label
-      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":8, \"label\":\"1\",                           \"source\":4,     \"startTime\":0 }", // labeled
+      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":8, \"label\":\"1\", \"labelObserved\":true,   \"source\":4,     \"startTime\":0 }", // labeled
       "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":9, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation
       "{\"batch\": 3, \"data\":\"DEF\", \"endTime\":10, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation to same doc
       
@@ -121,7 +122,7 @@ public class DatasetsTest {
    */
   @Test
   public void testBuildDataset() throws FileNotFoundException {
-    Dataset dataset = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
     Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(4);
     Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
@@ -140,6 +141,7 @@ public class DatasetsTest {
           (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
           (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==2) 
           ).isTrue();
+      Assertions.assertThat(dataset.getInfo().getNullLabel() == dataset.getInfo().getLabelIndexer().indexOf(null));
       Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       Assertions.assertThat(inst.hasObservedLabel()).isTrue();
       Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
@@ -157,7 +159,7 @@ public class DatasetsTest {
           ).isTrue();
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
-      Assertions.assertThat(inst.getObservedLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(inst.hasObservedLabel()).isFalse(); 
       
     }
     
@@ -166,7 +168,7 @@ public class DatasetsTest {
   @Test
   public void testHideLabelsByClass1() throws FileNotFoundException{
     int numObservedLabelsPerClass = 1;
-    Dataset data = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
     
     Dataset labeledData = Datasets.divideInstancesWithObservedLabels(data).getFirst();
@@ -184,7 +186,7 @@ public class DatasetsTest {
   @Test
   public void testHideLabelsByClass2() throws FileNotFoundException{
     int numObservedLabelsPerClass = 2;
-    Dataset data = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
 
     // 4 trusted labels (2 per class) will remain unhidden
@@ -196,7 +198,7 @@ public class DatasetsTest {
   @Test
   public void testToFeatureArrayVsToSparseFeatureArray() throws FileNotFoundException{
 	// run this test on a variety of test datasets
-    Dataset data1 = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Dataset data1 = JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     Dataset data2 = DatasetsTestUtil.mockDataset();
     
     for (Dataset data: new Dataset[]{data1,data2}){
@@ -218,7 +220,7 @@ public class DatasetsTest {
   
   @Test
   public void testToFeatureArray() throws FileNotFoundException{
-    Dataset data = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     for (DatasetInstance inst: data){
       Assertions.assertThat(
             (inst.getInfo().getSource().equals("1") && DoubleArrays.equals(
@@ -254,9 +256,9 @@ public class DatasetsTest {
   @Test
   public void testAddAnnotation() throws FileNotFoundException{
 	// base dataset
-    Dataset dataset = JSONDocumentTest.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
+    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances(System.currentTimeMillis()));
     // annotations
-    List<FlatInstance<SparseFeatureVector, Integer>> annotations = Datasets.annotationsIn(JSONDocumentTest.buildTestDatasetFromJson(jsonInstances2(System.currentTimeMillis())));
+    List<FlatInstance<SparseFeatureVector, Integer>> annotations = Datasets.annotationsIn(JsonDatasetMocker.buildTestDatasetFromJson(jsonInstances2(System.currentTimeMillis())));
     // add them
     Datasets.addAnnotationsToDataset(dataset, annotations);
     
@@ -296,7 +298,7 @@ public class DatasetsTest {
           ).isTrue();;
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
-      Assertions.assertThat(inst.getObservedLabel()).isEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+      Assertions.assertThat(!inst.hasObservedLabel());
       
     }
   }

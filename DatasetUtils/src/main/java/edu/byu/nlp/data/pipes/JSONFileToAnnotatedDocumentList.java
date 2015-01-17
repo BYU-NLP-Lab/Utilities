@@ -86,7 +86,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	private static class JSONAnnotation {
 		private String annotator, label, data, source, annotation, datapath;
 		private long startTime, endTime;
-		private boolean labelobserved;
+		private boolean labelObserved;
 
 		@Override
 		public String toString() {
@@ -140,7 +140,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 							+ inst.label + " and " + ann.label + ") Choosing " + ann.label + " arbitrarily");
 				}
 				inst.label = ann.label;
-				inst.labelobserved = ann.labelobserved;
+				inst.labelobserved = ann.labelObserved;
 			}
 		}
 

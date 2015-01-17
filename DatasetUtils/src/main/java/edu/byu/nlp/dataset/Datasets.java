@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
+import org.apache.commons.math3.linear.SparseRealMatrix;
+import org.apache.commons.math3.linear.SparseRealVector;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.base.Charsets;
@@ -397,7 +399,7 @@ public class Datasets {
 		// build dataset
 		List<DatasetInstance> instances = Lists.newArrayList();
 		for (long instanceIndex: instanceIndices){
-			Preconditions.checkState(featureMap.containsKey(instanceIndex),"one instance had no associated data: "+instanceIndex);
+			Preconditions.checkState(featureMap.containsKey(instanceIndex),"one instance had no associated data: "+sourceMap.get(instanceIndex)+" (index="+instanceIndex+")");
 			
 			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
@@ -849,7 +851,10 @@ public class Datasets {
 		});
 		return annotations;
 	}
-	
+
+	public static AnnotationSet emptyAnnotationSet(){
+		return new BasicAnnotationSet(0, 0, null);
+	}
 	public static Dataset emptyDataset(DatasetInfo info){
 		return new BasicDataset( // full labeled data
 				Lists.<DatasetInstance>newArrayList(), 

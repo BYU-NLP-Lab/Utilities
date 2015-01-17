@@ -167,10 +167,9 @@ private String jsonReferencedDataDir;
     
 //    // first null label marks the beginning of "unlabeled" data
 //    // this arrangement is enforced by JSONFileToAnnotatedDocumentList
-//    int nullLabel = dataset.getInfo().getLabelIndexer().indexOf(null);
 //    int firstNullLabel=0;
 //    for (DatasetInstance dat: dataset){
-//      if (dat.getLabel()==nullLabel){
+//      if (!dat.hasObservedLabel()){
 //        break;
 //      }
 //      firstNullLabel++;

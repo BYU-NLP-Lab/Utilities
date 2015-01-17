@@ -26,15 +26,34 @@ public class BasicDataset implements Dataset {
 		this.instances = Lists.newArrayList(other);
 		this.info = other.getInfo();
 	}
+	
+	/**
+	 * This is the constructor you should use if you are creating a Dataset from scratch
+	 * (rather than transforming an existing dataset). 
+	 * Creates a dataset with info calculated from instances.
+	 */
+	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
+		Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
+		this(instances, Datasets.infoWithCalculatedCounts(instances, source, annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer));
+	}
 
+	/**
+	 * Creates a dataset with an info from provided stats. This method trusts that you got it right, 
+	 * and does not double-check your work.
+	 */
 	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
 			int numDocuments, int numDocumentsWithAnnotations, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
-		int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels, Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
+		int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels, 
+		Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
 		this(instances, new Info(source, 
 				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels, 
 				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels, annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer));
 	}
 	
+	/**
+	 * Creates a dataset with the given info. Trusts that the stats in the info 
+	 * are correct, and does not double-check your work.
+	 */
 	public BasicDataset(Iterable<DatasetInstance> instances, DatasetInfo info){
 		this.instances = Lists.newArrayList(instances);
 		this.info=info;

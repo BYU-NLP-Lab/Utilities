@@ -6,7 +6,7 @@ import org.fest.assertions.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.byu.nlp.MoreAsserts;
+import edu.byu.nlp.util.asserts.MoreAsserts;
 
 public class SparseRealMatricesTests {
 

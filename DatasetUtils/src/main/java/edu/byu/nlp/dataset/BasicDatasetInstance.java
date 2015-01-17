@@ -27,6 +27,12 @@ public class BasicDatasetInstance implements DatasetInstance {
 
 	private DatasetInstanceInfo info;
 
+	/**
+	 * Create a simple instance with an observed label and no annotations or regressand
+	 */
+	public BasicDatasetInstance(SparseFeatureVector vector, Integer label, long instanceId, String source, Indexer<String> labelIndexer){
+		this(vector, label, false, null, false, Datasets.emptyAnnotationSet(), instanceId, source, labelIndexer);
+	}
 	
 	public BasicDatasetInstance(SparseFeatureVector vector,  
 			Integer label, boolean isLabelConcealed, Double regressand, boolean isRegressandConcealed, 

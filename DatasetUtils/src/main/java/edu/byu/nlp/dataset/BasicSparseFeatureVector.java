@@ -17,15 +17,18 @@ package edu.byu.nlp.dataset;
 
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.math3.linear.OpenMapRealVector;
 import org.apache.commons.math3.linear.SparseRealVector;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Lists;
 
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.SparseFeatureVectors.ValueFunction;
+import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.IntArrays;
 
 /**
@@ -99,6 +102,23 @@ public class BasicSparseFeatureVector implements SparseFeatureVector {
 	private final int[] indices;
 	private final double[] values;
 
+	public static BasicSparseFeatureVector fromDenseFeatureVector(double[] denseVector){
+		List<Integer> indices = Lists.newArrayList();
+		List<Double> values = Lists.newArrayList();
+		for (int i=0; i<denseVector.length; i++){
+			if (denseVector[i]!=0){
+				indices.add(i);
+				values.add(denseVector[i]);
+			}
+		}
+		// preserve length info by adding the extreme index with value 0 (if necessary)
+		if (!indices.contains(denseVector.length-1)){
+			indices.add(denseVector.length-1);
+			values.add(0.0);
+		}
+		return new BasicSparseFeatureVector(IntArrays.fromList(indices), DoubleArrays.fromList(values));
+	}
+	
 	public BasicSparseFeatureVector(int[] indices, double[] values) {
 		Preconditions.checkNotNull(indices);
 		Preconditions.checkNotNull(values);

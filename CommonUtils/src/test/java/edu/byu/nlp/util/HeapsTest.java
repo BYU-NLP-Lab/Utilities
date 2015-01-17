@@ -27,7 +27,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.MoreAsserts;
+import edu.byu.nlp.util.asserts.MoreAsserts;
 
 /**
  * @author rah67

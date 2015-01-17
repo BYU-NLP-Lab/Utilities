@@ -7,8 +7,8 @@
   </parent>
   <artifactId>commons</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>BYU NLP Common Math</name>
-  <description>Math utilities that don't seem to be available via libraries</description>
+  <name>BYU NLP Common Utilities</name>
+  <description>Math and other utilities that don't seem to be available via libraries</description>
   <dependencies>
   	<dependency>
   		<groupId>org.apache.commons</groupId>
@@ -46,16 +46,5 @@
   		<version>2.0</version>
   	</dependency>
   </dependencies>
-    <build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+  
 </project>

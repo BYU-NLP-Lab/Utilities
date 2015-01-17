@@ -7,7 +7,7 @@
   </parent>
   <artifactId>dataset-utils</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>Dataset Utilities</name>
+  <name>BYU NLP Dataset Utilities</name>
   <description>This repository provides a java representation of data instances along with
 their associated labels, continuous metadata values, and annotation values. 
 Also routines for IO from common document corpus formats.</description>
@@ -63,16 +63,4 @@ Also routines for IO from common document corpus formats.</description>
   		<version>1.10.8</version>
   	</dependency>
   </dependencies>
-  <build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>

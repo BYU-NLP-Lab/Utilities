@@ -5,9 +5,7 @@ package edu.byu.nlp.data.types;
 public interface DatasetInstance {
 
 	/**
-	 * Get the features associated with this instance 
-	 * as a single vector. This representation is 
-	 * usually suitable for classification or clustering.
+	 * Get the feature vector associated with this instance. 
 	 */
 	SparseFeatureVector asFeatureVector();
 	
