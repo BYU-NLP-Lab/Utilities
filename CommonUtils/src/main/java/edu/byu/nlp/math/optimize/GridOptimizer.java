@@ -39,6 +39,7 @@ public class GridOptimizer extends MultivariateOptimizer{
 
 	@Override
 	protected PointValuePair doOptimize() {
+		incrementEvaluationCount();
 		
 		PointValuePair best = new PointValuePair(null, worstValue(goal));
 		
