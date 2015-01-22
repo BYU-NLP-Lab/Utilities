@@ -15,8 +15,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
-import org.apache.commons.math3.linear.SparseRealMatrix;
-import org.apache.commons.math3.linear.SparseRealVector;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.base.Charsets;
