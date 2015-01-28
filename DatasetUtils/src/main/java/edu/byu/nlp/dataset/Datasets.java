@@ -12,10 +12,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 import org.apache.commons.math3.random.RandomGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -54,7 +55,7 @@ import edu.byu.nlp.util.Pair;
 import edu.byu.nlp.util.TableCounter;
 
 public class Datasets {
-	private static final Logger logger = Logger.getLogger(Datasets.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(Datasets.class);
 
 	// distance from a double to the nearest integer to cast to int without failing?
 	public static final double INT_CAST_THRESHOLD = 1e-10;
@@ -376,7 +377,7 @@ public class Datasets {
 					labelMap.put(instanceId, inst.getLabel());
 				}
 				else{
-					logger.warning("untrusted label by labeler "+labelerId+" is being ignored");
+					logger.warn("untrusted label by labeler "+labelerId+" is being ignored");
 				}
 				
 				if (labelerId == Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR){
@@ -985,7 +986,7 @@ public class Datasets {
 			}
 			// found nothing that will contribute (impossible goal given data)
 			if (candidates.size() == 0) {
-				logger.warning("Unable to find "
+				logger.warn("Unable to find "
 						+ numObservedLabelsPerClass
 						+ " labeled instances for each class. Stopping early\n\t"
 						+ classCounts);
@@ -1096,7 +1097,7 @@ public class Datasets {
 			@Override
 			public boolean apply(DatasetInstance inst) {
 				if (inst.asFeatureVector().sum()==0){
-					logger.warning("Filtering empty document: " + inst.getInfo().getSource());
+					logger.warn("Filtering empty document: " + inst.getInfo().getSource());
 					return false;
 				}
 				else{
@@ -1117,7 +1118,7 @@ public class Datasets {
 			@Override
 			public boolean apply(DatasetInstance inst) {
 				if (docSources.contains(inst.getInfo().getSource())){
-					logger.warning("Filtering repeated data item " + inst.getInfo().getSource());
+					logger.warn("Filtering repeated data item " + inst.getInfo().getSource());
 					return false;
 				}
 				else{

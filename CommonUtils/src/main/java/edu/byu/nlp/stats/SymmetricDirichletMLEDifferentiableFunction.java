@@ -15,8 +15,6 @@
  */
 package edu.byu.nlp.stats;
 
-import java.util.logging.Logger;
-
 import org.apache.commons.math3.analysis.DifferentiableMultivariateFunction;
 import org.apache.commons.math3.analysis.DifferentiableMultivariateVectorFunction;
 import org.apache.commons.math3.analysis.MultivariateFunction;
@@ -31,7 +29,7 @@ import com.google.common.base.Preconditions;
  */
 public class SymmetricDirichletMLEDifferentiableFunction implements DifferentiableMultivariateFunction {
 
-	private static final Logger logger = Logger.getLogger(SymmetricDirichletMLEDifferentiableFunction.class.getName());
+//	private static final Logger logger = LoggerFactory.getLogger(SymmetricDirichletMLEDifferentiableFunction.class);
 	
 	private final SymmetricDirichletOptimizationHelper helper;
 

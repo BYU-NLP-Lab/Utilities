@@ -5,10 +5,11 @@ package edu.byu.nlp.data.pipes;
 
 import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.logging.Logger;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -27,7 +28,7 @@ import edu.byu.nlp.io.Paths;
  */
 public class IndexFileToLabeledFileList implements OneToManyLabeledInstanceFunction<String, String, String> {
 
-	private static Logger logger = Logger.getLogger(IndexFileToLabeledFileList.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(IndexFileToLabeledFileList.class);
 
 	private final FileObject basedir;
 	private final Charset charset;

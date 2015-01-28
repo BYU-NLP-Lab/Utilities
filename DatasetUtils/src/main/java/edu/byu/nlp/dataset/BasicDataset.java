@@ -3,9 +3,10 @@ package edu.byu.nlp.dataset;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.random.RandomGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -17,7 +18,7 @@ import edu.byu.nlp.util.Collections3;
 import edu.byu.nlp.util.Indexer;
 
 public class BasicDataset implements Dataset {
-	private static final Logger logger = Logger.getLogger(BasicDataset.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(BasicDataset.class);
 
 	private List<DatasetInstance> instances;
 	private DatasetInfo info;

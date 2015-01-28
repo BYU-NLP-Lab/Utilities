@@ -17,10 +17,11 @@ import java.io.FileNotFoundException;
 import java.io.Reader;
 import java.util.BitSet;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.vfs2.FileObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.pipes.DataSource;
@@ -28,11 +29,11 @@ import edu.byu.nlp.data.pipes.DataSources;
 import edu.byu.nlp.data.pipes.FieldIndexer;
 import edu.byu.nlp.data.pipes.FilenameToContents;
 import edu.byu.nlp.data.pipes.IndexFileToLabeledFileList;
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.pipes.JSONFileToAnnotatedDocumentList;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.pipes.Pipes;
 import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
@@ -48,7 +49,7 @@ import edu.byu.nlp.util.Nullable;
  * 
  */
 public class DocPipes {
-  private static Logger logger = Logger.getLogger(DocPipes.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(DocPipes.class);
   
   private DocPipes() {}
 

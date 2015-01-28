@@ -1,7 +1,5 @@
 package edu.byu.nlp.math;
 
-import java.util.logging.Logger;
-
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -9,6 +7,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealMatrixChangingVisitor;
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.SparseRealMatrix;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -18,7 +18,7 @@ import edu.byu.nlp.util.Integers;
 
 public class SparseRealMatrices {
 
-	private static final Logger logger = Logger.getLogger(SparseRealMatrices.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(SparseRealMatrices.class);
 	
 	private SparseRealMatrices(){}
 	
@@ -125,7 +125,7 @@ public class SparseRealMatrices {
 					dest.setEntry(row, column, value);
 				}
 				else{
-					logger.warning("matrix entry out of bounds while copying. Losing entry ["+row+","+column+"]");
+					logger.warn("matrix entry out of bounds while copying. Losing entry ["+row+","+column+"]");
 				}
 			}
 		});

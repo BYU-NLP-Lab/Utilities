@@ -1,6 +1,7 @@
 package edu.byu.nlp.dataset;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.DatasetInstance;
@@ -13,7 +14,7 @@ import edu.byu.nlp.util.Integers;
 
 public class BasicDatasetInstance implements DatasetInstance {
 
-	private static final Logger logger = Logger.getLogger(BasicDatasetInstance.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(BasicDatasetInstance.class);
 	  
 	private SparseFeatureVector featureVector;
 

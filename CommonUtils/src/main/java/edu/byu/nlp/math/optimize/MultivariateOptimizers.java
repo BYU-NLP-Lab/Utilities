@@ -3,7 +3,6 @@ package edu.byu.nlp.math.optimize;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.optim.InitialGuess;
@@ -14,6 +13,8 @@ import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.byu.nlp.util.DoubleArrays;
 
@@ -25,7 +26,7 @@ import edu.byu.nlp.util.DoubleArrays;
  *
  */
 public class MultivariateOptimizers {
-    private static final Logger logger = Logger.getLogger(MultivariateOptimizers.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(MultivariateOptimizers.class);
 	
 	public static enum OptimizationMethod {NONE,GRID,BOBYQA};
 

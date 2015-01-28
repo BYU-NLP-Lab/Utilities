@@ -5,9 +5,10 @@ package edu.byu.nlp.data.pipes;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.logging.Logger;
 
 import org.apache.commons.vfs2.FileObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -19,7 +20,7 @@ import edu.byu.nlp.io.Files2;
 
 public class FilenameToContents implements Function<FlatInstance<String,String>, FlatInstance<String,String>> {
 
-	public static Logger logger = Logger.getLogger(FilenameToContents.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(FilenameToContents.class);
 	
 	private final FileObject basedir;
 	private final Charset charset;
@@ -38,7 +39,7 @@ public class FilenameToContents implements Function<FlatInstance<String,String>,
 	public FlatInstance<String, String> apply(FlatInstance<String, String> label) {
 		try {
 			String filename = label.getData(); 
-			logger.fine("Processing " + filename);
+			logger.debug("Processing " + filename);
 			FileObject file = basedir.resolveFile(filename);
 			return new FlatLabeledInstance<String,String>(
 					AnnotationInterfaceJavaUtils.<String,String>newLabeledInstance(

@@ -2,7 +2,6 @@ package edu.byu.nlp.math.optimize;
 
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.optim.InitialGuess;
@@ -11,6 +10,8 @@ import org.apache.commons.math3.optim.PointValuePair;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -26,7 +27,7 @@ import edu.byu.nlp.util.DoubleArrays;
  * for-loops, or "grid"). 
  */
 public class GridOptimizer extends MultivariateOptimizer{
-	private static final Logger logger = Logger.getLogger(GridOptimizer.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(GridOptimizer.class);
 
 	private MultivariateFunction function;
 	private GoalType goal;

@@ -19,11 +19,12 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.vfs2.FileSystemException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -46,7 +47,7 @@ import edu.byu.nlp.util.jargparser.annotations.Option;
  */
 public class DataExporter {
 
-	private static Logger logger = Logger.getLogger(DataExporter.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(DataExporter.class);
 	
 	// TODO : share options with ClustererEvaluator
 	@Option(help="base directory of the documents")

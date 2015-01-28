@@ -15,14 +15,14 @@
  */
 package edu.byu.nlp.math.optimize;
 
-import java.util.logging.Logger;
-
 import org.apache.commons.math3.analysis.DifferentiableUnivariateFunction;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.optimization.ConvergenceChecker;
 import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.univariate.BaseUnivariateOptimizer;
 import org.apache.commons.math3.optimization.univariate.UnivariatePointValuePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -32,7 +32,7 @@ import com.google.common.base.Preconditions;
  */
 public class UnivariateNewtonRaphson implements BaseUnivariateOptimizer<DifferentiableUnivariateFunction> {
 
-	private static final Logger logger = Logger.getLogger(UnivariateNewtonRaphson.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(UnivariateNewtonRaphson.class);
 	
 	private final ConvergenceChecker<UnivariatePointValuePair> convergenceChecker;
 	private final int maxEvaluations;

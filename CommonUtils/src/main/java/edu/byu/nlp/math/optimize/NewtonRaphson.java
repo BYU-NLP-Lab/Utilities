@@ -15,8 +15,6 @@
  */
 package edu.byu.nlp.math.optimize;
 
-import java.util.logging.Logger;
-
 import org.apache.commons.math3.analysis.DifferentiableMultivariateFunction;
 import org.apache.commons.math3.analysis.DifferentiableMultivariateVectorFunction;
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
@@ -26,6 +24,8 @@ import org.apache.commons.math3.optimization.ConvergenceChecker;
 import org.apache.commons.math3.optimization.DifferentiableMultivariateOptimizer;
 import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.PointValuePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -37,7 +37,7 @@ import edu.byu.nlp.util.DoubleArrays;
  */
 public class NewtonRaphson implements DifferentiableMultivariateOptimizer {
 
-	private static final Logger logger = Logger.getLogger(NewtonRaphson.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(NewtonRaphson.class);
 	
 	private final ConvergenceChecker<PointValuePair> convergenceChecker;
 	private final int maxEvaluations;

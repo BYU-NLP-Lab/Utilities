@@ -16,17 +16,19 @@
 package edu.byu.nlp.util;
 
 import java.util.Arrays;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Maintain integer counts over an array of positions
  */
 public class IntArrayCounter {
-  private static final Logger logger = Logger.getLogger(IntArrayCounter.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(IntArrayCounter.class);
   
-// assignment counts
-Counter<Integer>[] counts;
-private int numCategories;
+  // assignment counts
+  Counter<Integer>[] counts;
+  private int numCategories;
 
   public IntArrayCounter(int size, int numCategories) {
     this.numCategories = numCategories;
@@ -73,7 +75,7 @@ private int numCategories;
   
   public int argmax(int i) {
     if (counts[i]==null || counts[i].totalCount()==0){
-      logger.warning("Asked for argmax of empty counts. Returning -1.");
+      logger.warn("Asked for argmax of empty counts. Returning -1.");
       return -1;
     }
     return counts[i].argMax();

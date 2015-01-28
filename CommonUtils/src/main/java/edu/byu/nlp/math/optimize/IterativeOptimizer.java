@@ -15,7 +15,9 @@
  */
 package edu.byu.nlp.math.optimize;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * @author rah67
@@ -23,7 +25,7 @@ import java.util.logging.Logger;
  */
 public class IterativeOptimizer {
 
-	static final Logger logger = Logger.getLogger(IterativeOptimizer.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(IterativeOptimizer.class);
 	
 	public static interface Optimizable<T> {
 		// TODO : add facilities to lazily compute the value so that we can skip computation
@@ -62,7 +64,7 @@ public class IterativeOptimizer {
 
 			// Ensure that the value is strictly non-decreasing, if necessary
 			if (strictlyIncreasing && prevVal > curValueAndObject.getValue()) {
-				logger.warning(String.format("On iteration %d, the value decreased from %f to %f",
+				logger.warn(String.format("On iteration %d, the value decreased from %f to %f",
 						it, prevVal, curValueAndObject.getValue()));
 			}
 		} while (!convergenceChecker.isConverged(it++, prevVal, curValueAndObject.getValue()));

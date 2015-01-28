@@ -15,9 +15,9 @@
  */
 package edu.byu.nlp.stats;
 
-import java.util.logging.Logger;
-
 import org.apache.commons.math3.special.Gamma;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -28,7 +28,7 @@ import edu.byu.nlp.util.DoubleArrays;
  */
 public class SymmetricDirichletOptimizationHelper {
 
-	private static final Logger logger = Logger.getLogger(SymmetricDirichletOptimizationHelper.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(SymmetricDirichletOptimizationHelper.class);
 	
 	private final int K;
 	private final int N;
@@ -66,21 +66,21 @@ public class SymmetricDirichletOptimizationHelper {
 	public double valueAt(double alpha) {
 		Preconditions.checkArgument(alpha > 0.0, "alpha must be strictly greater than zero; was %s", alpha);
 		double value = N * (Gamma.logGamma(K * alpha) - K * Gamma.logGamma(alpha)) + (alpha - 1) * sumOfLogThetas; 
-		logger.fine(String.format("valueAt(%f) = %f", alpha, value));
+		logger.debug(String.format("valueAt(%f) = %f", alpha, value));
 		return value;
 	}
 	
 	public double firstDerivativeAt(double alpha) {
 		Preconditions.checkArgument(alpha > 0.0, "alpha must be strictly greater than zero; was %s", alpha);
 		double derivative = N * K * (Gamma.digamma(K * alpha) - Gamma.digamma(alpha)) + sumOfLogThetas;
-		logger.fine(String.format("derivativeAt(%f) = %f", alpha, derivative));
+		logger.debug(String.format("derivativeAt(%f) = %f", alpha, derivative));
 		return derivative;
 	}
 	
 	public double secondDerivativeAt(double alpha) {
 		Preconditions.checkArgument(alpha > 0.0, "alpha must be strictly greater than zero; was %s", alpha);
 		double secondDerivative = N * K * (K * Gamma.trigamma(K * alpha) - Gamma.trigamma(alpha));
-		logger.fine(String.format("secondDerivativeAt(%f) = %f", alpha, secondDerivative));
+		logger.debug(String.format("secondDerivativeAt(%f) = %f", alpha, secondDerivative));
 		return secondDerivative;
 	}
 	

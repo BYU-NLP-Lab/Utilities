@@ -17,9 +17,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.random.RandomGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -58,7 +59,7 @@ import edu.byu.nlp.util.Strings;
  */
 public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstanceFunction<String, String, String> {
 
-	private static Logger logger = Logger.getLogger(JSONFileToAnnotatedDocumentList.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(JSONFileToAnnotatedDocumentList.class);
 
 	private Reader jsonReader;
 	private RandomGenerator rnd;
@@ -136,7 +137,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 			// instance (with optional gold label)
 			if (ann.label != null) {
 				if (inst.label != null && !inst.label.equals(ann.label)) {
-					logger.warning("Multiple differing labels have been specified for the same data instance. ("
+					logger.warn("Multiple differing labels have been specified for the same data instance. ("
 							+ inst.label + " and " + ann.label + ") Choosing " + ann.label + " arbitrarily");
 				}
 				inst.label = ann.label;
