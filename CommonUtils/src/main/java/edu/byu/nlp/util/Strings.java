@@ -39,8 +39,7 @@ public class Strings {
      * @return
      * @throws IOException
      */
-    public static <T extends Appendable> T join(Iterable<? extends CharSequence> src, CharSequence pattern, T dst) throws IOException {
-        Iterator<? extends CharSequence> it = src.iterator();
+    public static <T extends Appendable> T join(Iterator<? extends CharSequence> it, CharSequence pattern, T dst) throws IOException {
         if (it.hasNext()) {
             dst.append(it.next());
         }
@@ -49,17 +48,24 @@ public class Strings {
         }
         return dst;
     }
+
+    public static <T extends Appendable> T join(Iterable<? extends CharSequence> src, CharSequence pattern, T dst) throws IOException {
+    	return join(src.iterator(),pattern,dst);
+    }
     
     /**
      * @author tarbo 
      * http://forums.java.net/jive/thread.jspa?threadID=34370&tstart=179
      */
-    public static String join(Iterable<? extends CharSequence> src, CharSequence pattern) {
+    public static String join(Iterator<? extends CharSequence> it, CharSequence pattern) {
         try {
-            return join(src, pattern, new StringBuilder()).toString();
+            return join(it, pattern, new StringBuilder()).toString();
         } catch (IOException excpt) {
             throw new Error("StringBuilder should not throw IOExceptions!");
         }
+    }
+    public static String join(Iterable<? extends CharSequence> src, CharSequence pattern) {
+    	return join(src.iterator(),pattern);
     }
 
 	public static String repeat(String str, String sep, int n) {

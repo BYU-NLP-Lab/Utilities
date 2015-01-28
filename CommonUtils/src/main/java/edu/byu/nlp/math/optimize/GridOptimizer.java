@@ -5,12 +5,14 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
+import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.OptimizationData;
 import org.apache.commons.math3.optim.PointValuePair;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import edu.byu.nlp.util.DoubleArrays;
@@ -28,20 +30,33 @@ public class GridOptimizer extends MultivariateOptimizer{
 
 	private MultivariateFunction function;
 	private GoalType goal;
+	private List<Set<Double>> variableSettingSets;
+	private InitialGuess initialGuess;
 
-	private Set<Double>[] variableSettingSets;
-
-	@SafeVarargs
-	public GridOptimizer(final Set<Double> ... variableSettingSets) {
+	public GridOptimizer(final List<Set<Double>> variableSettingSets) {
 		super(null);
 		this.variableSettingSets=variableSettingSets;
+		this.evaluations.setMaximalCount(Integer.MAX_VALUE);
+		this.iterations.setMaximalCount(Integer.MAX_VALUE);
+	}
+	
+	@SafeVarargs
+	public GridOptimizer(final Set<Double> ... variableSettingSets) {
+		this(variableSettingSets==null? null: Lists.newArrayList(variableSettingSets));
 	}
 
 	@Override
 	protected PointValuePair doOptimize() {
 		incrementEvaluationCount();
+		incrementIterationCount();
 		
 		PointValuePair best = new PointValuePair(null, worstValue(goal));
+		
+		// if no grid specified, stick with initial value
+		if (variableSettingSets==null){
+			logger.info("no grid specified. Returning start value. No optimization performed");
+			return new PointValuePair(this.initialGuess.getInitialGuess(),-1);
+		}
 		
 		for (List<Double> variableSettingsList: Sets.cartesianProduct(variableSettingSets)){
 			double[] variableSettings = DoubleArrays.fromList(variableSettingsList);
@@ -93,6 +108,9 @@ public class GridOptimizer extends MultivariateOptimizer{
             if (data instanceof ObjectiveFunction) {
                 this.function = ((ObjectiveFunction) data).getObjectiveFunction();
                 continue;
+            }
+            if (data instanceof InitialGuess){
+            	this.initialGuess = (InitialGuess)data;
             }
         }
     }
