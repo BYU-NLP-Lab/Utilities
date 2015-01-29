@@ -169,6 +169,14 @@ public class RandomGenerators {
 		}
 	}
 
+	public static double[] nextVectorUnnormalizedProbs(RandomGenerator rnd, double[] unnormalizedProbs, int numDraws){
+		double[] vec = new double[unnormalizedProbs.length];
+		for (int d=0; d<numDraws; d++){
+			vec[nextIntUnnormalizedProbs(rnd, unnormalizedProbs)] += 1;
+		}
+		return vec;
+	}
+	
 	
 	/**
 	 * Returns a random integer with the probabilities specified by unnormalized probabilities.

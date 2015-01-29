@@ -25,6 +25,7 @@ import edu.byu.nlp.util.Matrices;
 /**
  * Optimizable for computing the MLE of Dirichlet distributed data.
  * 
+ * http://research.microsoft.com/en-us/um/people/minka/papers/dirichlet/minka-dirichlet.pdf
  */
 public class DirichletMLEOptimizable implements Optimizable<double[]> {
 

@@ -16,6 +16,8 @@
 package edu.byu.nlp.stats;
 
 
+import org.apache.commons.math3.random.RandomGenerator;
+
 import edu.byu.nlp.util.DoubleArrays;
 
 /**
@@ -26,6 +28,15 @@ public class DirichletTestUtils {
 	
 	private DirichletTestUtils() { }
 
+	public static double[][] sampleMultinomialDataset(double[] alpha, int numDataPoints, int datumSize, RandomGenerator rnd){
+		double[][] dataset = new double[numDataPoints][];
+		for (int i=0; i<numDataPoints; i++){
+			double[] p = DirichletDistribution.sample(alpha, rnd);
+			dataset[i] = RandomGenerators.nextVectorUnnormalizedProbs(rnd, p, datumSize);
+		}
+		return dataset;
+	}
+	
 	/**
 	 * Returns a 3 x 3 matrix of log probability vectors.
 	 */
