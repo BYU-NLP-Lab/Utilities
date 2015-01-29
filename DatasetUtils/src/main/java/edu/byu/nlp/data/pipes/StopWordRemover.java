@@ -32,7 +32,7 @@ import edu.byu.nlp.io.Files2;
  */
 public class StopWordRemover implements Function<List<String>, List<String>> {
 
-	private static final String DEFAULT_STOP_WORDS_FILE = "mallet_stopwords.txt";
+	private static final String DEFAULT_STOP_WORDS_FILE = "/mallet_stopwords.txt";
 	
 	private class StopWordPredicate implements Predicate<String> {
 
