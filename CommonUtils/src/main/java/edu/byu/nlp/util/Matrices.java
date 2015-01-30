@@ -43,6 +43,32 @@ public class Matrices {
 
 	private Matrices() { }
 	
+	public static void subtractFromSelf(double[][] mat, double beta) {
+		for (int i = 0; i < mat.length; i++) {
+			for (int j = 0; j < mat[i].length; j++) {
+				mat[i][j] -= beta;
+			}
+		}
+	}
+
+  public static void subtractFromSelf(double[][][] mat, double[][][] other) {
+	  for (int i=0; i<mat.length; i++){
+		  subtractFromSelf(mat[i], other[i]);
+	  }
+  }
+	  
+  public static void subtractFromSelf(double[][] mat, double[][] other) {
+    Preconditions.checkNotNull(mat);
+    Preconditions.checkNotNull(other);
+    Preconditions.checkArgument(mat.length==other.length);
+    for (int i = 0; i < mat.length; i++) {
+      Preconditions.checkArgument(mat[i].length==other[i].length);
+      for (int j = 0; j < mat[i].length; j++) {
+        mat[i][j] -= other[i][j];
+      }
+    }
+  }
+	
 	public static void addToSelf(double[][] mat, double beta) {
 		for (int i = 0; i < mat.length; i++) {
 			for (int j = 0; j < mat[i].length; j++) {

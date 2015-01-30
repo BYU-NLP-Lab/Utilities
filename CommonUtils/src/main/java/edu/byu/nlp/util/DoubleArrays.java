@@ -509,6 +509,17 @@ public class DoubleArrays {
       return list.iterator();
     }
 
+	public static double dotProduct(double[] a, double[] b) {
+	      Preconditions.checkNotNull(a);
+	      Preconditions.checkNotNull(b);
+	      Preconditions.checkArgument(a.length==b.length);
+	      double total = 0;
+	      for (int i=0; i<a.length; i++){
+	        total += a[i] * b[i];
+	      }
+	      return total;
+	}
+	
     public static double dotProduct(double[] a, int[] b) {
       Preconditions.checkNotNull(a);
       Preconditions.checkNotNull(b);
@@ -551,5 +562,18 @@ public class DoubleArrays {
     	}
     	return min;
     }
+
+    /**
+     * Extend one array with a number of elements
+     */
+	public static double[] extend(double[] a, double ... b) {
+		Preconditions.checkNotNull(a);
+		Preconditions.checkNotNull(b);
+		double[] result = new double[a.length+b.length];
+		System.arraycopy(a, 0, result, 0, a.length);
+		System.arraycopy(b, 0, result, a.length, b.length);
+		return result;
+	}
+
     
 }

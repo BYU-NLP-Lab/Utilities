@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 
+import org.fest.assertions.Assertions;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -438,4 +439,12 @@ public class DoubleArraysTest {
     assertEquals(Lists.newArrayList(2), DoubleArrays.argMaxList(1, arr));
     assertEquals(Lists.newArrayList(2,3), DoubleArrays.argMaxList(2, arr));
   }
+  
+  @Test
+  public void testExtend(){
+	  double[] a = new double[]{1,4,12,8,2};
+	  double[] b = DoubleArrays.extend(a,2,7,4,67.23);
+	  Assertions.assertThat(b).isEqualTo(new double[]{1,4,12,8,2,2,7,4,67.23});
+  }
+  
 }
