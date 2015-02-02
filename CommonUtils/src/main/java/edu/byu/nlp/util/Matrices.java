@@ -43,6 +43,16 @@ public class Matrices {
 
 	private Matrices() { }
 	
+	public static double mean(double[][] mat){
+		Preconditions.checkNotNull(mat);
+		Preconditions.checkArgument(mat.length>0);
+		Preconditions.checkArgument(mat[0].length>0);
+		int rows = mat.length;
+		int cols = mat[0].length;
+		int size = rows*cols;
+		return sum(mat)/size;	
+	}
+	
 	public static void subtractFromSelf(double[][] mat, double beta) {
 		for (int i = 0; i < mat.length; i++) {
 			for (int j = 0; j < mat[i].length; j++) {

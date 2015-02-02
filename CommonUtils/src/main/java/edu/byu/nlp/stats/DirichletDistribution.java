@@ -143,16 +143,25 @@ public class DirichletDistribution {
     return logDensity;
   }
 
-	public static double[] sample(RealVector alpha, RandomGenerator rnd) {
-		double[] theta = GammaDistribution.sample(alpha, rnd);
-		DoubleArrays.normalizeToSelf(theta);
-		return theta;
-	}
+	
+  public static double[] sample(RealVector alpha, RandomGenerator rnd) {
+    double[] theta = GammaDistribution.sample(alpha, rnd);
+    DoubleArrays.normalizeToSelf(theta);
+    return theta;
+  }
 
   public static double[] sampleSymmetric(double alpha, int len, RandomGenerator rnd) {
     double[] alphavec = new double[len];
     Arrays.fill(alphavec, alpha);
     return sample(alphavec, rnd);
+  }
+
+  public static double[][] sample(double[] alpha, int numSamples, RandomGenerator rnd) {
+    double[][] data = new double[numSamples][];
+    for(int i=0; i<numSamples; i++){
+      data[i] = sample(alpha, rnd);
+    }
+    return data;
   }
   
 	public static double[] sample(double[] alpha, RandomGenerator rnd) {
