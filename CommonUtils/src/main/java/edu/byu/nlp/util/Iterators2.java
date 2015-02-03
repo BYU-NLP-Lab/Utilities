@@ -23,6 +23,7 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
 /**
@@ -192,4 +193,23 @@ public class Iterators2 {
 			}
 		};
 	}
+
+	
+	public static <E> Iterator<E> subInterval(final Iterator<E> it, final int start, final int length) {
+		// note: improve this (if necessary) by making it lazy
+		List<E> items = Lists.newArrayListWithExpectedSize(length);
+		Iterator<Enumeration<E>> enit = enumerate(it);
+		while (enit.hasNext() && items.size()<length){
+			Enumeration<E> item = enit.next();
+			if (item.getIndex()>=start){
+				items.add(item.getElement());
+			}
+		}
+		return items.iterator();
+	}
+	
+	public static <E> Iterator<E> firstN(final Iterator<E> iterable, final int n) {
+		return subInterval(iterable, 0, n);
+	}
+	
 }

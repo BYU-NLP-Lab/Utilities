@@ -29,6 +29,10 @@ import com.google.common.collect.Lists;
  */
 public class Iterables2 {
 	
+	public static <E> Iterator<E> simpleIterator(final Iterable<? extends E> it){
+		return Lists.newArrayList(it).iterator();
+	}
+	
 	public static <E> List<E> topN(final Iterable<? extends E> it, final Comparator<? super E> c, final int n) {
 		return Iterators2.topN(it.iterator(), n, c);
 	}
@@ -104,7 +108,14 @@ public class Iterables2 {
     }
     
 
+
+	public static <E> Iterable<E> subInterval(final Iterable<E> it, final int start, final int length) {
+		return Lists.newArrayList(Iterators2.subInterval(it.iterator(), start, length));
+	}
 	
+	public static <E> Iterable<E> firstN(final Iterable<E> iterable, final int n) {
+		return subInterval(iterable, 0, n);
+	}
     
 	
 }
