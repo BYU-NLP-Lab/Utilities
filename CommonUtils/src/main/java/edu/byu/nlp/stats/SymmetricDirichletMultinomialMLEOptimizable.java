@@ -41,15 +41,23 @@ public class SymmetricDirichletMultinomialMLEOptimizable implements Optimizable<
 	private final double[] perIDataSums;
 	private final int N;
 	private final int K;
-	
-	public static SymmetricDirichletMultinomialMLEOptimizable newOptimizable(double[][] data) {
-		return new SymmetricDirichletMultinomialMLEOptimizable(data);
+	private double gammaA;
+	private double gammaB;
+
+	/**
+	 * @param gammaA the first parameter of a gamma hyperprior over the dirichlet 
+	 * @param gammaB the second parameter of a gamma hyperprior over the dirichlet
+	 */
+	public static SymmetricDirichletMultinomialMLEOptimizable newOptimizable(double[][] data, double gammaA, double gammaB) {
+		return new SymmetricDirichletMultinomialMLEOptimizable(data,gammaA,gammaB);
 	}
 	
-	private SymmetricDirichletMultinomialMLEOptimizable(double[][] data) {
+	private SymmetricDirichletMultinomialMLEOptimizable(double[][] data, double gammaA, double gammaB) {
 		Preconditions.checkNotNull(data, "invalid data: "+data);
 		Preconditions.checkArgument(data.length>0, "invalid data: "+data);
 		Preconditions.checkArgument(data[0].length>0, "invalid data: "+data);
+		this.gammaA=gammaA;
+		this.gammaB=gammaB;
 		this.data = data;
 		this.N = data.length;
 		this.K = data[0].length;
@@ -60,8 +68,8 @@ public class SymmetricDirichletMultinomialMLEOptimizable implements Optimizable<
 	@Override
 	public ValueAndObject<Double> computeNext(Double alpha) {
 		
-		double denominator = computeDenominator(perIDataSums,alpha,K);
-		double numerator = computeNumerator(data,alpha,N,K);
+		double numerator = computeNumerator(data,alpha,N,K) + gammaA - 1;
+		double denominator = computeDenominator(perIDataSums,alpha,K) + gammaB;
 		double ratio = numerator / denominator; 
 		double newalpha = alpha *= ratio;
 		
