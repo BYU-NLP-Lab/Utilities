@@ -163,6 +163,13 @@ public class Matrices {
       DoubleArrays.logNormalizeToSelf(mat[r]);
     }
   }
+
+  public static void normalizeRowsToSelf(double[][][] tensor) {
+	  Preconditions.checkNotNull(tensor);
+	  for (int i=0; i<tensor.length; i++){
+		  normalizeRowsToSelf(tensor[i]);
+	  }
+  }
   
 	/**
    * Calls DoubleArrays.normalizeToSelf on each row
