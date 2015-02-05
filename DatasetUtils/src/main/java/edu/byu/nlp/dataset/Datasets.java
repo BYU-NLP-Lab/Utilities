@@ -41,6 +41,7 @@ import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
+import edu.byu.nlp.math.AbstractRealMatrixPreservingVisitor;
 import edu.byu.nlp.math.SparseRealMatrices;
 import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.Doubles;
@@ -684,7 +685,7 @@ public class Datasets {
 		// extract labels (in order defined by instanceIndices)
 		int[] gold = IntArrays.repeat(-1, instances.size());
 		for (DatasetInstance inst : instances) {
-			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getLabel();
+			gold[instanceIndices.get(inst.getInfo().getSource())] = (inst.getLabel()!=null)? inst.getLabel(): -1;
 		}
 
 		return gold;
@@ -943,6 +944,16 @@ public class Datasets {
 		return map;
 	}
 
+	public static boolean hasDuplicateSources(Dataset data){
+		Set<String> sources = Sets.newHashSet();
+		for (DatasetInstance inst: data){
+			if (sources.contains(inst.getInfo().getSource())){
+				return true;
+			}
+			sources.add(inst.getInfo().getSource());
+		}
+		return false;
+	}
 	
 	
 
@@ -1128,5 +1139,26 @@ public class Datasets {
 			}
 		};
 	}
+
+	/**
+	 * Returns confusion matrices, one per annotator.  
+	 * result[annotator][true class][annotation class] = count
+	 */
+	public static int[][][] confusionMatrices(Dataset data){
+		int numAnnotators = data.getInfo().getNumAnnotators();
+		int numClasses = data.getInfo().getNumClasses();
+		final int[][][] confusions = new int[numAnnotators][numClasses][numClasses]; 
+		for (DatasetInstance inst: data){
+			final int label = inst.getLabel();
+			inst.getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
+				@Override
+				public void visit(int annotator, int annotationValue, double value) {
+					confusions[annotator][label][annotationValue] += value;
+				}
+			});
+		}
+		return confusions;
+	}
+	
 
 }

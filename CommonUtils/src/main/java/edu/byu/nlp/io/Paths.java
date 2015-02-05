@@ -5,6 +5,8 @@ package edu.byu.nlp.io;
 
 import java.io.File;
 
+import com.google.common.base.Preconditions;
+
 import edu.byu.nlp.util.Pair;
 
 /**
@@ -35,5 +37,11 @@ public class Paths {
 
 	public static String baseName(String path) {
 		return new File(path).getName();
+	}
+
+	public static String directory(String path) {
+		Preconditions.checkNotNull(path);
+		Preconditions.checkNotNull(new File(path).getParent());
+		return new File(new File(path).getParent()).getAbsolutePath();
 	}
 }

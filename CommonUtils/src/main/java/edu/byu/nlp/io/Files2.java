@@ -14,10 +14,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 
@@ -64,7 +66,9 @@ public class Files2 {
   }
 
   public static void writeLines(Iterable<? extends CharSequence> it, File file) throws IOException {
-    Writers.writeLines(new FileWriter(file), it);
+	  FileWriter writer = new FileWriter(file);
+	  Writers.writeLines(writer, it);
+	  writer.close();
   }
 
   public static void writeLines(Iterable<? extends CharSequence> it, String fn, Charset charset)
@@ -73,8 +77,15 @@ public class Files2 {
   }
 
   public static void writeLines(Iterable<? extends CharSequence> it, File file, Charset charset)
-      throws FileNotFoundException {
-    Writers.writeLines(new OutputStreamWriter(new FileOutputStream(file), charset), it);
+      throws IOException {
+	  OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), charset);
+	  Writers.writeLines(writer, it);
+	  writer.close();
+  }
+
+  public static void write(String content, String fn) throws IOException {
+	  ArrayList<String> lines = Lists.newArrayList(content.split("\n"));
+	  writeLines(lines, fn);
   }
   
   public static String toString(FileObject file, Charset charset) throws IOException {

@@ -78,6 +78,12 @@ public class Matrices {
       }
     }
   }
+
+	public static void addToSelf(double[][][] mat, double beta) {
+		for (int i = 0; i < mat.length; i++) {
+			addToSelf(mat[i], beta);
+		}
+	}
 	
 	public static void addToSelf(double[][] mat, double beta) {
 		for (int i = 0; i < mat.length; i++) {
@@ -676,25 +682,32 @@ public class Matrices {
         return (int)Math.ceil(Math.log10(asInt+1));
       }
     }
+
+    public static String toString(double[][][] mat) {
+    	return toString(mat, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 10);
+    }
+    public static String toString(double[][][] mat, int maxDim1, int maxDim2, int maxDim3, int numFractionDigits) {
+    	StringBuilder bld = new StringBuilder();
+    	bld.append("[\n");
+    	for (int i=0; i<mat.length; i++){
+    		bld.append(toString(mat[i], maxDim2, maxDim3, numFractionDigits));
+    		if (i<mat.length-1){
+    			bld.append(",\n");
+    		}
+    		if (i>=maxDim1){
+    			bld.append("...");
+    			break;
+    		}
+    	}
+    	bld.append("\n]");
+    	return bld.toString();
+    }
+    
     /**
-     * Pretty prints the full matrix.
+     * Pretty print a matrix
      */
     public static String toString(double[][] mat) {
-      if (mat==null){
-        return ""+null;
-      }
-      StringBuilder str = new StringBuilder();
-      str.append('[');
-      for (int r = 0; r < mat.length; r++) {
-        
-        if (r > 0) {
-          str.append(' ');
-        }
-        str.append(Arrays.toString(mat[r]));
-        str.append('\n');
-      }
-      str.append(']');
-      return str.toString();
+    	return toString(mat,Integer.MAX_VALUE,Integer.MAX_VALUE);
     }
 
     public static String toString(double[][] mat, int maxRows, int maxCols) {
@@ -714,7 +727,8 @@ public class Matrices {
       
       StringBuilder str = new StringBuilder();
       str.append('[');
-      for (int r = 0; r < Math.min(mat.length, maxRows); r++) {
+      int numrows = Math.min(mat.length, maxRows);
+      for (int r = 0; r<numrows; r++) {
         if (r > 0) {
           str.append("\n ");
         }
@@ -728,15 +742,17 @@ public class Matrices {
             str.append(' ');
           }
           str.append(df.format(mat[r][c]));
-//          str.append(mat[r][c]);
         }
         if (mat[r].length > maxCols) {
           str.append(", ...");
         }
         str.append("]");
+        if (r<numrows-1){
+        	str.append(",");
+        }
       }
       if (mat.length > maxRows) {
-        str.append(" ...\n");
+        str.append(",\n  ...\n");
       }
       str.append("]");
       return str.toString();
@@ -751,6 +767,23 @@ public class Matrices {
         }
       }
       return m2;
+    }
+
+    public static String toString(int[][][] mat) {
+    	StringBuilder bld = new StringBuilder();
+    	bld.append("[\n");
+    	for (int i=0; i<mat.length; i++){
+    		bld.append(toString(mat[i]));
+    		if (i<mat.length-1){
+    			bld.append(",\n");
+    		}
+    	}
+    	bld.append("\n]");
+    	return bld.toString();
+    }
+    
+    public static String toString(int[][] mat) {
+    	return toString(mat,Integer.MAX_VALUE,Integer.MAX_VALUE);
     }
     
     public static String toString(int[][] mat, int maxRows, int maxCols) {
@@ -776,6 +809,16 @@ public class Matrices {
       return m;
     }
 
+	public static double[][] unflatten(double[] arr, int numRows, int numCols) {
+		double[][] result = new double[numRows][numCols];
+		for (int r=0; r<numRows; r++){
+			for (int c=0; c<numCols; c++){
+				result[r][c] = arr[r*numCols+c];
+			}
+		}
+		return result;
+	}
+	
     public static double[] flatten(double[][] matrix){
       if (matrix==null){
         return null;
@@ -799,6 +842,14 @@ public class Matrices {
         }
       }
       return array;
+    }
+
+    public static double[][][] fromInts(int[][]... rows){
+        double[][][] result = new double[rows.length][][];
+        for (int r=0; r<rows.length; r++){
+          result[r] = fromInts(rows[r]);
+        }
+        return result;
     }
     
     public static double[][] fromInts(int[]... rows){
@@ -830,5 +881,28 @@ public class Matrices {
     		}
     	}
     }
-    
+
+	public static double[][] sumOverFirst(double[][][] tensor) {
+		Preconditions.checkNotNull(tensor);
+		if (tensor.length == 0 || tensor[0].length==0) {
+			return new double[0][0];
+		}
+		int dim1 = tensor.length;
+		int dim2 = tensor[0].length;
+		int dim3 = tensor[0][0].length;
+		
+		double[][] sum = new double[dim2][dim3];
+		for (int i = 0; i < dim1; i++) {
+			Preconditions.checkArgument(tensor[i].length == dim2, "tensor must not be ragged");
+			for (int j = 0; j < dim2; j++) {
+				Preconditions.checkArgument(tensor[i][j].length == dim3, "tensor must not be ragged");
+				for (int k=0; k<dim3; k++){
+					sum[j][k] += tensor[i][j][k];
+				}
+			}
+		}
+		return sum;
+	}
+
+
 }

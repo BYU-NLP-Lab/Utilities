@@ -324,13 +324,42 @@ public class MatricesTest {
         {1.21,298.234512,3.9872},
         {41.2222,5,6.99999999},
     };
-    assertThat(Matrices.toString(mat, 100, 100, 1)).isEqualTo("[[ 1.2, 298.2, 4.0]\n [41.2,   5.0, 7.0]]");
+    assertThat(Matrices.toString(mat, 100, 100, 1)).isEqualTo("[[ 1.2, 298.2, 4.0],\n [41.2,   5.0, 7.0]]");
 
     mat = new double[][] {
         {1210},
         {42000000},
     };
-    System.out.println(Matrices.toString(mat, 100, 100, 1));
-    assertThat(Matrices.toString(mat, 100, 100, 1)).isEqualTo("[[    1210.0]\n [42000000.0]]");
+//    System.out.println(Matrices.toString(mat, 100, 100, 1));
+    assertThat(Matrices.toString(mat, 100, 100, 1)).isEqualTo("[[    1210.0],\n [42000000.0]]");
+  }
+  
+  @Test
+  public void testSumOverFirstTensor(){
+	  double[][][] tensor = new double[][][]{
+			  {{3,2,3},{2,2,0},{1,8,9},{9,2,9}},
+			  {{1,6,3},{1,2,3},{6,2,3},{6,3,3}},
+			  {{8,2,0},{2,1,2},{9,2,3},{0,2,6}},
+	  };
+	  double[][] result = Matrices.sumOverFirst(tensor);
+	  assertThat(result.length).isEqualTo(4);
+	  assertThat(result[0].length).isEqualTo(3);
+	  assertMatrixEquals(result, new double[][]{
+			  {12,10,6},{5,5,5},{16,12,15},{15,7,18}
+	  	}, 1e-20);
+  }
+  
+  @Test
+  public void testFlattenUnflatten(){    
+	  double[][] mat = new double[][] {
+	        {1.21, 298.234512, 3.9872},
+	        {41.2222, 5, 6.99999999},
+	    };
+	  double[] arr = Matrices.flatten(mat);
+	  assertArrayEquals(arr, new double[]{1.21, 298.234512, 3.9872, 41.2222, 5, 6.99999999}, 1e-20);
+	  
+	  double[][] reconstituted = Matrices.unflatten(arr, 2, 3);
+	  assertMatrixEquals(mat, reconstituted, 1e-20);
+	  
   }
 }

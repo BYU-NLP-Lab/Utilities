@@ -30,6 +30,7 @@ public class Writers {
 		for(CharSequence cs : it) {
 			out.println(cs);
 		}
+		out.flush();
 	}
 
 }
