@@ -25,6 +25,7 @@ import java.util.Map;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 
 import edu.byu.nlp.math.Math2;
 
@@ -486,19 +487,8 @@ public class DoubleArrays {
     }
 
 
-    // TODO: make this more robust, and work with streams 
     public static double[] parseDoubleArray(String str){
-      List<Double> dblList = Lists.newArrayList();
-      String stripped = str.replaceAll("[\\[\\]]", "");
-      for (String dblStr: stripped.split(",")){
-        dblList.add(Double.parseDouble(dblStr));
-      }
-      // convert to double[]
-      double[] dbls = new double[dblList.size()];
-      for (int i=0; i<dblList.size(); i++){
-        dbls[i] = dblList.get(i);
-      }
-      return dbls;
+		return new Gson().fromJson(str, double[].class);
     }
     
     public static Iterator<Double> iterator(double[] array){

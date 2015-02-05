@@ -21,6 +21,7 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotSame;
 
+import org.fest.assertions.Assertions;
 import org.fest.assertions.Delta;
 import org.junit.Test;
 
@@ -362,4 +363,30 @@ public class MatricesTest {
 	  assertMatrixEquals(mat, reconstituted, 1e-20);
 	  
   }
+
+  @Test
+  public void testMatrixParseToString(){
+	    double[][] mat = new double[][] {
+	            {1,2,3},
+	            {4,5,6},
+	    };
+	    String str = Matrices.toString(mat);
+	    double[][] reconstituted = Matrices.parseMatrix(str);
+	    assertMatrixEquals(mat, reconstituted,1e-20);
+  }
+
+  @Test
+  public void testTensorParseToString(){
+	  double[][][] tensor = new double[][][]{
+			  {{3,2,3},{2,2,0},{1,8,9},{9,2,9}},
+			  {{1,6,3},{1,2,3},{6,2,3},{6,3,3}},
+			  {{8,2,0},{2,1,2},{9,2,3},{0,2,6}},
+	  };
+	  String str = Matrices.toString(tensor);
+	  double[][][] reconstituted = Matrices.parseTensor(str);
+	  for (int i=0; i<reconstituted.length; i++){
+		  assertMatrixEquals(tensor[i], reconstituted[i],1e-20);
+	  }
+  }
+  
 }

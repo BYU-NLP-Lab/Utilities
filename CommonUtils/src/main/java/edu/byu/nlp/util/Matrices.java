@@ -32,6 +32,7 @@ import org.apache.commons.math3.optimization.linear.SimplexSolver;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 
 import edu.byu.nlp.math.Math2;
 
@@ -902,6 +903,14 @@ public class Matrices {
 			}
 		}
 		return sum;
+	}
+
+	public static double[][] parseMatrix(String str) {
+		return new Gson().fromJson(str, double[][].class);
+	}
+	
+	public static double[][][] parseTensor(String str) {
+		return new Gson().fromJson(str, double[][][].class);
 	}
 
 

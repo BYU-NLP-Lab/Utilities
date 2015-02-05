@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.VFS;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
@@ -86,6 +87,11 @@ public class Files2 {
   public static void write(String content, String fn) throws IOException {
 	  ArrayList<String> lines = Lists.newArrayList(content.split("\n"));
 	  writeLines(lines, fn);
+  }
+
+  public static String toString(String fn, Charset charset) throws IOException {
+    FileObject file = VFS.getManager().resolveFile(fn);
+	return toString(file, charset);
   }
   
   public static String toString(FileObject file, Charset charset) throws IOException {
