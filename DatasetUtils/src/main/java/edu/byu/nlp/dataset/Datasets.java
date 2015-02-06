@@ -35,6 +35,8 @@ import edu.byu.nlp.annotationinterface.Constants;
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
+import edu.byu.nlp.data.app.AnnotatorParameterEstimator;
+import edu.byu.nlp.data.app.AnnotatorParameterEstimator.ClusteringMethod;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
@@ -1033,7 +1035,7 @@ public class Datasets {
 	 * existing annotator identity has not changed. That is, the 0th annotator 
 	 * in the dataset must be the 0th in the annotatorIdIndexer, etc. 
 	 */
-	public static Dataset withNewAnnotators(Dataset dataset, Indexer<Long> annotatorIdIndexer){
+	public static Dataset withNewAnnotators(Dataset dataset, Indexer<Long> annotatorIdIndexer, boolean preserveExistingAnnotations){
 		Preconditions.checkArgument(Indexers.agree(dataset.getInfo().getAnnotatorIdIndexer(), annotatorIdIndexer),
 				"Annotator id indexers conflict");
 		
@@ -1043,7 +1045,9 @@ public class Datasets {
 		for (DatasetInstance inst: dataset){
 			// copy all instances but with an annotationset with more annotators
 			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), inst.getAnnotations().getRawLabelAnnotations());
-			SparseRealMatrices.copyOnto(inst.getAnnotations().getLabelAnnotations(), annotationSet.getLabelAnnotations());
+			if (preserveExistingAnnotations){
+				SparseRealMatrices.copyOnto(inst.getAnnotations().getLabelAnnotations(), annotationSet.getLabelAnnotations());
+			}
 			// instance with the new annotationset
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
 					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
@@ -1176,6 +1180,33 @@ public class Datasets {
 			}
 		}
 		return confusions;
+	}
+
+	/**
+	 * transform the data (in place), collapsing annotators into clusters based on 
+	 * the similarity of their confusion matrices wrt majority vote. 
+	 */
+	public static Dataset withClusteredAnnotators(Dataset data, int numAnnotatorClusters, double smoothing, RandomGenerator rnd) {
+		
+		// get the per-annotator cluster assignments
+		int[][][] confusionMatrices = confusionMatricesWrtMajorityVoteLabels(data, rnd);
+		int maxIterations = 10000;
+		double[][][] annotatorParameters = AnnotatorParameterEstimator.confusionMatrices2AnnotatorParameters(confusionMatrices);
+		final int[] clusterAssignments = AnnotatorParameterEstimator.clusterAnnotatorParameters(annotatorParameters, ClusteringMethod.KMEANS, numAnnotatorClusters, maxIterations, smoothing, rnd);
+		
+		// apply the assignments to create a new dataset
+		Dataset newdata = withNewAnnotators(data, Indexers.indexerOfLongs(numAnnotatorClusters), false);
+		for (final Pair<DatasetInstance,DatasetInstance> pair: Iterables2.pairUp(data, newdata)){
+			// copy mapped annotations
+			pair.getFirst().getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
+				@Override
+				public void visit(int annotator, int annotationVal, double value) {
+					int mappedAnnotator = clusterAssignments[annotator];
+					pair.getSecond().getAnnotations().getLabelAnnotations().setEntry(mappedAnnotator, annotationVal, value);
+				}
+			});
+		}
+		return null;
 	}
 	
 
