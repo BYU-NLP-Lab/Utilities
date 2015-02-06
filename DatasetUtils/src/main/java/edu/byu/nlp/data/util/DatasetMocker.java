@@ -12,16 +12,16 @@ import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
 import edu.byu.nlp.dataset.BasicDataset;
 import edu.byu.nlp.dataset.BasicDatasetInstance;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
+import edu.byu.nlp.util.ArgMinMaxTracker.MinMaxTracker;
 import edu.byu.nlp.util.Indexer;
-import edu.byu.nlp.util.MaxTracker;
 
 public class DatasetMocker {
 
 	// instances
 	List<DatasetInstance> instances = Lists.newArrayList();
 	Indexer<String> labelIndexer = new Indexer<String>();
-	MaxTracker maxLabelTracker = new MaxTracker();
-	MaxTracker maxFeatureTracker = new MaxTracker();
+	MinMaxTracker<Integer> maxLabelTracker = MinMaxTracker.newMinMaxTracker();
+	MinMaxTracker<Integer> maxFeatureTracker = MinMaxTracker.newMinMaxTracker();
 	int numAnnotators = -1;
 
 	public DatasetMocker addInstance(String source, double[] denseFeatureValues,
@@ -45,12 +45,12 @@ public class DatasetMocker {
 			Preconditions.checkArgument(tmpNumAnnotators==numAnnotators);
 		}
 		// how many labels?
-		maxLabelTracker.offerLong(label);
+		maxLabelTracker.offer(label);
 		// how many features?
 		fv.visitSparseEntries(new EntryVisitor() {
 			@Override
 			public void visitEntry(int index, double value) {
-				maxFeatureTracker.offerLong(index);
+				maxFeatureTracker.offer(index);
 			}
 		});
 		// create instance
@@ -67,11 +67,11 @@ public class DatasetMocker {
 			instanceIdIndexer.add(i);
 		}
 		Indexer<String> featureIndexer = new Indexer<String>();
-		for (long f = 0; f < maxFeatureTracker.maxLong(); f++) {
+		for (long f = 0; f < maxFeatureTracker.max(); f++) {
 			featureIndexer.add("" + f);
 		}
 		Indexer<String> labelIndexer = new Indexer<String>();
-		for (long l = 0; l < maxLabelTracker.maxLong(); l++) {
+		for (long l = 0; l < maxLabelTracker.max(); l++) {
 			labelIndexer.add("" + l);
 		}
 		Indexer<Long> annotatorIdIndexer = new Indexer<Long>();

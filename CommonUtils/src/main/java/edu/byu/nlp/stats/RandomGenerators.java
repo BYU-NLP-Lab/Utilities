@@ -17,10 +17,13 @@ package edu.byu.nlp.stats;
 
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import edu.byu.nlp.util.DoubleArrays;
 
@@ -365,6 +368,16 @@ public class RandomGenerators {
 			result[i] = rnd.nextInt(max);
 		}
 		return result;
+	}
+
+	public static<T> T sample(Iterable<T> coll, RandomGenerator rnd){
+		return sample(Lists.newArrayList(coll), rnd);
+	}
+	
+	public static<T> T sample(List<T> list, RandomGenerator rnd){
+		Preconditions.checkNotNull(list);
+		Preconditions.checkNotNull(rnd);
+		return list.get(rnd.nextInt(list.size()));
 	}
 	
 }

@@ -1,9 +1,14 @@
 package edu.byu.nlp.dataset;
 
+import org.apache.commons.math3.random.RandomGenerator;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
+
 import edu.byu.nlp.data.types.DatasetInstance;
-import edu.byu.nlp.data.types.DatasetInstanceInfo;
-import edu.byu.nlp.math.SparseRealMatrices;
-import edu.byu.nlp.util.Doubles;
+import edu.byu.nlp.math.AbstractRealMatrixPreservingVisitor;
+import edu.byu.nlp.util.Multisets2;
 
 public class DatasetInstances {
 
@@ -29,5 +34,21 @@ public class DatasetInstances {
 				inst.getAnnotations(), inst.getInfo());
 	}
 	
+	/**
+	 * Returns null if there are no annotations on this instance
+	 */
+	public static Integer majorityVoteLabel(DatasetInstance inst, RandomGenerator rnd){
+		Preconditions.checkNotNull(inst);
+		final Multiset<Integer> labelDist = HashMultiset.create();
+		inst.getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
+			@Override
+			public void visit(int annotator, int annotationValue, double value) {
+				for (int i=0; i<Math.round(value); i++){
+					labelDist.add(annotationValue);
+				}
+			}
+		});
+		return Multisets2.maxElement(labelDist, rnd);
+	}
 	
 }

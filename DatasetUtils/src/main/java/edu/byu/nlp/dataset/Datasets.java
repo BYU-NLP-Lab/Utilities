@@ -1144,7 +1144,7 @@ public class Datasets {
 	 * Returns confusion matrices, one per annotator.  
 	 * result[annotator][true class][annotation class] = count
 	 */
-	public static int[][][] confusionMatrices(Dataset data){
+	public static int[][][] confusionMatricesWrtGoldLabels(Dataset data){
 		int numAnnotators = data.getInfo().getNumAnnotators();
 		int numClasses = data.getInfo().getNumClasses();
 		final int[][][] confusions = new int[numAnnotators][numClasses][numClasses]; 
@@ -1156,6 +1156,24 @@ public class Datasets {
 					confusions[annotator][label][annotationValue] += value;
 				}
 			});
+		}
+		return confusions;
+	}
+
+	public static int[][][] confusionMatricesWrtMajorityVoteLabels(Dataset data, RandomGenerator rnd) {
+		int numAnnotators = data.getInfo().getNumAnnotators();
+		int numClasses = data.getInfo().getNumClasses();
+		final int[][][] confusions = new int[numAnnotators][numClasses][numClasses]; 
+		for (DatasetInstance inst: data){
+			final Integer label = DatasetInstances.majorityVoteLabel(inst, rnd);
+			if (label!=null){ // skip instances that have no annotations
+				inst.getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
+					@Override
+					public void visit(int annotator, int annotationValue, double value) {
+						confusions[annotator][label][annotationValue] += value;
+					}
+				});
+			}
 		}
 		return confusions;
 	}

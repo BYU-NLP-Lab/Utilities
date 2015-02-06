@@ -15,7 +15,13 @@
  */
 package edu.byu.nlp.util;
 
+import java.util.Set;
+
+import org.apache.commons.math3.random.RandomGenerator;
+
 import com.google.common.collect.Multiset;
+
+import edu.byu.nlp.stats.RandomGenerators;
 
 /**
  * @author pfelt
@@ -24,33 +30,56 @@ import com.google.common.collect.Multiset;
 public class Multisets2 {
 
   /**
-   * Return the element with the smallest count in a multiset, or else null
+   * Return the element(s) with the largest count in a multiset, or else null
    * if there are no elements
    */
-  public static <T> T minElement(Multiset<T> mset){
-    // return the smallest element
-    T argmin = null;
-    int min = Integer.MAX_VALUE;
-    for (com.google.common.collect.Multiset.Entry<T> entry: mset.entrySet()){
-      if (entry.getCount()<min){
-        argmin = entry.getElement();
-        min = entry.getCount();
-      }
-    }
-    return argmin;
+  public static <T> Set<T> maxElements(Multiset<T> mset){
+    return getArgMinMax(mset).argmax();
+  }
+
+  /**
+   * Choose an arbitrary max element
+   */
+  public static <T> T  maxElement(Multiset<T> mset, RandomGenerator rnd){
+	  return RandomGenerators.sample(maxElements(mset), rnd);
+  }
+
+  /**
+   * @return the count of the element that appeared 
+   * the largest number of times
+   */
+  public static <T> int maxCount(Multiset<T> mset){
+    return getArgMinMax(mset).max();
+  }
+	  
+  /**
+   * Return the element(s) with the smallest count in a multiset, or else null
+   * if there are no elements
+   */
+  public static <T> Set<T> minElements(Multiset<T> mset){
+    return getArgMinMax(mset).argmin();
+  }
+
+  /**
+   * Choose an arbitrary min element
+   */
+  public static <T> T  minElement(Multiset<T> mset, RandomGenerator rnd){
+	  return RandomGenerators.sample(minElements(mset), rnd);
   }
   
   /**
-   * @return
+   * @return the count of the element that appeared 
+   * the fewest number of times
    */
   public static <T> int minCount(Multiset<T> mset){
-    T argmin = minElement(mset);
-    if (argmin==null){
-      return 0;
-    }
-    else{
-      return mset.count(argmin);
-    }
+    return getArgMinMax(mset).min();
   }
   
+  public static <T> ArgMinMaxTracker<Integer, T> getArgMinMax(Multiset<T> mset){
+	ArgMinMaxTracker<Integer,T> tracker = ArgMinMaxTracker.newArgMinMaxTracker();
+    for (com.google.common.collect.Multiset.Entry<T> entry: mset.entrySet()){
+    	tracker.offer(entry.getCount(),entry.getElement());
+    }
+    return tracker;
+  }
 }

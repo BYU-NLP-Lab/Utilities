@@ -44,7 +44,7 @@ public class Multisets2Test {
 
   @Test
   public void testMinElement() throws FileNotFoundException{
-    Assertions.assertThat( Multisets2.minElement(stubMultiset())).isEqualTo("b");
+    Assertions.assertThat( Multisets2.minElements(stubMultiset())).contains("b");
   }
   
 }

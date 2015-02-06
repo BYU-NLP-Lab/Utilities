@@ -2,26 +2,20 @@ package edu.byu.nlp.util;
 
 import java.util.Set;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
+import edu.byu.nlp.util.ArgMinMaxTracker.MinMaxTracker;
 
 public class Sets {
 
 	public static double max(Set<Double> set){
-		MaxTracker mt = new MaxTracker();
-		mt.offerDoubles(set);
-		return mt.maxDouble();
+		MinMaxTracker<Double> mt = new MinMaxTracker<Double>();
+		mt.offer(set);
+		return mt.max();
 	}
 
 	public static double min(Set<Double> set){
-		MaxTracker mt = new MaxTracker();
-		mt.offerDoubles(Iterables.transform(set,new Function<Double,Double>(){
-			@Override
-			public Double apply(Double input) {
-				return -1*input;
-			}
-		}));
-		return -1*mt.maxDouble();
+		MinMaxTracker<Double> mt = new MinMaxTracker<Double>();
+		mt.offer(set);
+		return mt.min();
 	}
 	
 	
