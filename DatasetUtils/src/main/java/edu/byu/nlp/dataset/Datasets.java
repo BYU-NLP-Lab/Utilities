@@ -32,7 +32,9 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
 import edu.byu.nlp.annotationinterface.Constants;
+import edu.byu.nlp.annotationinterface.java.Annotation;
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
+import edu.byu.nlp.data.FlatAnnotatedInstance;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.app.AnnotatorParameterEstimator;
@@ -347,31 +349,31 @@ public class Datasets {
 		// referring to the same instance. In a Dataset object, all of these are 
 		// aggregated into a single instance.
 		for (FlatInstance<SparseFeatureVector, Integer> inst: flatInstances){
-			// anotations
+			long instanceId = inst.getInstanceId();
+			instanceIndices.add(instanceId);
+
+			// record instance source (the last non-null occurrence gets the last say)
+			if (inst.getSource()!=null){
+				sourceMap.put(instanceId, inst.getSource());
+			}
+			
+			// annotations
 			if (inst.isAnnotation()){
-				long instanceIndex = inst.getInstanceId();
 				long annotatorIndex = inst.getAnnotator();
-				
-				instanceIndices.add(instanceIndex);
-				// record instance features (in case this is a previously-unseen instance)
-				if (inst.getData()!=null){
-					featureMap.put(instanceIndex, inst.getData());
-				}
-				// record instance source
-				if (inst.getSource()!=null){
-					sourceMap.put(instanceIndex, inst.getSource());
-				}
+
 				// record annotation
-				annotationCounter.incrementCount(instanceIndex, annotatorIndex, inst.getLabel());
+				annotationCounter.incrementCount(instanceId, annotatorIndex, inst.getLabel());
 				if (preserveRawAnnotations){
-					rawAnnotationMap.put(instanceIndex, inst);
+					rawAnnotationMap.put(instanceId, inst);
 				}
+				Preconditions.checkArgument(inst.getData()==null,"by convention, annotations have no data. Create a flatlabeledinstance (even if it has no label)");
 			}
 			// labels
 			else{
-				long instanceId = inst.getInstanceId();
-				instanceIndices.add(instanceId);
-				
+				// record instance features (the last non-null occurrence gets the last say) 
+				if (inst.getData()!=null){
+					featureMap.put(instanceId, inst.getData());
+				}
 				// record label
 				long labelerId = inst.getAutomaticLabelerId();
 				if (labelerId == Constants.CONCEALED_GOLD_AUTOMATIC_ANNOTATOR || 
@@ -382,18 +384,10 @@ public class Datasets {
 				else{
 					logger.warn("untrusted label by labeler "+labelerId+" is being ignored");
 				}
-				
+				// mark gold labels
 				if (labelerId == Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR){
 					// this is a publically known annotation (available as training data)
 					indicesWithObservedLabel.add(instanceId);
-				}
-				// record instance features
-				if (inst.getData()!=null){
-					featureMap.put(instanceId, inst.getData());
-				}
-				// record instance source
-				if (inst.getSource()!=null){
-					sourceMap.put(instanceId, inst.getSource());
 				}
 			}
 		}
@@ -1035,7 +1029,7 @@ public class Datasets {
 	 * existing annotator identity has not changed. That is, the 0th annotator 
 	 * in the dataset must be the 0th in the annotatorIdIndexer, etc. 
 	 */
-	public static Dataset withNewAnnotators(Dataset dataset, Indexer<Long> annotatorIdIndexer, boolean preserveExistingAnnotations){
+	public static Dataset withNewAnnotators(Dataset dataset, Indexer<Long> annotatorIdIndexer){
 		Preconditions.checkArgument(Indexers.agree(dataset.getInfo().getAnnotatorIdIndexer(), annotatorIdIndexer),
 				"Annotator id indexers conflict");
 		
@@ -1043,11 +1037,8 @@ public class Datasets {
 		List<DatasetInstance> instances = Lists.newArrayList();
 		
 		for (DatasetInstance inst: dataset){
-			// copy all instances but with an annotationset with more annotators
-			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), inst.getAnnotations().getRawLabelAnnotations());
-			if (preserveExistingAnnotations){
-				SparseRealMatrices.copyOnto(inst.getAnnotations().getLabelAnnotations(), annotationSet.getLabelAnnotations());
-			}
+			// copy all instances but without annotations
+			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector,Integer>>newArrayList());
 			// instance with the new annotationset
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
 					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
@@ -1056,11 +1047,12 @@ public class Datasets {
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
-		return new BasicDataset(instances, 
+		BasicDataset newdataset = new BasicDataset(instances, 
 				new BasicDataset.Info(info.getSource(), 
 						info.getNumDocuments(), info.getNumDocumentsWithAnnotations(), info.getNumDocumentsWithLabels(), info.getNumDocumentsWithObservedLabels(), 
 						info.getNumTokens(), info.getNumTokensWithAnnotations(), info.getNumTokensWithLabels(), info.getNumTokensWithObservedLabels(), 
 						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
+		return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
 	}
 
 	/**
@@ -1183,30 +1175,62 @@ public class Datasets {
 	}
 
 	/**
-	 * transform the data (in place), collapsing annotators into clusters based on 
+	 * transform copy of the data, collapsing annotators into clusters based on 
 	 * the similarity of their confusion matrices wrt majority vote. 
 	 */
 	public static Dataset withClusteredAnnotators(Dataset data, int numAnnotatorClusters, double smoothing, RandomGenerator rnd) {
-		
+
 		// get the per-annotator cluster assignments
 		int[][][] confusionMatrices = confusionMatricesWrtMajorityVoteLabels(data, rnd);
 		int maxIterations = 10000;
 		double[][][] annotatorParameters = AnnotatorParameterEstimator.confusionMatrices2AnnotatorParameters(confusionMatrices);
-		final int[] clusterAssignments = AnnotatorParameterEstimator.clusterAnnotatorParameters(annotatorParameters, ClusteringMethod.KMEANS, numAnnotatorClusters, maxIterations, smoothing, rnd);
+		final int[] clusterAssignments = AnnotatorParameterEstimator.clusterAnnotatorParameters(
+				annotatorParameters, ClusteringMethod.KMEANS, numAnnotatorClusters, maxIterations, smoothing, rnd);
 		
-		// apply the assignments to create a new dataset
-		Dataset newdata = withNewAnnotators(data, Indexers.indexerOfLongs(numAnnotatorClusters), false);
-		for (final Pair<DatasetInstance,DatasetInstance> pair: Iterables2.pairUp(data, newdata)){
-			// copy mapped annotations
-			pair.getFirst().getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
-				@Override
-				public void visit(int annotator, int annotationVal, double value) {
-					int mappedAnnotator = clusterAssignments[annotator];
-					pair.getSecond().getAnnotations().getLabelAnnotations().setEntry(mappedAnnotator, annotationVal, value);
-				}
-			});
+		// transform flat instances and then recreate a dataset.
+		List<FlatInstance<SparseFeatureVector, Integer>> transformedFlatInstances = Lists.newArrayList();
+		for (DatasetInstance inst: data){
+			// add labeled instance (unchanged)
+			boolean isLabelConcealed = inst.hasLabel() && !inst.hasObservedLabel();
+			transformedFlatInstances.add(new FlatLabeledInstance<>(AnnotationInterfaceJavaUtils.newLabeledInstance(
+					inst.asFeatureVector(), inst.getLabel(), inst.getInfo().getInstanceId(), inst.getInfo().getSource(), isLabelConcealed)));
+			
+			// add transformed annotations
+			for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+				Annotation<SparseFeatureVector, Integer> xann = AnnotationInterfaceJavaUtils.newAnnotatedInstance(
+						clusterAssignments[(int)ann.getAnnotator()], // xformed annotator
+						ann.getLabel(), ann.getStartTimestamp(), ann.getEndTimestamp(), ann.getInstanceId(), ann.getSource(), inst.asFeatureVector());
+				transformedFlatInstances.add(new FlatAnnotatedInstance<>(xann));
+			}
 		}
-		return null;
+		return convert(data.getInfo().getSource(), transformedFlatInstances, 
+				data.getInfo().getFeatureIndexer(), data.getInfo().getLabelIndexer(), data.getInfo().getInstanceIdIndexer(), 
+				Indexers.indexerOfLongs(numAnnotatorClusters), // annotator id indexer (one annotator per cluster)
+				true); // "true" preserves raw annotations
+		
+		
+//		// apply the assignments to create a new dataset
+//		Dataset newdata = withNewAnnotators(data, Indexers.indexerOfLongs(numAnnotatorClusters));
+//		for (final Pair<DatasetInstance,DatasetInstance> pair: Iterables2.pairUp(data, newdata)){
+//			// copy mapped annotations
+//			pair.getFirst().getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
+//				@Override
+//				public void visit(int annotator, int annotationVal, double value) {
+//					int mappedAnnotator = clusterAssignments[annotator];
+//					pair.getSecond().getAnnotations().getLabelAnnotations().setEntry(mappedAnnotator, annotationVal, value);
+//				}
+//			});
+//			// also copy/map the raw annotations (note: we need to find a way to get rid of raw annotations--this requires
+//			// that we figure out how to embed annotation arrival and completion times in the AnnotationSet.) 
+//			List<FlatInstance<SparseFeatureVector, Integer>> transformedRawLabelAnnotations = Lists.newArrayList();
+//			for (FlatInstance<SparseFeatureVector, Integer> inst: pair.getFirst().getAnnotations().getRawLabelAnnotations()){
+//				transformedRawLabelAnnotations.add(new FlatAnnotatedInstance<>(
+//						AnnotationInterfaceJavaUtils.newAnnotatedInstance(clusterAssignments[(int)inst.getAnnotator()], 
+//								inst.getLabel(), inst.getStartTimestamp(), inst.getEndTimestamp(), inst.getInstanceId(), inst.getSource(), inst.getData())));
+//			}
+//			((BasicAnnotationSet)pair.getSecond().getAnnotations()).setRawLabelAnnotations(transformedRawLabelAnnotations);
+//		}
+//		return new BasicDataset(newdata, infoWithUpdatedCounts(newdata, newdata.getInfo()));
 	}
 	
 

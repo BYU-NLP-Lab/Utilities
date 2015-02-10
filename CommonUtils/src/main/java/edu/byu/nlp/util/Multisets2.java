@@ -41,7 +41,8 @@ public class Multisets2 {
    * Choose an arbitrary max element
    */
   public static <T> T  maxElement(Multiset<T> mset, RandomGenerator rnd){
-	  return RandomGenerators.sample(maxElements(mset), rnd);
+	  Set<T> maxElements = maxElements(mset);
+	  return maxElements.size()==0? null: RandomGenerators.sample(maxElements, rnd);
   }
 
   /**
@@ -64,7 +65,8 @@ public class Multisets2 {
    * Choose an arbitrary min element
    */
   public static <T> T  minElement(Multiset<T> mset, RandomGenerator rnd){
-	  return RandomGenerators.sample(minElements(mset), rnd);
+	  Set<T> minElements = minElements(mset);
+	  return minElements.size()==0? null: RandomGenerators.sample(minElements, rnd);
   }
   
   /**
