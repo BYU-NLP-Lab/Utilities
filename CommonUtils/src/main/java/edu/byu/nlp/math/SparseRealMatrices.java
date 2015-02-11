@@ -1,5 +1,7 @@
 package edu.byu.nlp.math;
 
+import java.util.Set;
+
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.linear.AbstractRealMatrix;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
 import edu.byu.nlp.util.Counter;
 import edu.byu.nlp.util.DenseCounter;
@@ -147,6 +150,19 @@ public class SparseRealMatrices {
 				return 0;
 			}
 		});
+	}
+	
+	public static int numNonZeroRows(SparseRealMatrix mat){
+		final Set<Integer> nonZeroRows = Sets.newHashSet();
+		mat.walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
+			@Override
+			public void visit(int row, int column, double value) {
+				if (value!=0){
+					nonZeroRows.add(row);
+				}
+			}
+		});
+		return nonZeroRows.size();
 	}
 	
 }

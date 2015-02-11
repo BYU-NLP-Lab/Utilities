@@ -71,7 +71,8 @@ public class FeatureSelectorFactories {
     }
   }
 
-  public static <L> FeatureSelectorFactory<L> conjoin(FeatureSelectorFactory<L>... factories) {
+  @SafeVarargs
+public static <L> FeatureSelectorFactory<L> conjoin(FeatureSelectorFactory<L>... factories) {
     ArrayList<FeatureSelectorFactory<L>> nonNullFactories = Lists.newArrayList();
     for (FeatureSelectorFactory<L> factory: factories){
       if (factory!=null){

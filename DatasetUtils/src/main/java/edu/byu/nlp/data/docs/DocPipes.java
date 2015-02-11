@@ -18,7 +18,6 @@ import java.io.Reader;
 import java.util.BitSet;
 import java.util.List;
 
-import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.vfs2.FileObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,9 +60,9 @@ public class DocPipes {
             .build();
   }
 
-  public static LabeledInstancePipe<String, String, String, String> jsonToDocPipe(Reader jsonReader, String jsonReferencedDataDir, RandomGenerator rnd) throws FileNotFoundException {
+  public static LabeledInstancePipe<String, String, String, String> jsonToDocPipe(Reader jsonReader, String jsonReferencedDataDir) throws FileNotFoundException {
     return new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-            .add(Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReader, jsonReferencedDataDir, rnd)))
+            .add(Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReader, jsonReferencedDataDir)))
             .build();
   }
   

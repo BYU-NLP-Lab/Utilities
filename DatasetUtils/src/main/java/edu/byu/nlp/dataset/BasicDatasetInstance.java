@@ -151,7 +151,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public int getNumAnnotators() {
-			return annotations.getLabelAnnotations().getRowDimension();
+			return SparseRealMatrices.numNonZeroRows(annotations.getLabelAnnotations());
 		}
 		@Override
 		public int getNumAnnotations() {

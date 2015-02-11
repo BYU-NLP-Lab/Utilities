@@ -57,7 +57,7 @@ import edu.byu.nlp.util.jargparser.annotations.Option;
 /**
  * @author plf1
  *
- * Read in crowdflower data, output a file containing fitted 
+ * Read in a json annotation stream, output a file containing fitted 
  * annotator confusion matrices (for use in future simulations)
  */
 public class AnnotatorParameterEstimator {
@@ -99,7 +99,7 @@ public class AnnotatorParameterEstimator {
     
     // compile annotation stream data into a dataset
     RandomGenerator rnd = new MersenneTwister(seed);
-    Dataset data = readData(jsonStream, rnd);
+    Dataset data = readData(jsonStream);
     
     // create confusion matrices for each annotator wrt some truth
     int[][][] confusionMatrices; // confusionMatrices[annotator][true label][annotation] = count
@@ -292,7 +292,7 @@ public class AnnotatorParameterEstimator {
   }
   
 
-  private static Dataset readData(String jsonStream, RandomGenerator rnd) throws FileSystemException, FileNotFoundException {
+  private static Dataset readData(String jsonStream) throws FileSystemException, FileNotFoundException {
     // these parameters are not important since we will ignore the data itself and concentrate only on annotations
     // in this script
     int featureCountCutoff = -1;
@@ -310,7 +310,7 @@ public class AnnotatorParameterEstimator {
           FeatureSelectorFactories.conjoin(
               new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
               (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),
-          featureNormalizer, rnd)
+          featureNormalizer)
           .dataset();
       
     // Postprocessing: remove all documents with duplicate sources or empty features

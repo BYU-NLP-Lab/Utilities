@@ -12,13 +12,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
-import org.apache.commons.math3.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,25 +59,23 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	private static final Logger logger = LoggerFactory.getLogger(JSONFileToAnnotatedDocumentList.class);
 
 	private Reader jsonReader;
-	private RandomGenerator rnd;
 	private String jsonReferencedDataDir;
 
-	public JSONFileToAnnotatedDocumentList(String basedir, RandomGenerator rnd) throws FileNotFoundException {
-		this(basedir, Charset.defaultCharset(), rnd);
+	public JSONFileToAnnotatedDocumentList(String basedir) throws FileNotFoundException {
+		this(basedir, Charset.defaultCharset());
 	}
 
-	public JSONFileToAnnotatedDocumentList(String jsonFile, Charset charset, RandomGenerator rnd)
+	public JSONFileToAnnotatedDocumentList(String jsonFile, Charset charset)
 			throws FileNotFoundException {
 		// assume the datadir referred to by json will be relative to the parent folder of the dataset (e.g., if 
 		// jsonFile= /aml/data/plf1/cfgroups/cfgroups1000.json then the basedir should be /aml/data/plf1
-		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), new File(jsonFile).getParentFile().getParent(), rnd);
+		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), new File(jsonFile).getParentFile().getParent());
 	}
 
-	public JSONFileToAnnotatedDocumentList(Reader jsonReader, String jsonReferencedDataDir, RandomGenerator rnd) {
+	public JSONFileToAnnotatedDocumentList(Reader jsonReader, String jsonReferencedDataDir) {
 		Preconditions.checkNotNull(jsonReader);
 		this.jsonReader = jsonReader;
 		this.jsonReferencedDataDir=jsonReferencedDataDir;
-		this.rnd = rnd;
 	}
 
 	// simple deserialization pojo
@@ -150,11 +145,6 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 		List<InstancePojo> labeledInstances = Lists.newArrayList();
 		List<InstancePojo> unlabeledInstances = Lists.newArrayList();
 		List<String> docSources = Lists.newArrayList(instanceMap.keySet());
-		Collections.shuffle(docSources, new Random(rnd.nextLong())); // random
-																		// instance
-																		// order
-																		// within
-																		// categories
 		for (String docSource : docSources) {
 			InstancePojo pojo = instanceMap.get(docSource);
 			if (pojo.labelobserved) {

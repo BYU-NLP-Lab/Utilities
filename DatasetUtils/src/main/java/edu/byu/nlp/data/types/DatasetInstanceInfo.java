@@ -18,6 +18,11 @@ public interface DatasetInstanceInfo {
 	 */
 	String getSource();
 
+	/**
+	 * NOT the same as Dataset.getNumAnnotators(). 
+	 * Returns the number of annotators who have annotated 
+	 * this DatasetInstance
+	 */
 	int getNumAnnotators();
 	
 	int getNumAnnotations();

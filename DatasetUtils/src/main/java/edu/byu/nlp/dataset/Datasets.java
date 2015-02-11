@@ -822,7 +822,7 @@ public class Datasets {
 		int[][][] a = new int[dataset.getInfo().getNumDocuments()][0][];
 		for (Enumeration<DatasetInstance> e : Iterables2.enumerate(dataset)) {
 			a[e.getIndex()] = compileDenseAnnotations(
-					e.getElement(), dataset.getInfo().getNumClasses(), e.getElement().getInfo().getNumAnnotators());
+					e.getElement(), dataset.getInfo().getNumClasses(), dataset.getInfo().getNumAnnotators());
 		}
 		return a;
 	}

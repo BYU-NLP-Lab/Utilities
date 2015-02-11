@@ -7,9 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.commons.math3.random.RandomGenerator;
-import org.mockito.Mockito;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -70,9 +67,8 @@ public class JsonDatasetMocker {
 		FeatureSelectorFactory<String> featureSelectorFactory = new CountCutoffFeatureSelectorFactory<String>(-1);
 		Integer featureNormalizationConstant = 1;
 		Function<List<String>, List<String>> tokenTransform = null;
-		RandomGenerator rnd = Mockito.mock(RandomGenerator.class);
 		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source", null, jsonReader,
-				docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant, rnd);
+				docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
 		return builder.dataset();
 	}
 	

@@ -23,7 +23,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.vfs2.FileSystemException;
 
 import com.google.common.base.Function;
@@ -78,7 +77,6 @@ public class JSONDocumentDatasetBuilder {
   private final FeatureSelectorFactory<String> featureSelectorFactory;
   private Integer featureNormalizationConstant;
   private Reader jsonReader;
-  private RandomGenerator rnd;
   private String source;
 private String jsonReferencedDataDir;
 
@@ -86,9 +84,9 @@ private String jsonReferencedDataDir;
       @Nullable Function<String, String> docTransform,
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
-      FeatureSelectorFactory<String> featureSelectorFactory, RandomGenerator rnd) 
+      FeatureSelectorFactory<String> featureSelectorFactory) 
           throws FileSystemException, FileNotFoundException {
-    this(basedir, filename, docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, null, rnd);
+    this(basedir, filename, docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, null);
   }
 
   private static Reader readerOf(String jsonFile) throws FileNotFoundException{
@@ -104,9 +102,9 @@ private String jsonReferencedDataDir;
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
       FeatureSelectorFactory<String> featureSelectorFactory,
-      @Nullable Integer featureNormalizationConstant, RandomGenerator rnd) throws FileSystemException, FileNotFoundException {
+      @Nullable Integer featureNormalizationConstant) throws FileSystemException, FileNotFoundException {
     this(basedir+"/"+filename, new File(basedir).getParent(), readerOf(basedir+"/"+filename), 
-        docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant, rnd);
+        docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
   }
   
   /**
@@ -120,7 +118,7 @@ private String jsonReferencedDataDir;
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
       FeatureSelectorFactory<String> featureSelectorFactory,
-      @Nullable Integer featureNormalizationConstant, RandomGenerator rnd) {
+      @Nullable Integer featureNormalizationConstant) {
 		this.source=source;
 		this.jsonReferencedDataDir=jsonReferencedDataDir;
 	    this.jsonReader=jsonReader;
@@ -129,12 +127,11 @@ private String jsonReferencedDataDir;
 	    this.tokenTransform=tokenTransform;
 	    this.featureSelectorFactory = featureSelectorFactory;
 	    this.featureNormalizationConstant=featureNormalizationConstant;
-	    this.rnd=rnd;
   }
 
   public Dataset dataset() throws FileNotFoundException {
     // This pipe leaves data in the form it is expected to be in at test time
-    LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, jsonReferencedDataDir, rnd);
+    LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, jsonReferencedDataDir);
 
     // Combine the indexToDocPipe, transform (if applicable), and tokenizer.
     SerialLabeledInstancePipeBuilder<String, String, String, String> builder =
