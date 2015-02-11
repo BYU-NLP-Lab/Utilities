@@ -75,7 +75,7 @@ public class AnnotationStream2Csv {
     Dataset data = readData(jsonStream);
 
     // optionally aggregate by instance
-    String header = "annotator,start,end,annotation,label,source,num_annotations,num_annotators\n";
+    String header = "annotator,start,end,annotation,label,source,instance_id,num_annotations,num_annotators\n";
     
     // iterate over instances and (optionally) annotations
     final StringBuilder bld = new StringBuilder();
@@ -90,6 +90,7 @@ public class AnnotationStream2Csv {
 				bld.append(ann.getLabel()+",");
 				bld.append(inst.getLabel()+",");
 				bld.append(inst.getInfo().getSource()+",");
+				bld.append(inst.getInfo().getInstanceId()+",");
 				bld.append("NA,");
 				bld.append("NA");
 				bld.append("\n");
@@ -102,6 +103,7 @@ public class AnnotationStream2Csv {
 			bld.append("NA,");
 			bld.append(inst.getLabel()+",");
 			bld.append(inst.getInfo().getSource()+",");
+			bld.append(inst.getInfo().getInstanceId()+",");
 			bld.append(inst.getInfo().getNumAnnotations()+",");
 			bld.append(inst.getInfo().getNumAnnotators());
 			bld.append("\n");

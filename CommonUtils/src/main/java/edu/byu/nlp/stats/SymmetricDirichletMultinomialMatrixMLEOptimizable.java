@@ -35,7 +35,7 @@ import edu.byu.nlp.util.Matrices;
  * note: If we wanted a gamma prior MAP it would look sort of like section 3.1 in http://arxiv.org/pdf/1205.2662.pdf
  * except that one is a symmetric dirichlet
  */
-public class SymmetricDirichletMultinomialMLEOptimizable implements Optimizable<Double> {
+public class SymmetricDirichletMultinomialMatrixMLEOptimizable implements Optimizable<Double> {
 
 	private final double[][] data;
 	private final double[] perIDataSums;
@@ -48,11 +48,11 @@ public class SymmetricDirichletMultinomialMLEOptimizable implements Optimizable<
 	 * @param gammaA the first parameter of a gamma hyperprior over the dirichlet 
 	 * @param gammaB the second parameter of a gamma hyperprior over the dirichlet
 	 */
-	public static SymmetricDirichletMultinomialMLEOptimizable newOptimizable(double[][] data, double gammaA, double gammaB) {
-		return new SymmetricDirichletMultinomialMLEOptimizable(data,gammaA,gammaB);
+	public static SymmetricDirichletMultinomialMatrixMLEOptimizable newOptimizable(double[][] data, double gammaA, double gammaB) {
+		return new SymmetricDirichletMultinomialMatrixMLEOptimizable(data,gammaA,gammaB);
 	}
 	
-	private SymmetricDirichletMultinomialMLEOptimizable(double[][] data, double gammaA, double gammaB) {
+	private SymmetricDirichletMultinomialMatrixMLEOptimizable(double[][] data, double gammaA, double gammaB) {
 		Preconditions.checkNotNull(data, "invalid data: "+data);
 		Preconditions.checkArgument(data.length>0, "invalid data: "+data);
 		Preconditions.checkArgument(data[0].length>0, "invalid data: "+data);
@@ -111,7 +111,6 @@ public class SymmetricDirichletMultinomialMLEOptimizable implements Optimizable<
 		// prod_i prod_k (1/gamma(alpha_k))
 		double logGammaOfAlpha = Gamma.logGamma(alpha);
 		double llik = -logGammaOfAlpha * N * K;
-		
 		
 		for (int i=0; i<N; i++){
 			// first  term numerator
