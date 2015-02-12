@@ -41,6 +41,8 @@ import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Paths;
+import edu.byu.nlp.util.DoubleArrays;
+import edu.byu.nlp.util.Integers;
 import edu.byu.nlp.util.jargparser.ArgumentParser;
 import edu.byu.nlp.util.jargparser.annotations.Option;
 
@@ -75,7 +77,7 @@ public class AnnotationStream2Csv {
     Dataset data = readData(jsonStream);
 
     // optionally aggregate by instance
-    String header = "annotator,start,end,annotation,label,source,instance_id,num_annotations,num_annotators\n";
+    String header = "annotator,start,end,annotation,label,source,instance_id,num_correct_annotations,num_annotations,num_annotators\n";
     
     // iterate over instances and (optionally) annotations
     final StringBuilder bld = new StringBuilder();
@@ -91,12 +93,15 @@ public class AnnotationStream2Csv {
 				bld.append(inst.getLabel()+",");
 				bld.append(inst.getInfo().getSource()+",");
 				bld.append(inst.getInfo().getInstanceId()+",");
-				bld.append("NA,");
+				bld.append((ann.getLabel()==inst.getLabel()? 1: 0)+",");
+				bld.append(1+",");
 				bld.append("NA");
 				bld.append("\n");
 			}
 			break;
-		case INSTANCE:				
+		case INSTANCE:
+			int numCorrectAnnotations = Integers.fromDouble(DoubleArrays.sum(inst.getAnnotations().getLabelAnnotations().getRow(inst.getLabel())), 1e-10);
+			
 			bld.append("NA,");
 			bld.append("NA,");
 			bld.append("NA,");
@@ -104,6 +109,7 @@ public class AnnotationStream2Csv {
 			bld.append(inst.getLabel()+",");
 			bld.append(inst.getInfo().getSource()+",");
 			bld.append(inst.getInfo().getInstanceId()+",");
+			bld.append(numCorrectAnnotations+",");
 			bld.append(inst.getInfo().getNumAnnotations()+",");
 			bld.append(inst.getInfo().getNumAnnotators());
 			bld.append("\n");
