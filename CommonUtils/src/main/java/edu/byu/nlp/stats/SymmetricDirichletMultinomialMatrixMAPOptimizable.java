@@ -26,16 +26,30 @@ import edu.byu.nlp.util.Matrices;
 /**
  * @author plf1
  * 
- * Optimizable for computing the MLE of Dirichlet-multinomial distributed data.
+ * Optimizable for computing the MLE of Dirichlet-multinomial distributed data 
+ * when a whole matrix of hyperparameters is tied together. This is derived by adapting 
+ * the log likelihood in equation (53) of  
+ * http://research.microsoft.com/en-us/um/people/minka/papers/dirichlet/minka-dirichlet.pdf
+ * to additionally sum over data for other distributions, and then taking the derivative
+ * wrt each tied parameter in the same way as equation 54. 
+ * The result is that the fixed point algorithm in equation 
+ * 55 gets additional sums in both the numerator and denominator, and some 
+ * terms simplify since all of the alpha terms are tied to the same value.  
+ * 
+ * Note that you can summarize all of the data for each distribution into a single 
+ * row because in general the MLE/MAP of a dirichlet-multinomial are the same 
+ * whether data is spread across multiple sparse observations or is condensed into a 
+ * single dense observation. 
+ * 
+ * If you pass in a single row of data then this reduces to solving the parameter of a 
+ * single symmetric Dirichlet-multinomial.
+ * 
+ * We also add a gamma prior like section 3.1 of http://arxiv.org/pdf/1205.2662.pdf
  * 
  * Technically the data should be int[][], but we are allowing a small generalization here 
  * in case data have been scaled to fractional counts.
- * 
- * http://research.microsoft.com/en-us/um/people/minka/papers/dirichlet/minka-dirichlet.pdf
- * note: If we wanted a gamma prior MAP it would look sort of like section 3.1 in http://arxiv.org/pdf/1205.2662.pdf
- * except that one is a symmetric dirichlet
  */
-public class SymmetricDirichletMultinomialMatrixMLEOptimizable implements Optimizable<Double> {
+public class SymmetricDirichletMultinomialMatrixMAPOptimizable implements Optimizable<Double> {
 
 	private final double[][] data;
 	private final double[] perIDataSums;
@@ -48,11 +62,11 @@ public class SymmetricDirichletMultinomialMatrixMLEOptimizable implements Optimi
 	 * @param gammaA the first parameter of a gamma hyperprior over the dirichlet 
 	 * @param gammaB the second parameter of a gamma hyperprior over the dirichlet
 	 */
-	public static SymmetricDirichletMultinomialMatrixMLEOptimizable newOptimizable(double[][] data, double gammaA, double gammaB) {
-		return new SymmetricDirichletMultinomialMatrixMLEOptimizable(data,gammaA,gammaB);
+	public static SymmetricDirichletMultinomialMatrixMAPOptimizable newOptimizable(double[][] data, double gammaA, double gammaB) {
+		return new SymmetricDirichletMultinomialMatrixMAPOptimizable(data,gammaA,gammaB);
 	}
 	
-	private SymmetricDirichletMultinomialMatrixMLEOptimizable(double[][] data, double gammaA, double gammaB) {
+	private SymmetricDirichletMultinomialMatrixMAPOptimizable(double[][] data, double gammaA, double gammaB) {
 		Preconditions.checkNotNull(data, "invalid data: "+data);
 		Preconditions.checkArgument(data.length>0, "invalid data: "+data);
 		Preconditions.checkArgument(data[0].length>0, "invalid data: "+data);

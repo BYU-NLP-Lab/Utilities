@@ -34,27 +34,36 @@ public class DirichletMultinomialMLEOptimizableTest {
 
 	private static final Delta delta = Delta.delta(0.1);
 	
+	private static double[] solve(double[][] data, double[] startPoint, boolean inPlace){
+
+		DirichletMultinomialMLEOptimizable o = DirichletMultinomialMLEOptimizable.newOptimizable(data, inPlace);
+		
+		double tolerance = 1e-6;
+		IterativeOptimizer optimizer = new IterativeOptimizer(ConvergenceCheckers.relativePercentChange(tolerance));
+		ValueAndObject<double[]> optimum = optimizer.optimize(o, ReturnType.HIGHEST, true, startPoint);
+		
+		return optimum.getObject();
+	}
+	
 	/**
 	 * Test method for {@link edu.byu.nlp.stats.DirichletMLEOptimizable#computeNext(double[])}.
 	 */
 	@Test
 	public void testComputeNextInPlace() {
+		// problem
 		boolean inPlace = true;
-
 		double[] alpha = new double[]{ 1,2,3,4 };
 		final double[][] data = DirichletTestUtils.sampleMultinomialDataset(alpha,10000,1000,new MersenneTwister(1));
-		DirichletMultinomialMLEOptimizable o = DirichletMultinomialMLEOptimizable.newOptimizable(data, inPlace);
-		
-		double tolerance = 1e-6;
-		IterativeOptimizer optimizer = new IterativeOptimizer(ConvergenceCheckers.relativePercentChange(tolerance));
 		double[] startPoint = new double[]{9,4,1,7};
-		ValueAndObject<double[]> optimum = optimizer.optimize(o, ReturnType.HIGHEST, true, startPoint);
+		
+		// solution
+		double[] optimum = solve(data, startPoint, inPlace);
 		
 		// Ensure that it was performed in place
-		assertThat(startPoint).isSameAs(optimum.getObject());
+		assertThat(startPoint).isSameAs(optimum);
 		
 		// Ensure that we recovered the original parameters
-		assertThat(optimum.getObject()).isEqualTo(alpha, delta);
+		assertThat(optimum).isEqualTo(alpha, delta);
 		
 	}
 
@@ -63,22 +72,44 @@ public class DirichletMultinomialMLEOptimizableTest {
 	 */
 	@Test
 	public void testComputeNextNotInPlace() {
+		// problem
 		boolean inPlace = false;
-
 		double[] alpha = new double[]{ 1,2,3,4 };
 		final double[][] data = DirichletTestUtils.sampleMultinomialDataset(alpha,10000,1000,new MersenneTwister(1));
 		DirichletMultinomialMLEOptimizable o = DirichletMultinomialMLEOptimizable.newOptimizable(data, inPlace);
-
-		double tolerance = 1e-6;
-		IterativeOptimizer optimizer = new IterativeOptimizer(ConvergenceCheckers.relativePercentChange(tolerance));
 		double[] startPoint = new double[]{9,4,1,7};
-		ValueAndObject<double[]> optimum = optimizer.optimize(o, ReturnType.HIGHEST, true, startPoint);
+		
+		// solutions
+		double[] optimum = solve(data, startPoint, inPlace);
 		
 		// Ensure that it was NOT performed in place (no changes should have happened)
 		assertThat(startPoint).isEqualTo(new double[]{9,4,1,7});
 		
 		// Ensure that we recovered the original parameters
-		assertThat(optimum.getObject()).isEqualTo(alpha, delta);
+		assertThat(optimum).isEqualTo(alpha, delta);
 	}
 
+
+	/**
+	 * An interesting property of the Dirichlet-Multinomial is that  
+	 * the MLE estimate is the same whether you see data spread 
+	 * across many draws or in a single draw. 
+	 */
+	@Test
+	public void testCompetingData() {
+		boolean inPlace = true;
+		double[] startPoint = new double[]{9,4,1};
+
+		double[][] data1 = new double[][]{
+				{3,28,2},
+				{1,39,4},
+				{4,25,3}};
+		double[] optimum1 = solve(data1, startPoint, inPlace);
+		
+		double[][] data2 = new double[][]{{8,92,9}};
+		double[] optimum2 = solve(data2, startPoint, inPlace);
+
+		assertThat(optimum1).isEqualTo(optimum2, delta);
+		
+	}
 }

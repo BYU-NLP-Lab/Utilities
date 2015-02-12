@@ -44,7 +44,7 @@ public class SymmetricDirichletMultinomialMLEOptimizableTest {
 		double alpha = 0.01;
 		int K = 5;
 		final double[][] data = DirichletTestUtils.sampleMultinomialDataset(DoubleArrays.constant(alpha, K),1000,100,new MersenneTwister(1));
-		SymmetricDirichletMultinomialMatrixMLEOptimizable o = SymmetricDirichletMultinomialMatrixMLEOptimizable.newOptimizable(data,2,2);
+		SymmetricDirichletMultinomialMatrixMAPOptimizable o = SymmetricDirichletMultinomialMatrixMAPOptimizable.newOptimizable(data,2,2);
 		
 		double tolerance = 1e-6;
 		IterativeOptimizer optimizer = new IterativeOptimizer(ConvergenceCheckers.relativePercentChange(tolerance));
