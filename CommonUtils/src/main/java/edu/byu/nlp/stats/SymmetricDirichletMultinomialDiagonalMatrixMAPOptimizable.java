@@ -55,9 +55,8 @@ import edu.byu.nlp.util.Pair;
  */
 public class SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable implements Optimizable<Pair<Double,Double>> {
 
-	private final double[][] data;
-	private final double[] perIDataSums;
-	private final int N;
+	private final double[][][] data;
+	private final int J;
 	private final int K;
 	private double gammaA;
 	private double gammaB;
@@ -66,119 +65,152 @@ public class SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable implement
 	 * @param gammaA the first parameter of a gamma hyperprior over the dirichlet 
 	 * @param gammaB the second parameter of a gamma hyperprior over the dirichlet
 	 */
-	public static SymmetricDirichletMultinomialMatrixMAPOptimizable newOptimizable(double[][] data, double gammaA, double gammaB) {
-		return new SymmetricDirichletMultinomialMatrixMAPOptimizable(data,gammaA,gammaB);
+	public static SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable newOptimizable(double[][][] data, double gammaA, double gammaB) {
+		return new SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable(data,gammaA,gammaB);
 	}
 	
-	private SymmetricDirichletMultinomialMatrixMAPOptimizable(double[][] data, double gammaA, double gammaB) {
+	private SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable(double[][][] data, double gammaA, double gammaB) {
 		Preconditions.checkNotNull(data, "invalid data: "+data);
 		Preconditions.checkArgument(data.length>0, "invalid data: "+data);
 		Preconditions.checkArgument(data[0].length>0, "invalid data: "+data);
+		Preconditions.checkArgument(gammaA*gammaB>0,"gammaA and gammaB must either both be valid (>0) or both invalid (<=0)");
 		this.gammaA=gammaA;
 		this.gammaB=gammaB;
 		this.data = data;
-		this.N = data.length;
+		this.J = data.length;
 		this.K = data[0].length;
-		this.perIDataSums = Matrices.sumOverSecond(data);
+		Preconditions.checkArgument(data[0][0].length==this.K,"parameter matrices must be square");
 	}
 	
 	/** {@inheritDoc} */
 	@Override
 	public ValueAndObject<Pair<Double,Double>> computeNext(Pair<Double,Double> params) {
+		double alphaDiag = params.getFirst();
+		double alphaOffdiag = params.getSecond();
 		
 		// diag
-		double diag = params.getFirst();
-		double diagNumerator = computeDiagNumerator(data,diag,N,K) + gammaA - 1; 
-		double diagDenominator = computeDiagDenominator(perIDataSums,diag,K) + gammaB;
+		double diagNumerator = computeDiagNumerator(data,alphaDiag,J,K); 
+		if (gammaA>0){
+			diagNumerator += (gammaA - 1) / alphaDiag; // optional prior
+		}
+		double diagDenominator = computeDiagDenominator(data,alphaDiag,alphaOffdiag,J,K);
+		if (gammaB>0){
+			diagDenominator += gammaB; // optional prior
+		}
 		double diagRatio = diagNumerator / diagDenominator; 
-		double newDiag = diag *= diagRatio;
+		double newDiag = alphaDiag * diagRatio;
 		
 		// off diag
-		double offdiag = params.getSecond();
-		double offDiagNumerator = computeOffDiagNumerator(data,offdiag,N,K) + gammaA - 1; 
-		double offDiagDenominator = computeOffDiagDenominator(perIDataSums,offdiag,K) + gammaB;
+		double offDiagNumerator = computeOffDiagNumerator(data,alphaOffdiag,J,K); 
+		if (gammaA>0){
+			offDiagNumerator += (gammaA - 1) / alphaOffdiag; // optional prior
+		}
+		double offDiagDenominator = computeOffDiagDenominator(data,alphaDiag,alphaOffdiag,J,K);
+		if (gammaB>0){
+			offDiagDenominator += gammaB; // optional prior
+		}
 		double offDiagRatio = offDiagNumerator / offDiagDenominator; 
-		double newOffDiag = offdiag *= offDiagRatio;
+		double newOffDiag = alphaOffdiag * offDiagRatio;
 		
-		double value = computeLogLikelihood(data, diag, offdiag, perIDataSums, N, K);
+		double value = computeLogLikelihood(data, alphaDiag, alphaOffdiag, gammaA, gammaB, J, K);
 		return new ValueAndObject<Pair<Double,Double>>(value, Pair.of(newDiag, newOffDiag));
 	}
 
-
-	private double computeOffDiagDenominator(double[] perIDataSums, double offdiag, int K) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	private double computeOffDiagNumerator(double[][] data, double offdiag, int N, int K) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	private double computeDiagDenominator(double[] perIDataSums, double diag, int K) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	private double computeDiagNumerator(double[][] data, double diag, int N, int K) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	private static double computeNumerator(double[][] data, double alpha, int N, int K) {
+	private double computeDiagNumerator(double[][][] data, double bdiag, int J, int K) {
 		double total = 0;
-		for (int k=0; k<K; k++){
-			for (int i=0; i<N; i++){
-				total += Gamma.digamma(data[i][k] + alpha);
+		for (int j=0; j<J; j++){
+			for (int k=0; k<K; k++){
+				total += Gamma.digamma(data[j][k][k] + bdiag);
 			}
 		}
-		total -= Gamma.digamma(alpha) * N * K; // pulled out of the loop for efficiency
+		
+		total -= J * K * Gamma.digamma(bdiag);
+				
 		return total;
 	}
-	
-	private static double computeDenominator(double[] perIDataSums, double alpha, double K) {
+
+	private double computeDiagDenominator(double[][][] data, double bdiag, double offdiag, int J, int K) {
 		double total = 0;
-		double alphaK = alpha*K;
-		for (int i=0; i<perIDataSums.length; i++){
-			total += Gamma.digamma(perIDataSums[i] + alphaK);
+		double alphasum = bdiag + (K-1)*offdiag;
+		
+		for (int j=0; j<J; j++){
+			double[] nj = Matrices.sumOverSecond(data[j]);
+			for (int k=0; k<K; k++){
+				total += Gamma.digamma(nj[k] + alphasum);
+			}
 		}
-		total -= Gamma.digamma(alphaK) * perIDataSums.length;
-		total *= K;
+		
+		total -= J * K * Gamma.digamma(alphasum);
+		
 		return total;
 	}
+
+	private double computeOffDiagNumerator(double[][][] data, double offdiag, int J, int K) {
+		double total = 0;
+
+		for (int j=0; j<J; j++){
+			for (int k=0; k<K; k++){
+				for (int kprime=0; kprime<K; kprime++){
+					if (k!=kprime){
+						total += Gamma.digamma(data[j][k][kprime]+offdiag);
+					}
+				}
+			}
+		}
+		
+		total -= J * K * (K-1) * Gamma.digamma(offdiag);
+		return total;
+	}
+
+	private double computeOffDiagDenominator(double[][][] data, double diag, double offdiag, int J, int K) {
+		double total = 0;
+		double alphasum = diag + (K-1)*offdiag;
+
+		for (int j=0; j<J; j++){
+			double[] nj = Matrices.sumOverSecond(data[j]);
+			for (int k=0; k<K; k++){
+				total += Gamma.digamma(nj[k] + alphasum);
+			}
+		}
+		total -= J * K * Gamma.digamma(alphasum);
+		return (K-1) * total;
+	}
+
 
 	/**
 	 * Equation 53 from http://research.microsoft.com/en-us/um/people/minka/papers/dirichlet/minka-dirichlet.pdf 
 	 * adapted to a matrix of data (just more outer sums)
 	 */
-	private double computeLogLikelihood(double[][] data, double diag, double offdiag, double[] perIDataSums, int N, int K) {
+	private double computeLogLikelihood(double[][][] data, double diag, double offdiag, double gammaA, double gammaB, int J, int K) {
 		double llik = 0;
-		// diagonal contribution
 		
-	
-		// off-diag contribution
+		// gamma priors
+		if (gammaA>0 && gammaB>0){
+			llik += ((gammaA - 1) * Math.log(diag)) - gammaB * diag;
+			llik += ((gammaA - 1) * Math.log(offdiag)) - gammaB * offdiag;
+		}
 		
-	
-		double alphaK = alpha*K;
-		
-		// this comes from the denominator of the second term
-		// which can be factored out of the inner loop into 
-		// prod_i prod_k (1/gamma(alpha_k))
-		double logGammaOfAlpha = Gamma.logGamma(alpha);
-		llik -= logGammaOfAlpha * N * K;
-		
-		for (int i=0; i<N; i++){
-			// first  term numerator
-			llik += Gamma.logGamma(alphaK);
-			// first term denominator
-			llik -= Gamma.logGamma(perIDataSums[i] + alphaK);
-			// second term
+		// lik
+		for (int j=0; j<J; j++){
+			double[] nj = Matrices.sumOverSecond(data[j]);
 			for (int k=0; k<K; k++){
-				// second term numerator
-				llik += Gamma.logGamma(data[i][k] + alpha);
-				// second term denominator (factored out and precomputed)
+				double totalAlpha = offdiag*(K-1) + diag;
+				// first  term numerator
+				llik += Gamma.logGamma(totalAlpha);
+				// first term denominator
+				llik -= Gamma.logGamma(nj[k] + totalAlpha);
+				// second term
+				for (int kprime=0; kprime<K; kprime++){
+					// second term numerator
+					llik += Gamma.logGamma(data[j][k][kprime] + (k==kprime?diag: offdiag));
+					// second term denominator (factored out and precomputed)
+				}
 			}
 		}
+		
+		// second term denominator
+		llik -= J * K * Gamma.logGamma(diag);
+		llik -= J * K * (K-1) * Gamma.logGamma(offdiag);
 		
 		return llik;
 	}

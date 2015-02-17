@@ -16,18 +16,44 @@
 package edu.byu.nlp.stats;
 
 
+import java.util.List;
+
 import org.apache.commons.math3.random.RandomGenerator;
+
+import com.google.common.collect.Lists;
 
 import edu.byu.nlp.util.DoubleArrays;
 
 /**
- * @author rah67
+ * @author plf1
  *
  */
 public class DirichletTestUtils {
 	
 	private DirichletTestUtils() { }
 
+	public static double[][][] sampleDirichletMultinomialMatrixDataset(double diagonalAlpha, double offdiagonalAlpha, int matrixSize, int numDataPoints, int datumSize, RandomGenerator rnd){
+		double[][] alpha = new double[matrixSize][matrixSize];
+		for (int r=0; r<matrixSize; r++){
+			for (int c=0; c<matrixSize; c++){
+				alpha[r][c] = (r==c)? diagonalAlpha: offdiagonalAlpha;
+			}
+		}
+		List<double[][]> result = Lists.newArrayList();
+		for (int i=0; i<numDataPoints; i++){
+			result.add(sampleDirichletMultinomialMatrixDataset(alpha, datumSize, rnd));
+		}
+		return result.toArray(new double[0][0][0]);
+	}
+	
+	public static double[][] sampleDirichletMultinomialMatrixDataset(double[][] alpha, int datumSize, RandomGenerator rnd){
+		double[][] result = new double[alpha.length][];
+		for (int r=0; r<alpha.length; r++){
+			result[r] = sampleMultinomialDataset(alpha[r], 1, datumSize, rnd)[0];
+		}
+		return result;
+	}
+	
 	public static double[][] sampleMultinomialDataset(double[] alpha, int numDataPoints, int datumSize, RandomGenerator rnd){
 		double[][] dataset = new double[numDataPoints][];
 		for (int i=0; i<numDataPoints; i++){

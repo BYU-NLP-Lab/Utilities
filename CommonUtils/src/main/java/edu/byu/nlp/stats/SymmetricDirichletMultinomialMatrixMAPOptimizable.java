@@ -82,12 +82,18 @@ public class SymmetricDirichletMultinomialMatrixMAPOptimizable implements Optimi
 	@Override
 	public ValueAndObject<Double> computeNext(Double alpha) {
 		
-		double numerator = computeNumerator(data,alpha,N,K) + gammaA - 1;
-		double denominator = computeDenominator(perIDataSums,alpha,K) + gammaB;
+		double numerator = computeNumerator(data,alpha,N,K);
+		if (gammaA>0){
+				numerator += (gammaA - 1)/alpha;
+		}
+		double denominator = computeDenominator(perIDataSums,alpha,K);
+		if (gammaB>0){
+			denominator += gammaB;
+		}
 		double ratio = numerator / denominator; 
-		double newalpha = alpha *= ratio;
+		double newalpha = alpha * ratio;
 		
-		double value = computeLogLikelihood(data, alpha, perIDataSums, N, K);
+		double value = computeLogLikelihood(data, alpha, perIDataSums, gammaA, gammaB, N, K);
 		return new ValueAndObject<Double>(value, newalpha);
 	}
 
@@ -116,15 +122,16 @@ public class SymmetricDirichletMultinomialMatrixMAPOptimizable implements Optimi
 	/**
 	 * Equation 53 from http://research.microsoft.com/en-us/um/people/minka/papers/dirichlet/minka-dirichlet.pdf
 	 */
-	private static double computeLogLikelihood(double[][] data, double alpha, double[] perIDataSums, int N, int K) {
+	private static double computeLogLikelihood(double[][] data, double alpha, double[] perIDataSums, double gammaA, double gammaB, int N, int K) {
 
 		double alphaK = alpha*K;
 		
-		// this comes from the denominator of the second term
-		// which can be factored out of the inner loop into 
-		// prod_i prod_k (1/gamma(alpha_k))
-		double logGammaOfAlpha = Gamma.logGamma(alpha);
-		double llik = -logGammaOfAlpha * N * K;
+		double llik = 0;
+
+		// gamma priors
+		if (gammaA>0 && gammaB>0){
+			llik += ((gammaA - 1) * Math.log(alpha)) - gammaB * alpha;
+		}
 		
 		for (int i=0; i<N; i++){
 			// first  term numerator
@@ -138,6 +145,11 @@ public class SymmetricDirichletMultinomialMatrixMAPOptimizable implements Optimi
 				// second term denominator (factored out and precomputed)
 			}
 		}
+		
+		// this comes from the denominator of the second term
+		// which can be factored out of the inner loop into 
+		// prod_i prod_k (1/gamma(alpha_k))
+		llik -= Gamma.logGamma(alpha) * N * K;
 		
 		return llik;
 	}

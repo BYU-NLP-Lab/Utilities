@@ -25,15 +25,15 @@ import edu.byu.nlp.math.optimize.ConvergenceCheckers;
 import edu.byu.nlp.math.optimize.IterativeOptimizer;
 import edu.byu.nlp.math.optimize.IterativeOptimizer.ReturnType;
 import edu.byu.nlp.math.optimize.ValueAndObject;
-import edu.byu.nlp.util.DoubleArrays;
+import edu.byu.nlp.util.Pair;
 
 /**
- * @author rah67
+ * @author plf1
  *
  */
-public class SymmetricDirichletMultinomialMLEOptimizableTest {
+public class SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizableTest {
 
-	private static final Delta delta = Delta.delta(0.1);
+	private static final Delta delta = Delta.delta(0.3);
 	
 	/**
 	 * Test method for {@link edu.byu.nlp.stats.DirichletMLEOptimizable#computeNext(double[])}.
@@ -41,18 +41,22 @@ public class SymmetricDirichletMultinomialMLEOptimizableTest {
 	@Test
 	public void testComputeNextInPlace() {
 
-		double alpha = 0.01;
-		int K = 5;
-		final double[][] data = DirichletTestUtils.sampleMultinomialDataset(DoubleArrays.constant(alpha, K),1000,100,new MersenneTwister(1));
-		SymmetricDirichletMultinomialMatrixMAPOptimizable o = SymmetricDirichletMultinomialMatrixMAPOptimizable.newOptimizable(data,2,2);
+		double diag = 10;
+		double offdiag = 1;
+		int numDataPoints = 1000;
+		int datumSize = 10000;
+		int matrixSize = 3;
+		final double[][][] data = DirichletTestUtils.sampleDirichletMultinomialMatrixDataset(diag, offdiag, matrixSize , numDataPoints, datumSize, new MersenneTwister(1));
+		SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable o = SymmetricDirichletMultinomialDiagonalMatrixMAPOptimizable.newOptimizable(data,-1,-1);
 		
-		double tolerance = 1e-6;
+		double tolerance = 1e-10;
 		IterativeOptimizer optimizer = new IterativeOptimizer(ConvergenceCheckers.relativePercentChange(tolerance));
-		Double startPoint = 7.;
-		ValueAndObject<Double> optimum = optimizer.optimize(o, ReturnType.HIGHEST, true, startPoint);
+		Pair<Double,Double> startPoint = Pair.of(7., 4.2);
+		ValueAndObject<Pair<Double,Double>> optimum = optimizer.optimize(o, ReturnType.HIGHEST, true, startPoint);
 		
 		// Ensure that we recovered the original parameters
-		assertThat(optimum.getObject()).isEqualTo(alpha, delta);
+		assertThat(optimum.getObject().getFirst()).isEqualTo(diag, delta);
+		assertThat(optimum.getObject().getSecond()).isEqualTo(offdiag, delta);
 		
 	}
 
