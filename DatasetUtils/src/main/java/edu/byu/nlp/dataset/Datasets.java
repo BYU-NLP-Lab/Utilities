@@ -1174,18 +1174,35 @@ public class Datasets {
 		return confusions;
 	}
 
+
+	public static enum AnnotatorClusterMethod {KM_MV, KM_GOLD}
 	/**
 	 * transform copy of the data, collapsing annotators into clusters based on 
 	 * the similarity of their confusion matrices wrt majority vote. 
 	 */
-	public static Dataset withClusteredAnnotators(Dataset data, int numAnnotatorClusters, double smoothing, RandomGenerator rnd) {
+	public static Dataset withClusteredAnnotators(Dataset data, int numAnnotatorClusters, AnnotatorClusterMethod clusterMethod, double smoothing, RandomGenerator rnd) {
 
-		// get the per-annotator cluster assignments
-		int[][][] confusionMatrices = confusionMatricesWrtMajorityVoteLabels(data, rnd);
+		// per-annotator cluster assignments
+		int[][][] confusionMatrices;
+		ClusteringMethod clusterAlgorithm;
+		
+		switch (clusterMethod) {
+		case KM_GOLD:
+			confusionMatrices = confusionMatricesWrtGoldLabels(data);
+			clusterAlgorithm = ClusteringMethod.KMEANS;
+			break;
+		case KM_MV:
+			confusionMatrices = confusionMatricesWrtMajorityVoteLabels(data, rnd);
+			clusterAlgorithm = ClusteringMethod.KMEANS;
+			break;
+		default:
+			throw new IllegalArgumentException("clustering method not implemented: "+clusterMethod);
+		}
+		
 		int maxIterations = 10000;
 		double[][][] annotatorParameters = AnnotatorParameterEstimator.confusionMatrices2AnnotatorParameters(confusionMatrices);
 		final int[] clusterAssignments = AnnotatorParameterEstimator.clusterAnnotatorParameters(
-				annotatorParameters, ClusteringMethod.KMEANS, numAnnotatorClusters, maxIterations, smoothing, rnd);
+				annotatorParameters, clusterAlgorithm, numAnnotatorClusters, maxIterations, smoothing, rnd);
 		
 		// transform flat instances and then recreate a dataset.
 		List<FlatInstance<SparseFeatureVector, Integer>> transformedFlatInstances = Lists.newArrayList();
