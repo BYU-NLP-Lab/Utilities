@@ -34,6 +34,8 @@ public interface DatasetInfo {
 	
 	int getNumTokensWithoutLabels();
 	
+	int getNumAnnotations();
+	
 	int getNumFeatures();
 	
 	int getNumClasses();

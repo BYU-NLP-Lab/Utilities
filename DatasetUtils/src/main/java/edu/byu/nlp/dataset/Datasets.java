@@ -418,7 +418,7 @@ public class Datasets {
 		}
 		
 		// info without counts
-		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
 		
 		// dataset with correct counts
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
@@ -489,7 +489,7 @@ public class Datasets {
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
 			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
 			Indexer<Long> instanceIdIndexer){
-		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0,0,0, 
+		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0,0,0,0, 
 				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer);
 		return infoWithUpdatedCounts(instances, info);
 	}
@@ -498,12 +498,14 @@ public class Datasets {
 
 		int numDocuments = 0, numDocumentsWithAnnotations = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
 		int numTokens = 0, numTokensWithAnnotations = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
+		int numAnnotations = 0;
 		for (DatasetInstance inst: instances){
 			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;
 			if (inst.hasAnnotations()){
+				numAnnotations += inst.getInfo().getNumAnnotations();
 				numDocumentsWithAnnotations++;
 				numTokensWithAnnotations += numTokensInCurrentDocument;
 			}
@@ -520,7 +522,7 @@ public class Datasets {
 		return new BasicDataset.Info(
 				previousInfo.getSource(), 
 				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels,
-				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels,
+				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels, numAnnotations,
 				previousInfo.getAnnotatorIdIndexer(), 
 				previousInfo.getFeatureIndexer(), 
 				previousInfo.getLabelIndexer(), 
@@ -1047,10 +1049,7 @@ public class Datasets {
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
-		BasicDataset newdataset = new BasicDataset(instances, 
-				new BasicDataset.Info(info.getSource(), 
-						info.getNumDocuments(), info.getNumDocumentsWithAnnotations(), info.getNumDocumentsWithLabels(), info.getNumDocumentsWithObservedLabels(), 
-						info.getNumTokens(), info.getNumTokensWithAnnotations(), info.getNumTokensWithLabels(), info.getNumTokensWithObservedLabels(), 
+		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0,0,0,0, 
 						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
 		return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
 	}
