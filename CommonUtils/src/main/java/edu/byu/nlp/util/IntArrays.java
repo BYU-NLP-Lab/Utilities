@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 
 
 /**
@@ -29,21 +30,6 @@ import com.google.common.collect.Lists;
  */
 public class IntArrays {
 
-  public static long sum(int[][][] arr) {
-    long sum = 0;
-    for (int i=0; i<arr.length; i++){
-      sum += sum(arr[i]);
-    }
-    return sum;
-  }
-  
-  public static long sum(int[][] arr) {
-    long sum = 0;
-    for (int i=0; i<arr.length; i++){
-      sum += sum(arr[i]);
-    }
-    return sum;
-  }
   
 	public static long sum(int[] arr) {
 		long sum = 0;
@@ -98,19 +84,8 @@ public class IntArrays {
     return builder.toString();
   }
 
-  // TODO: make this more robust, and work with streams 
   public static int[] parseIntArray(String str){
-    List<Integer> intList = Lists.newArrayList();
-    String stripped = str.replaceAll("[\\[\\]]", "");
-    for (String intStr: stripped.split(",")){
-      intList.add(Integer.parseInt(intStr));
-    }
-    // convert to int[]
-    int[] ints = new int[intList.size()];
-    for (int i=0; i<intList.size(); i++){
-      ints[i] = intList.get(i);
-    }
-    return ints;
+		return new Gson().fromJson(str, int[].class);
   }
   
   /**
@@ -177,16 +152,22 @@ public class IntArrays {
 		}
 		return hist;
 	}
-
-	public static void multiplyAndRoundToSelf(int[][] arr, double value){
-		for (int i=0; i<arr.length; i++){
-			multiplyAndRoundToSelf(arr[i], value);
-		}
-	}
 	
 	public static void multiplyAndRoundToSelf(int[] arr, double value){
 		for (int i=0; i<arr.length; i++){
 			arr[i] = (int)Math.round(arr[i]*value);
+		}
+	}
+
+	public static int[] add(int[] arr, int val){
+		int[] result = arr.clone();
+		addToSelf(result, val);
+		return result;
+	}
+	
+	public static void addToSelf(int[] arr, int val){
+		for (int i=0; i<arr.length; i++){
+			arr[i] += val;
 		}
 	}
 	

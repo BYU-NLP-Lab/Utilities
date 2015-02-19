@@ -792,6 +792,14 @@ public class Matrices {
       return toString(convertInt2Double(mat), maxRows, maxCols, 0);
     }
 
+    public static int[][] parseIntMatrix(String str){
+  		return new Gson().fromJson(str, int[][].class);
+    }
+
+    public static int[][][] parseIntTensor(String str){
+  		return new Gson().fromJson(str, int[][][].class);
+    }
+
     public static double[][] diagonalMatrix(int rows, int cols){
       double[][] m = new double[rows][cols];
       for (int r=0; r<rows; r++){
@@ -913,5 +921,40 @@ public class Matrices {
 		return new Gson().fromJson(str, double[][][].class);
 	}
 
+	public static int[][] selectSecondDimension(int[][][] arr, int index) {
+		Preconditions.checkNotNull(arr);
+		Preconditions.checkArgument(arr.length>0);
+		Preconditions.checkNotNull(arr[0]);
+		Preconditions.checkArgument(arr[0].length>0);
+		Preconditions.checkNotNull(arr[0][0]);
+		Preconditions.checkArgument(arr[0][0].length>0);
+		
+		int[][] result = new int[arr.length][arr[0][0].length];
+		for (int i=0; i<arr.length; i++){
+			result[i] = arr[i][index];
+		}
+		return result;
+	}
 
+	  public static long sum(int[][][] arr) {
+	    long sum = 0;
+	    for (int i=0; i<arr.length; i++){
+	      sum += sum(arr[i]);
+	    }
+	    return sum;
+	  }
+	  
+	  public static long sum(int[][] arr) {
+	    long sum = 0;
+	    for (int i=0; i<arr.length; i++){
+	      sum += IntArrays.sum(arr[i]);
+	    }
+	    return sum;
+	  }
+
+	public static void multiplyAndRoundToSelf(int[][] arr, double value){
+		for (int i=0; i<arr.length; i++){
+			IntArrays.multiplyAndRoundToSelf(arr[i], value);
+		}
+	}
 }
