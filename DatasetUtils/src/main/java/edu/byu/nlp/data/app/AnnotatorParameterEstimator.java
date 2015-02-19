@@ -141,7 +141,7 @@ public class AnnotatorParameterEstimator {
     int numAnnotators = confusionMatrices.length;
     
     logger.info("num annotators="+numAnnotators);
-    logger.info("total annotations="+IntArrays.sum(confusionMatrices));
+    logger.info("total annotations="+Matrices.sum(confusionMatrices));
 
     // smoothed annotation counts
     double[][][] annotatorParameters = Matrices.fromInts(confusionMatrices);

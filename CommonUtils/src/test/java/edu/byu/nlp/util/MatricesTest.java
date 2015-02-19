@@ -21,7 +21,6 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotSame;
 
-import org.fest.assertions.Assertions;
 import org.fest.assertions.Delta;
 import org.junit.Test;
 
@@ -388,5 +387,34 @@ public class MatricesTest {
 		  assertMatrixEquals(tensor[i], reconstituted[i],1e-20);
 	  }
   }
-  
+
+  @Test
+  public void testSelectSecondDimension(){
+	  int[][][] arr = new int[][][]{
+				{{1,2,3},
+				 {4,5,6},
+				 {7,8,9},},
+				{{11,12,13},
+				 {14,15,16},
+				 {17,18,19},},
+				{{21,22,23},
+				 {24,25,26},
+				 {27,28,29},},
+	  };
+	  
+	  int[][] r0 = Matrices.selectSecondDimension(arr, 0);
+	  for (int i=0; i<r0.length; i++){
+		  assertArrayEquals(r0[i],IntArrays.add(new int[]{1,2,3},i*10));
+	  }
+
+	  int[][] r1 = Matrices.selectSecondDimension(arr, 1);
+	  for (int i=0; i<r1.length; i++){
+		  assertArrayEquals(r1[i],IntArrays.add(new int[]{4,5,6},i*10));
+	  }
+
+	  int[][] r2 = Matrices.selectSecondDimension(arr, 2);
+	  for (int i=0; i<r2.length; i++){
+		  assertArrayEquals(r2[i],IntArrays.add(new int[]{7,8,9},i*10));
+	  }
+  }
 }
