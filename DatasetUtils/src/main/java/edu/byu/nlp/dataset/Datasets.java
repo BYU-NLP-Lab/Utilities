@@ -859,15 +859,34 @@ public class Datasets {
 				infoWithUpdatedCounts(Lists.<DatasetInstance>newArrayList(), info));
 	}
 
-	public static double[] countDocSizes(Dataset data) {
-		List<FlatInstance<SparseFeatureVector, Integer>> instances = Datasets.instancesIn(data);
-		double[] sizes = new double[instances.size()];
-		for (int i = 0; i < sizes.length; i++) {
-			sizes[i] = instances.get(i).getData().sum();
-		}
-		return sizes;
+	/**
+	 * Returns the sizes of each document assuming that all features are integer-valued. 
+	 * If features are not integer-valued, fails.
+	 */
+	public static int[] countIntegerDocSizes(Dataset data){
+		double[] docSizes = countDocSizes(data);
+	    int[] intDocSizes = new int[docSizes.length];
+	    for (int i=0; i<intDocSizes.length; i++){
+	    	intDocSizes[i] = Integers.fromDouble(docSizes[i], INT_CAST_THRESHOLD);
+	    }
+	    return intDocSizes;
 	}
 	
+	public static double[] countDocSizes(Dataset data) {
+      double[] docSizes = new double[data.getInfo().getNumDocuments()];
+      for (Enumeration<DatasetInstance> inst: Iterables2.enumerate(data)){
+    	  docSizes[inst.getIndex()] = inst.getElement().asFeatureVector().sum();
+      }
+      return docSizes;
+	}
+	
+	public static int[] countDocAnnotations(Dataset data){
+      int[] docAnnotations = new int[data.getInfo().getNumDocuments()];
+      for (Enumeration<DatasetInstance> inst: Iterables2.enumerate(data)){
+    	  docAnnotations[inst.getIndex()] = inst.getElement().getInfo().getNumAnnotations();
+      }
+      return docAnnotations;
+	}
 
 	/**
 	 * convert a dataset to the following simplified array form:
@@ -1067,18 +1086,6 @@ public class Datasets {
 	    	  documents[inst.getIndex()] = SparseFeatureVectors.asSequentialIndices(inst.getElement().asFeatureVector());
 	      }
 	      return documents;
-	}
-	
-	/**
-	 * Returns the sizes of each document assuming that all features are integer-valued. 
-	 * If features are not integer-valued, fails.
-	 */
-	public static int[] integerValuedInstanceSizes(Dataset data){
-	      int[] docSizes = new int[data.getInfo().getNumDocuments()];
-	      for (Enumeration<DatasetInstance> inst: Iterables2.enumerate(data)){
-	    	  docSizes[inst.getIndex()] = Integers.fromDouble(inst.getElement().asFeatureVector().sum(), INT_CAST_THRESHOLD);
-	      }
-	      return docSizes;
 	}
 	
 	public static Dataset sortedBySource(Dataset data){
