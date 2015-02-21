@@ -127,6 +127,14 @@ public class Matrices {
 		}
 		return clone;
 	}
+	
+	public static int[][] clone(int[][] arr) {
+		int[][] clone = new int[arr.length][];
+		for (int i = 0; i < clone.length; i++) {
+			clone[i] = arr[i].clone();
+		}
+		return clone;
+	}
 
 	/**
 	 * Computes ret[i] = \sum_j mat[j][i]
@@ -957,4 +965,5 @@ public class Matrices {
 			IntArrays.multiplyAndRoundToSelf(arr[i], value);
 		}
 	}
+
 }

@@ -1099,6 +1099,15 @@ public class Datasets {
     return new BasicDataset(instances, data.getInfo());
 	}
 
+	public static String[] docSourcesIn(Dataset data) {
+		List<String> sources = Lists.newArrayList();
+		for (DatasetInstance inst: data){
+			sources.add(inst.getInfo().getSource());
+		}
+		return sources.toArray(new String[]{});
+	}
+	
+
 	public static Dataset filteredDataset(Dataset data, Predicate<DatasetInstance> predicate) {
 		Iterable<DatasetInstance> filteredInstances = Lists.newArrayList(Iterables.filter(data, predicate));
 		return new BasicDataset(filteredInstances, infoWithUpdatedCounts(filteredInstances, data.getInfo()));
@@ -1255,6 +1264,6 @@ public class Datasets {
 //		}
 //		return new BasicDataset(newdata, infoWithUpdatedCounts(newdata, newdata.getInfo()));
 	}
-	
+
 
 }
