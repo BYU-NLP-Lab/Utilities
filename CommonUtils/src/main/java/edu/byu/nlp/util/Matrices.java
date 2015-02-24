@@ -28,6 +28,7 @@ import org.apache.commons.math3.optimization.linear.LinearConstraint;
 import org.apache.commons.math3.optimization.linear.LinearObjectiveFunction;
 import org.apache.commons.math3.optimization.linear.Relationship;
 import org.apache.commons.math3.optimization.linear.SimplexSolver;
+import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -964,6 +965,91 @@ public class Matrices {
 		for (int i=0; i<arr.length; i++){
 			IntArrays.multiplyAndRoundToSelf(arr[i], value);
 		}
+	}
+
+	public static int max(int[][][] matrix){
+		ArgMinMaxTracker<Integer, ?> tracker = new ArgMinMaxTracker<Integer,Integer>();
+		for (int[][] row: matrix){
+			tracker.offer(max(row));
+		}
+		return tracker.max();
+	}
+	
+	public static int max(int[][] matrix){
+		ArgMinMaxTracker<Integer, ?> tracker = new ArgMinMaxTracker<Integer,Integer>();
+		for (int[] row: matrix){
+			for (int val: row){
+				tracker.offer(val);
+			}
+		}
+		return tracker.max();
+	}
+
+	public static double max(double[][][] matrix){
+		ArgMinMaxTracker<Double, ?> tracker = new ArgMinMaxTracker<Double,Integer>();
+		for (double[][] row: matrix){
+			tracker.offer(max(row));
+		}
+		return tracker.max();
+	}
+	
+	public static double max(double[][] matrix){
+		ArgMinMaxTracker<Double, ?> tracker = new ArgMinMaxTracker<Double,Integer>();
+		for (double[] row: matrix){
+			for (double val: row){
+				tracker.offer(val);
+			}
+		}
+		return tracker.max();
+	}
+
+	/**
+	 * Combine rows via majority vote. Ties are split randomly.
+	 */
+	public static int[] aggregateRowsViaMajorityVote(int[][] matrix, RandomGenerator rnd) {
+		Preconditions.checkNotNull(matrix);
+		Preconditions.checkArgument(matrix.length > 0);
+		int assignments[] = new int[matrix[0].length];
+		// calculate marginals
+		int numValues = max(matrix)+1;
+		IntArrayCounter counter = new IntArrayCounter(assignments.length, numValues);
+		for (int[] row: matrix) {
+			counter.increment(row);
+		}
+		// assign maxes
+		for (int v = 0; v < assignments.length; v++) {
+			assignments[v] = counter.argmax(v);
+		}
+		return assignments;
+	}
+
+	/**
+	 * Combine matrices (indexed by the 1st dimension) via majority vote. Ties are split randomly.
+	 * Matrices may be ragged as long as the raggedness is the same for each.
+	 */
+	public static int[][] aggregateFirstDimensionViaMajorityVote(int[][][] matrix, RandomGenerator rnd) {
+		Preconditions.checkNotNull(matrix);
+		Preconditions.checkArgument(matrix.length > 0);
+		Preconditions.checkArgument(matrix[0].length > 0);
+		
+		int dim1 = matrix.length;
+		int dim2 = matrix[0].length;
+		int[][] assignments = new int[dim2][];
+		int numValues = max(matrix)+1;
+		// calculate marginals for each row
+		for (int d2=0; d2<dim2; d2++){
+			int dim3 = matrix[0][d2].length; // allow ragged inner dimension, but must be same across all matrices (indexed by d1)
+			assignments[d2] = new int[dim3]; 
+			IntArrayCounter counter = new IntArrayCounter(assignments.length, numValues);
+			for (int d1=0; d1<dim1; d1++){
+				counter.increment(matrix[d1][d2]);
+				// assign maxes
+				for (int d3 = 0; d3 < dim3; d3++) {
+					assignments[d2][d3] = counter.argmax(d3);
+				}
+			}
+		}
+		return assignments;
 	}
 
 }
