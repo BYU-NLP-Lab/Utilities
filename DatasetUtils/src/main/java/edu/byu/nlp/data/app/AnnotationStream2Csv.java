@@ -18,7 +18,11 @@ package edu.byu.nlp.data.app;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
@@ -28,6 +32,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
 import edu.byu.nlp.data.FlatInstance;
@@ -41,8 +48,8 @@ import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Paths;
-import edu.byu.nlp.util.DoubleArrays;
-import edu.byu.nlp.util.Integers;
+import edu.byu.nlp.util.Enumeration;
+import edu.byu.nlp.util.Iterables2;
 import edu.byu.nlp.util.jargparser.ArgumentParser;
 import edu.byu.nlp.util.jargparser.annotations.Option;
 
@@ -77,15 +84,39 @@ public class AnnotationStream2Csv {
     Dataset data = readData(jsonStream);
 
     // optionally aggregate by instance
-    String header = "annotator,start,end,annotation,label,source,instance_id,num_correct_annotations,num_annotations,num_annotators\n";
+    String header = "annotator,start,end,annotation,label,source,instance_id,num_correct_annotations,num_annotations,cum_num_annotations,num_annotators,cum_num_annotators\n";
     
     // iterate over instances and (optionally) annotations
     final StringBuilder bld = new StringBuilder();
-    for (DatasetInstance inst: data){
     	
     	switch(row){
 		case ANNOTATION:
-			for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+
+			// sort all annotations by end time
+			Map<FlatInstance<SparseFeatureVector, Integer>, DatasetInstance> ann2InstMap = Maps.newIdentityHashMap();
+			List<FlatInstance<SparseFeatureVector, Integer>> annotationList = Lists.newArrayList();
+		    for (DatasetInstance inst: data){
+		    	for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+		    		ann2InstMap.put(ann, inst); // record instance of each annotations
+		    		annotationList.add(ann);
+		    	}
+		    }
+			Collections.sort(annotationList, new Comparator<FlatInstance<SparseFeatureVector, Integer>>(){
+				@Override
+				public int compare(FlatInstance<SparseFeatureVector, Integer> o1, FlatInstance<SparseFeatureVector, Integer> o2) {
+			        // no null checking since we want to fail if annotation time is not set. 
+			        return Long.compare(
+			            o1.getEndTimestamp(),
+			            o2.getEndTimestamp());
+				}
+		    });
+			
+			Set<Long> annotators = Sets.newHashSet();
+			for (Enumeration<FlatInstance<SparseFeatureVector, Integer>> item: Iterables2.enumerate(annotationList)){
+				FlatInstance<SparseFeatureVector, Integer> ann = item.getElement();
+				DatasetInstance inst = ann2InstMap.get(ann);
+				annotators.add(ann.getAnnotator());
+				
 				bld.append(ann.getAnnotator()+",");
 				bld.append(ann.getStartTimestamp()+",");
 				bld.append(ann.getEndTimestamp()+",");
@@ -93,31 +124,45 @@ public class AnnotationStream2Csv {
 				bld.append(inst.getLabel()+",");
 				bld.append(inst.getInfo().getSource()+",");
 				bld.append(inst.getInfo().getInstanceId()+",");
-				bld.append((ann.getLabel()==inst.getLabel()? 1: 0)+",");
-				bld.append(1+",");
-				bld.append("NA");
+				bld.append((ann.getLabel()==inst.getLabel()? 1: 0)+","); // num correct
+				bld.append(1+","); // num annotations
+				bld.append((item.getIndex()+1)+","); // cumulative num annotations
+				bld.append(1+","); // num annotators
+				bld.append(annotators.size()+""); // cumulative num annotators
 				bld.append("\n");
 			}
 			break;
 		case INSTANCE:
-			int numCorrectAnnotations = Integers.fromDouble(DoubleArrays.sum(inst.getAnnotations().getLabelAnnotations().getRow(inst.getLabel())), 1e-10);
-			
-			bld.append("NA,");
-			bld.append("NA,");
-			bld.append("NA,");
-			bld.append("NA,");
-			bld.append(inst.getLabel()+",");
-			bld.append(inst.getInfo().getSource()+",");
-			bld.append(inst.getInfo().getInstanceId()+",");
-			bld.append(numCorrectAnnotations+",");
-			bld.append(inst.getInfo().getNumAnnotations()+",");
-			bld.append(inst.getInfo().getNumAnnotators());
-			bld.append("\n");
-			break;
+			int cumNumAnnotations = 0;
+		    for (DatasetInstance inst: data){
+		    	cumNumAnnotations += inst.getInfo().getNumAnnotations();
+		    	
+				int numCorrectAnnotations = 0;
+				// sum over all the annotators who put the correct answer
+				int correctLabel = inst.getLabel();
+				for (int j=0; j<data.getInfo().getNumAnnotators(); j++){
+					numCorrectAnnotations += inst.getAnnotations().getLabelAnnotations().getRow(j)[correctLabel];
+				}
+				
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append(inst.getLabel()+",");
+				bld.append(inst.getInfo().getSource()+",");
+				bld.append(inst.getInfo().getInstanceId()+",");
+				bld.append(numCorrectAnnotations+",");
+				bld.append(inst.getInfo().getNumAnnotations()+",");
+				bld.append(cumNumAnnotations+",");
+				bld.append(inst.getInfo().getNumAnnotators()+",");
+				bld.append("NA"); // cumulative num annotators
+				bld.append("\n");
+		    }
+		    break;
 		default:
+			Preconditions.checkArgument(false,"unknown row type: "+row);
 			break;
     	}
-    }
     
     // output to console
     if (out==null){
