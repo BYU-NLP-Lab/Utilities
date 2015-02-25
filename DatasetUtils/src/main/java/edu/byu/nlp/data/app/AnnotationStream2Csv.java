@@ -32,8 +32,12 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
@@ -49,7 +53,9 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Paths;
 import edu.byu.nlp.util.Enumeration;
+import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Iterables2;
+import edu.byu.nlp.util.Iterators2;
 import edu.byu.nlp.util.jargparser.ArgumentParser;
 import edu.byu.nlp.util.jargparser.annotations.Option;
 
@@ -65,7 +71,7 @@ import edu.byu.nlp.util.jargparser.annotations.Option;
 public class AnnotationStream2Csv {
   private static Logger logger = LoggerFactory.getLogger(AnnotationStream2Csv.class);
 
-  private static enum ROW {ANNOTATION,INSTANCE};
+  private static enum ROW {ANNOTATION,INSTANCE,ANNOTATOR};
   @Option(help = "If ")
   private static ROW row = ROW.ANNOTATION;
   
@@ -159,6 +165,43 @@ public class AnnotationStream2Csv {
 				bld.append("\n");
 		    }
 		    break;
+		    
+		case ANNOTATOR:
+			Multiset<Long> perAnnotatorAnnotationCounts = HashMultiset.create();
+			Multiset<Long> perAnnotatorCorrectAnnotationCounts = HashMultiset.create();
+		    for (DatasetInstance inst: data){
+		    	for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+		    		long annotatorId = ann.getAnnotator();
+		    		
+		    		perAnnotatorAnnotationCounts.add(annotatorId);
+		    		
+		    		if (inst.getLabel()==ann.getLabel()){
+		    			perAnnotatorCorrectAnnotationCounts.add(annotatorId);
+		    		}
+
+		    	}
+		    }
+		    
+		    
+		    for (Long annotatorId: data.getInfo().getAnnotatorIdIndexer()){
+
+				bld.append(annotatorId+",");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append("NA,");
+				bld.append(perAnnotatorCorrectAnnotationCounts.count(annotatorId) +",");
+				bld.append(perAnnotatorAnnotationCounts.count(annotatorId)+",");
+				bld.append("NA,");
+				bld.append("1,"); // num annotators
+				bld.append("NA"); // cumulative num annotators
+				bld.append("\n");
+		    }
+		    
+			break;
+			
 		default:
 			Preconditions.checkArgument(false,"unknown row type: "+row);
 			break;
