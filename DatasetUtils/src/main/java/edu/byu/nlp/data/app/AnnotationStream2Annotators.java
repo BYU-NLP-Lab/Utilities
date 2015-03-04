@@ -40,6 +40,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import edu.byu.nlp.data.annotators.SimulatedAnnotator;
+import edu.byu.nlp.data.annotators.SimulatedAnnotators;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
@@ -49,7 +51,7 @@ import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Files2;
 import edu.byu.nlp.io.Paths;
-import edu.byu.nlp.util.IntArrays;
+import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.Matrices;
 import edu.byu.nlp.util.jargparser.ArgumentParser;
 import edu.byu.nlp.util.jargparser.annotations.Option;
@@ -57,11 +59,12 @@ import edu.byu.nlp.util.jargparser.annotations.Option;
 /**
  * @author plf1
  *
- * Read in a json annotation stream, output a file containing fitted 
- * annotator confusion matrices (for use in future simulations)
+ * Read in a json annotation stream, output a json file containing fitted 
+ * annotator confusion matrices along with the number of annotations 
+ * produced by each annotator (for use in future simulations)
  */
-public class AnnotatorParameterEstimator {
-  private static Logger logger = LoggerFactory.getLogger(AnnotatorParameterEstimator.class);
+public class AnnotationStream2Annotators {
+  private static Logger logger = LoggerFactory.getLogger(AnnotationStream2Annotators.class);
 
   @Option(help = "A json annotation stream containing annotations to be fitted.")
   private static String jsonStream = "/aml/data/plf1/cfgroups/cfgroups1000.json"; 
@@ -92,7 +95,7 @@ public class AnnotatorParameterEstimator {
   
   public static void main(String[] args) throws IOException{
     // parse CLI arguments
-    new ArgumentParser(AnnotatorParameterEstimator.class).parseArgs(args);
+    new ArgumentParser(AnnotationStream2Annotators.class).parseArgs(args);
     Preconditions.checkNotNull(jsonStream,"You must provide a valid --json-stream!");
     Preconditions.checkArgument(smooth>=0,"invalid smoothing value="+smooth);
     Preconditions.checkArgument(k>0,"invalid number of clusters="+k);
@@ -120,15 +123,26 @@ public class AnnotatorParameterEstimator {
     int[] clusterAssignments = clusterAnnotatorParameters(annotatorParameters, aggregate, k, maxIterations, smooth, rnd);
     double[][][] clusteredAnnotatorParameters = aggregateAnnotatorParameterClusters(annotatorParameters, clusterAssignments);
 
+    // aggregate annotator rates
+    double[] annotationRates = new double[clusteredAnnotatorParameters.length]; 
+    for (int j=0; j<confusionMatrices.length; j++){
+    	long numAnnotationsPerJ = Matrices.sum(confusionMatrices[j]);
+    	// add this annotator's annotation count to the cluster total
+    	annotationRates[clusterAssignments[j]] += numAnnotationsPerJ;
+    }
+    DoubleArrays.normalizeToSelf(annotationRates);
+    
     // output to console 
     logger.info("aggregated annotators=\n"+Matrices.toString(clusteredAnnotatorParameters, 10, 10, 20, 3));
-    for (int i=0; i<clusteredAnnotatorParameters.length; i++){
-      logger.info("aggregated annotator #"+i+" accuracy="+accuracyOf(clusteredAnnotatorParameters[i]));
+    for (int c=0; c<clusteredAnnotatorParameters.length; c++){
+        logger.info("aggregated annotator #"+c+" accuracy="+accuracyOf(clusteredAnnotatorParameters[c]));
+        logger.info("aggregated annotator #"+c+" rate="+annotationRates[c]);
     }
-    
+
     // output to file 
     if (output!=null){
-      Files2.write(Matrices.toString(clusteredAnnotatorParameters), output);
+      List<SimulatedAnnotator> annotators = SimulatedAnnotators.from(clusteredAnnotatorParameters, annotationRates);
+      Files2.write(SimulatedAnnotators.serialize(annotators), output);
     }
   }
   /////////////////////////////

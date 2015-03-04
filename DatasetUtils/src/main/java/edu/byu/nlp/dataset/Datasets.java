@@ -37,8 +37,8 @@ import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatAnnotatedInstance;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
-import edu.byu.nlp.data.app.AnnotatorParameterEstimator;
-import edu.byu.nlp.data.app.AnnotatorParameterEstimator.ClusteringMethod;
+import edu.byu.nlp.data.app.AnnotationStream2Annotators;
+import edu.byu.nlp.data.app.AnnotationStream2Annotators.ClusteringMethod;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
@@ -598,6 +598,8 @@ public class Datasets {
 	 */
 	public static synchronized void addAnnotationToDataset(
 			Dataset dataset, FlatInstance<SparseFeatureVector, Integer> ann){
+		Preconditions.checkNotNull(dataset);
+		Preconditions.checkNotNull(ann);
 		// check that values are indexed values
 		Preconditions.checkArgument(ann.getInstanceId() < dataset.getInfo().getInstanceIdIndexer().size(),
 				"cannot add annotation with invalid instance id "+ann.getInstanceId()+"."
@@ -1215,8 +1217,8 @@ public class Datasets {
 		}
 		
 		int maxIterations = 10000;
-		double[][][] annotatorParameters = AnnotatorParameterEstimator.confusionMatrices2AnnotatorParameters(confusionMatrices);
-		final int[] clusterAssignments = AnnotatorParameterEstimator.clusterAnnotatorParameters(
+		double[][][] annotatorParameters = AnnotationStream2Annotators.confusionMatrices2AnnotatorParameters(confusionMatrices);
+		final int[] clusterAssignments = AnnotationStream2Annotators.clusterAnnotatorParameters(
 				annotatorParameters, clusterAlgorithm, numAnnotatorClusters, maxIterations, smoothing, rnd);
 		
 		// transform flat instances and then recreate a dataset.
@@ -1240,30 +1242,8 @@ public class Datasets {
 				Indexers.indexerOfLongs(numAnnotatorClusters), // annotator id indexer (one annotator per cluster)
 				true); // "true" preserves raw annotations
 		
-		
-//		// apply the assignments to create a new dataset
-//		Dataset newdata = withNewAnnotators(data, Indexers.indexerOfLongs(numAnnotatorClusters));
-//		for (final Pair<DatasetInstance,DatasetInstance> pair: Iterables2.pairUp(data, newdata)){
-//			// copy mapped annotations
-//			pair.getFirst().getAnnotations().getLabelAnnotations().walkInOptimizedOrder(new AbstractRealMatrixPreservingVisitor() {
-//				@Override
-//				public void visit(int annotator, int annotationVal, double value) {
-//					int mappedAnnotator = clusterAssignments[annotator];
-//					pair.getSecond().getAnnotations().getLabelAnnotations().setEntry(mappedAnnotator, annotationVal, value);
-//				}
-//			});
-//			// also copy/map the raw annotations (note: we need to find a way to get rid of raw annotations--this requires
-//			// that we figure out how to embed annotation arrival and completion times in the AnnotationSet.) 
-//			List<FlatInstance<SparseFeatureVector, Integer>> transformedRawLabelAnnotations = Lists.newArrayList();
-//			for (FlatInstance<SparseFeatureVector, Integer> inst: pair.getFirst().getAnnotations().getRawLabelAnnotations()){
-//				transformedRawLabelAnnotations.add(new FlatAnnotatedInstance<>(
-//						AnnotationInterfaceJavaUtils.newAnnotatedInstance(clusterAssignments[(int)inst.getAnnotator()], 
-//								inst.getLabel(), inst.getStartTimestamp(), inst.getEndTimestamp(), inst.getInstanceId(), inst.getSource(), inst.getData())));
-//			}
-//			((BasicAnnotationSet)pair.getSecond().getAnnotations()).setRawLabelAnnotations(transformedRawLabelAnnotations);
-//		}
-//		return new BasicDataset(newdata, infoWithUpdatedCounts(newdata, newdata.getInfo()));
 	}
+
 
 
 }

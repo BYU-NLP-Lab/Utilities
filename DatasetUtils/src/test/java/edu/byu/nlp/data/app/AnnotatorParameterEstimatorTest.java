@@ -21,7 +21,7 @@ import org.apache.commons.math3.random.MersenneTwister;
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 
-import edu.byu.nlp.data.app.AnnotatorParameterEstimator.ClusteringMethod;
+import edu.byu.nlp.data.app.AnnotationStream2Annotators.ClusteringMethod;
 
 /**
  * @author plf1
@@ -79,9 +79,9 @@ public class AnnotatorParameterEstimatorTest {
     int k = 3;
     int maxIterations = 1000;
     double smooth = 0.00001;
-	double[][][] annotatorParameters = AnnotatorParameterEstimator.confusionMatrices2AnnotatorParameters(confusionMatrices);
-	final int[] clusterAssignments = AnnotatorParameterEstimator.clusterAnnotatorParameters(annotatorParameters, aggregate, k, maxIterations, smooth, new MersenneTwister(1));
-	double[][][] clusteredParameters = AnnotatorParameterEstimator.aggregateAnnotatorParameterClusters(annotatorParameters, clusterAssignments);
+	double[][][] annotatorParameters = AnnotationStream2Annotators.confusionMatrices2AnnotatorParameters(confusionMatrices);
+	final int[] clusterAssignments = AnnotationStream2Annotators.clusterAnnotatorParameters(annotatorParameters, aggregate, k, maxIterations, smooth, new MersenneTwister(1));
+	double[][][] clusteredParameters = AnnotationStream2Annotators.aggregateAnnotatorParameterClusters(annotatorParameters, clusterAssignments);
 
 //	System.out.println(IntArrays.toString(clusterAssignments));
 	// make sure items {0,1,2}, {3,4,5}, and {6,7,8} cluster together (event though we can't predict indices) 
