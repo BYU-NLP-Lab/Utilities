@@ -565,5 +565,13 @@ public class DoubleArrays {
 		return result;
 	}
 
+	public static List<Double> asList(double[] annotatorRates) {
+		List<Double> result = Lists.newArrayListWithCapacity(annotatorRates.length);
+		for (int i=0; i<annotatorRates.length; i++){
+			result.add(annotatorRates[i]);
+		}
+		return result;
+	}
+
     
 }
