@@ -67,22 +67,12 @@ public class Counters {
   public static <E,V extends Comparable<V>> List<E> argMaxList(Set<Entry<E, V>> entrySet, int topn, RandomGenerator rnd) {
     topn = (topn>0)? topn: entrySet.size();
     
-    
-    // TODO: The sorting hacks below were intended to simply ensure that 
-    // we matched previous implementations, but when they are removed 
-    // item/mom resp performance tanks. Something is going on! 
-    // (probably related to some indexer?)
     List<Entry<E, V>> entries = Lists.newArrayList(entrySet);
-    Collections.sort(entries, new Comparator<Entry<E, V>>() {
-		@Override
-		public int compare(Entry<E, V> o1, Entry<E, V> o2) {
-			return ((Comparable<E>)o1.getKey()).compareTo(o2.getKey());
-		}
-	});
-    // FIXME: undo this and shuffle again
-//    if (rnd!=null){
-//      Collections.shuffle(entries, new Random(rnd.nextLong()));
-//    }
+    // shuffle to ensure that ties are broken randomly
+    if (rnd!=null){
+      Collections.shuffle(entries, new Random(rnd.nextLong()));
+    }
+    // sort to ensure most voted-for options are at the beginning
     Collections.sort(entries,new Comparator<Entry<E, V>>() {
 	@Override
       public int compare(Entry<E, V> o1, Entry<E, V> o2) {
