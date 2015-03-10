@@ -38,7 +38,7 @@ public class CountNormalizer implements Function<SparseFeatureVector, SparseFeat
   /** {@inheritDoc} */
   @Override
   public SparseFeatureVector apply(SparseFeatureVector fv) {
-    // TODO: cloning for safety and to respect pipeline semantics
+    // note: cloning for safety and to respect pipeline semantics
     // but it's probably not necessary in most situations
     SparseFeatureVector newFv = fv.copy(); 
     if (featureNormalizationConstant!=null){

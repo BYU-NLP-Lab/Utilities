@@ -98,13 +98,11 @@ public class Strings {
 		
 		@Override
 		public Character get(int index) {
-			// TODO Auto-generated method stub
 			return string.charAt(index);
 		}
 
 		@Override
 		public int size() {
-			// TODO Auto-generated method stub
 			return string.length();
 		}		
 	}

@@ -162,18 +162,6 @@ private String jsonReferencedDataDir;
     Dataset dataset = DocPipes.createDataset(
     		DataSources.from(source, cachedData), featureSelectorFactory, featureNormalizationConstant);
     
-//    // first null label marks the beginning of "unlabeled" data
-//    // this arrangement is enforced by JSONFileToAnnotatedDocumentList
-//    int firstNullLabel=0;
-//    for (DatasetInstance dat: dataset){
-//      if (!dat.hasObservedLabel()){
-//        break;
-//      }
-//      firstNullLabel++;
-//    }
-//    // FIXME: exclude unlabeled data
-//    dataset.hideLabels(dataset.labeledData().size()-firstNullLabel);
-    
     return dataset;
   }
 }
