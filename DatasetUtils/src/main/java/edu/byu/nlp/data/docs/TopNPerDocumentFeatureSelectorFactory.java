@@ -74,8 +74,10 @@ public class TopNPerDocumentFeatureSelectorFactory<L> implements FeatureSelector
 			BitSet b = new BitSet(numFeatures);
 			Comparator<Entry> c = BasicSparseFeatureVector.valueComparator();
 			for (FlatInstance<SparseFeatureVector, L> doc : tfidfVectors) {
-				for (Entry e : Heaps.largestN(doc.getData().sparseEntries(), minFeaturesToKeepPerDocument, false, c)) {
-					b.set(e.getIndex());
+				if (doc.getData()!=null){
+					for (Entry e : Heaps.largestN(doc.getData().sparseEntries(), minFeaturesToKeepPerDocument, false, c)) {
+						b.set(e.getIndex());
+					}
 				}
 			}
 			return b;

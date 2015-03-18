@@ -50,7 +50,9 @@ public class LogDocumentFrequency<L> implements DataSink<SparseFeatureVector, L,
 	public double[] processLabeledInstances(Iterable<FlatInstance<SparseFeatureVector, L>> documents) {
 		DFIncrementor inc = new DFIncrementor(numFeatures);
 		for (FlatInstance<SparseFeatureVector, L> document : documents) {
-			document.getData().visitIndices(inc);
+			if (document.getData()!=null){ // annotation instances may have null documents and should be skipped. data is in the corresponding label
+				document.getData().visitIndices(inc);
+			}
 		}
 		// Take the log
 		for (int i = 0; i < inc.df.length; i++) {
