@@ -32,11 +32,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
@@ -53,9 +51,7 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Paths;
 import edu.byu.nlp.util.Enumeration;
-import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Iterables2;
-import edu.byu.nlp.util.Iterators2;
 import edu.byu.nlp.util.jargparser.ArgumentParser;
 import edu.byu.nlp.util.jargparser.annotations.Option;
 
@@ -130,7 +126,7 @@ public class AnnotationStream2Csv {
 				bld.append(inst.getLabel()+",");
 				bld.append(inst.getInfo().getSource()+",");
 				bld.append(inst.getInfo().getInstanceId()+",");
-				bld.append((ann.getLabel()==inst.getLabel()? 1: 0)+","); // num correct
+				bld.append((!inst.hasLabel()? "NA": ann.getLabel()==inst.getLabel()? 1: 0)+","); // num correct
 				bld.append(1+","); // num annotations
 				bld.append((item.getIndex()+1)+","); // cumulative num annotations
 				bld.append(1+","); // num annotators
