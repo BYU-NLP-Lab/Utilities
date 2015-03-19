@@ -19,7 +19,6 @@ import edu.byu.nlp.data.pipes.Downcase;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.pipes.RegexpTokenizer;
 import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
-import edu.byu.nlp.data.pipes.StopWordRemover;
 
 /**
  * @author rah67
@@ -31,7 +30,6 @@ public class TokenizerPipes {
   public static LabeledInstancePipe<String, String, List<String>, String> McCallumAndNigam() {
     return new SerialLabeledInstancePipeBuilder<String, String, String, String>()
         .addDataTransform(new Downcase())
-        .<List<String>>addDataTransform(new RegexpTokenizer("[a-zA-Z]+"))
-        .addDataTransform(StopWordRemover.malletStopWords()).build();
+        .<List<String>>addDataTransform(new RegexpTokenizer("[a-zA-Z]+")).build();
   }
 }

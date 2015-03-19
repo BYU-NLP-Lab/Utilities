@@ -16,8 +16,6 @@ import edu.byu.nlp.data.pipes.Pipes;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
-import edu.byu.nlp.dataset.BasicSparseFeatureVector;
-import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.util.Indexer;
 
 public class DatasetsTestUtil {
@@ -146,6 +144,7 @@ public class DatasetsTestUtil {
 		
 		return Datasets.convert(datasetSource, indexTransformedInstances, featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex, true);
 	}
+	
 	
 	
 }

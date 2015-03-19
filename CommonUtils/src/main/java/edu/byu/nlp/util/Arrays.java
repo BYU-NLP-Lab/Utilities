@@ -1,6 +1,10 @@
 package edu.byu.nlp.util;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
+import java.util.List;
+
+import com.google.common.collect.Lists;
 
 public class Arrays {
 
@@ -29,7 +33,23 @@ public class Arrays {
 	}
 
 	public static <T> Iterator<T> subsequence(final T[] arr, final int startIndex){
-		return subsequence(arr,startIndex,arr.length);
+		return subsequence(arr,startIndex,arr.length-startIndex);
+	}
+
+	public static <T> List<T> sublist(final T[] arr, final int startIndex){
+		return sublist(arr, startIndex, arr.length-startIndex);
 	}
 	
+	public static <T> List<T> sublist(final T[] arr, final int startIndex, int length){
+		return Lists.newArrayList(subsequence(arr, startIndex, length));
+	}
+	
+	public static <T> T[] subarray(final T[] arr, final int startIndex){
+		return subarray(arr, startIndex, arr.length-startIndex);
+	}
+	@SuppressWarnings("unchecked")
+	public static <T> T[] subarray(final T[] arr, final int startIndex, int length){
+		T[] dummyArray = (T[]) Array.newInstance(arr.getClass().getComponentType(), 0);
+		return (T[]) sublist(arr, startIndex, length).toArray(dummyArray);
+	}
 }

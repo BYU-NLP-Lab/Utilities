@@ -1,18 +1,226 @@
 package edu.byu.nlp.dataset;
 
+import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.math3.random.MersenneTwister;
 import org.fest.assertions.Assertions;
 import org.fest.assertions.Fail;
 import org.junit.Test;
 
+import com.google.common.collect.Sets;
+
+import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.types.Dataset;
+import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.util.JsonDatasetMocker;
 import edu.byu.nlp.util.Counter;
 import edu.byu.nlp.util.Counters;
+import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.IntArrays;
+import edu.byu.nlp.util.Pair;
 
 public class DatasetsTest {
 
+
+	  private static void assertAllLabeledDataAnnotated(Dataset data){
+		Dataset labeledData = Datasets.divideInstancesWithObservedLabels(data).getFirst();
+	    for (DatasetInstance inst: labeledData){
+	      Assertions.assertThat(inst.getInfo().getNumAnnotations()).isGreaterThan(0);
+	    }
+	  }
+
+	  /**
+	   * Test method for {@link edu.byu.nlp.data.pipes.StopWordRemover#apply(java.util.List)}.
+	   * @throws FileNotFoundException 
+	   */
+	  @Test
+	  public void testBuildDataset() throws FileNotFoundException {
+	    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
+	    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(4);
+	    Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
+	    
+	    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
+	    Dataset labeledData = partitions.getFirst();
+	    Dataset unlabeledData = partitions.getSecond();
+	    
+	    // check labeled data
+	    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
+	    for (DatasetInstance inst: labeledData){
+	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(
+	          (inst.getInfo().getSource().equals("1") && inst.getInfo().getNumAnnotations()==2) ||
+	          (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==2) ||
+	          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+	          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==2) 
+	          ).isTrue();
+	      Assertions.assertThat(dataset.getInfo().getNullLabel() == dataset.getInfo().getLabelIndexer().indexOf(null));
+	      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+	      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
+	      Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+	      Assertions.assertThat(inst.hasLabel()).isTrue();
+	    }
+	    // check unlabeled data
+	    Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
+	    for (DatasetInstance inst: unlabeledData){
+	      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(
+	          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
+	          (inst.getInfo().getSource().equals("six") && inst.getInfo().getNumAnnotations()==0) ||
+	          (inst.getInfo().getSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
+	          (inst.getInfo().getSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
+	          ).isTrue();
+	      
+	      Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
+	      Assertions.assertThat(inst.hasObservedLabel()).isFalse(); 
+	      
+	    }
+	    
+	  }
+
+	  @Test
+	  public void testHideLabelsByClass1() throws FileNotFoundException{
+	    int numObservedLabelsPerClass = 1;
+	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
+	    
+	    Dataset labeledData = Datasets.divideInstancesWithObservedLabels(data).getFirst();
+	    Dataset unlabeledData = Datasets.divideInstancesWithObservedLabels(data).getSecond();
+	    
+	    // 2 trusted labels (one per class) will remain unhidden
+	    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(2);
+	    Assertions.assertThat(data.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(2);
+	    Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(6);
+	    Assertions.assertThat(data.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(6);
+	    Assertions.assertThat(data.getInfo().getNumDocuments()).isEqualTo(8);
+	    assertAllLabeledDataAnnotated(data);
+	  }
+
+	  @Test
+	  public void testHideLabelsByClass2() throws FileNotFoundException{
+	    int numObservedLabelsPerClass = 2;
+	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
+
+	    // 4 trusted labels (2 per class) will remain unhidden
+	    Assertions.assertThat(data.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
+	    Assertions.assertThat(data.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(8-4);
+	    Assertions.assertThat(data.getInfo().getNumDocuments()).isEqualTo(8);
+	  }
+
+	  @Test
+	  public void testToFeatureArrayVsToSparseFeatureArray() throws FileNotFoundException{
+		// run this test on a variety of test datasets
+	    Dataset data1 = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    Dataset data2 = DatasetsTestUtil.mockDataset();
+	    
+	    for (Dataset data: new Dataset[]{data1,data2}){
+
+	      double[][] dense = Datasets.toFeatureArray(data);
+	      List<Map<Integer, Double>> sparse = Datasets.toSparseFeatureArray(data);
+	      
+	      for (int i=0; i<dense.length; i++){
+	        for (int f=0; f<dense[i].length; f++){
+	          double denseval = dense[i][f];
+	          double sparseval = (sparse.get(i).containsKey(f))? sparse.get(i).get(f): 0;
+	          Assertions.assertThat(sparseval).isEqualTo(denseval);
+	        }
+	      }
+	    
+	    }
+	    
+	  }
+	  
+	  @Test
+	  public void testToFeatureArray() throws FileNotFoundException{
+	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    for (DatasetInstance inst: data){
+	      Assertions.assertThat(
+	            (inst.getInfo().getSource().equals("1") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{1,0,0,0,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("2") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,1,0,0,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("3") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,1,0,0,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("4") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,1,0,0,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("five") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,0,1,0,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("six") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,0,1,0,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("7") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,0,0,1,0}, 1e-6)) ||
+	            (inst.getInfo().getSource().equals("8") && DoubleArrays.equals(
+	                Datasets.toFeatureArray(inst, 5), 
+	                new double[]{0,0,0,0,1}, 1e-6)) 
+	          );
+	      
+	    }
+	    
+	  }
+	  
+	  @Test
+	  public void testAddAnnotation() throws FileNotFoundException{
+		// base dataset
+	    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    // annotations
+	    List<FlatInstance<SparseFeatureVector, Integer>> annotations = Datasets.annotationsIn(JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances3(System.currentTimeMillis())));
+	    // add them
+	    Datasets.addAnnotationsToDataset(dataset, annotations);
+	    
+	    // labeled vs unlabeled shouldn't change
+	    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
+	    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(4);
+	    Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);
+	    
+	    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
+	    Dataset labeledData = partitions.getFirst();
+	    Dataset unlabeledData = partitions.getSecond();
+	    
+	    // check labeled data
+	    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
+	    for (DatasetInstance inst: labeledData){
+	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(
+	          (inst.getInfo().getSource().equals("1") && inst.getInfo().getNumAnnotations()==3) ||
+	          (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==3) ||
+	          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+	          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==3) 
+	          ).isTrue();
+	      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+	      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
+	      Assertions.assertThat(inst.getLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
+	      Assertions.assertThat(inst.hasLabel()).isTrue();
+	    }
+	    // check unlabeled data
+	    Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
+	    for (DatasetInstance inst: unlabeledData){
+	      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(
+	          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
+	          (inst.getInfo().getSource().equals("six") && inst.getInfo().getNumAnnotations()==3) ||
+	          (inst.getInfo().getSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
+	          (inst.getInfo().getSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
+	          ).isTrue();;
+	      
+	      Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
+	      Assertions.assertThat(!inst.hasObservedLabel());
+	      
+	    }
+	  }
+	
+	
+	
 	@Test
 	public void testSplitbySizeException(){
 		Dataset dataset = DatasetsTestUtil.mockDataset();

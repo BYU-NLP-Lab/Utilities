@@ -22,6 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
@@ -1050,4 +1051,25 @@ public class Datasets {
 
 
 
+	public static String summaryOf(Dataset data, int indentation){
+		String indent = Strings.repeat("\t", indentation);
+		
+		StringBuilder bld = new StringBuilder();
+
+	    bld.append(indent+"Number of documents = " + data.getInfo().getNumDocuments());
+	    bld.append("\n"+indent+"Number of labeled documents = " + data.getInfo().getNumDocumentsWithObservedLabels());
+	    bld.append("\n"+indent+"Number of unlabeled documents = " + data.getInfo().getNumDocumentsWithoutObservedLabels());
+	    bld.append("\n"+indent+"Number of annotated documents = " + data.getInfo().getNumDocumentsWithAnnotations());
+	    bld.append("\n"+indent+"Number of unannotated documents = " + data.getInfo().getNumDocumentsWithoutAnnotations());
+	    bld.append("\n"+indent+"Number of annotations = " + data.getInfo().getNumAnnotations());
+	    bld.append("\n"+indent+"Average annotations per document = " + ((double)data.getInfo().getNumAnnotations())/(double)data.getInfo().getNumDocumentsWithAnnotations());
+	    bld.append("\n"+indent+"Number of tokens = " + data.getInfo().getNumTokens());
+	    bld.append("\n"+indent+"Number of features = " + data.getInfo().getNumFeatures());
+	    bld.append("\n"+indent+"Number of classes = " + data.getInfo().getNumClasses());
+	    bld.append("\n"+indent+"Average document size = " + ((double)data.getInfo().getNumTokens()/(double)data.getInfo().getNumDocuments()));
+	    bld.append("\n"+indent+"Number of annotators = " + data.getInfo().getNumAnnotators());
+	    
+		return bld.toString();
+	}
+	
 }

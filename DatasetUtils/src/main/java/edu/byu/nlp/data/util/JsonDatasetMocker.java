@@ -20,7 +20,7 @@ import edu.byu.nlp.data.types.Dataset;
 
 public class JsonDatasetMocker {
 
-	 public static String jsonInstances(long seed){ 
+	 public static String jsonInstances1(long seed){ 
 	    List<String> jsonInstances = Lists.newArrayList(
 	        // "1" has 2 annotations + label
 	      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":-1, \"label\":\"0\", \"labelObserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
@@ -57,6 +57,71 @@ public class JsonDatasetMocker {
 		return "[ \n" + Joiner.on(", \n").join(jsonInstances) + "]";
 
 	}
+
+
+	  public static String jsonInstances2(long seed){ 
+	    List<String> jsonInstances = Lists.newArrayList(
+	        // "1" has 2 annotations + label
+	      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":0, \"label\":\"0\", \"labelObserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
+	      "{\"batch\": 1, \"data\":\"ABC\", \"endTime\":1, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
+	      "{\"batch\": 2, \"data\":\"ABC\", \"endTime\":2, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
+	      "{\"batch\": 3, \"data\":\"ABC\", \"endTime\":3,                                            \"source\":1,     \"startTime\":0 }", // bare ref to the same doc
+	      
+	      // "2" has 2 annotations + label
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":4, \"label\":\"1\", \"labelObserved\":true,   \"source\":\"2\", \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":5, \"annotation\":\"1\", \"annotator\":\"C\", \"source\":\"2\", \"startTime\":0 }", // annotation
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":6, \"annotation\":\"0\", \"annotator\":\"C\", \"source\":\"2\", \"startTime\":0 }", // annotation
+
+	      // "3" has label
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":7, \"label\":\"0\", \"labelObserved\":true,   \"source\":3,     \"startTime\":0 }", // labeled
+
+	      // "4" has 2 annotations + label
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":8, \"label\":\"1\", \"labelObserved\":true,   \"source\":4,     \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":9, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation
+	      "{\"batch\": 3, \"data\":\"DEF\", \"endTime\":10, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation to same doc
+	      
+	      // "five" has 1 annotation
+	      "{\"batch\": 4, \"data\":\"HIJ\", \"endTime\":11,                                            \"source\":\"five\", \"startTime\":0 }", // bare doc
+	      "{\"batch\": 5, \"data\":\"HIJ\", \"endTime\":12, \"annotation\":\"1\", \"annotator\":\"C\", \"source\":\"five\", \"startTime\":0 }", // annotation to same doc
+	      
+	      // "six" has nothing
+	      "{\"batch\": 6, \"data\":\"HIJ\", \"endTime\":13,                                           \"source\":\"six\", \"startTime\":0 }", // bare doc
+	      "{\"batch\": 7, \"data\":\"HIJ\", \"endTime\":14,                                           \"source\":\"six\", \"startTime\":0 }", // bare doc (redundant with previous)
+	      
+	      // "7" has 1 annotation
+	      "{\"batch\": 0, \"data\":\"KLM\", \"endTime\":15, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":7,     \"startTime\":0 }", // annotation
+	      
+	      // "8" has 1 annotation
+	      "{\"batch\": 0, \"data\":\"NOP\", \"endTime\":16, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":8,     \"startTime\":0 }" // annotation
+	    );
+	    Random rand = new Random(seed);
+	    Collections.shuffle(jsonInstances, rand); // try different orderings
+	    return "[ \n"+ Joiner.on(", \n").join(jsonInstances) +"]";
+	    
+	  }
+
+	  // a few extra annotations
+	  public static String jsonInstances3(long seed){ 
+	    List<String> jsonInstances = Lists.newArrayList(
+	        // "1" has 2 annotations + label
+	      "{\"batch\": 1, \"data\":\"ABC\", \"endTime\":1, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
+	      
+	      // "2" has 2 annotations + label
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":5, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":\"2\", \"startTime\":0 }", // annotation
+
+	      // "4"
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":9, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation
+
+	      // "six"
+	      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":9, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":\"six\",     \"startTime\":0 }", // annotation
+	      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":9, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":\"six\",     \"startTime\":0 }", // annotation
+	      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":9, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":\"six\",     \"startTime\":0 }" // annotation
+	    );
+	    Random rand = new Random(seed);
+	    Collections.shuffle(jsonInstances, rand); // try different orderings
+	    return "[ \n"+ Joiner.on(", \n").join(jsonInstances) +"]";
+	    
+	  }
 
 	public static Dataset buildTestDatasetFromJson(String jsonString) throws FileNotFoundException {
 		Reader jsonReader = new StringReader(jsonString);

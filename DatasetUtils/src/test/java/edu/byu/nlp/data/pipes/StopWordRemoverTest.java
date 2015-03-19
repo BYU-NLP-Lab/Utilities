@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package edu.byu.nlp.pipes;
+package edu.byu.nlp.data.pipes;
 
 import java.util.List;
 

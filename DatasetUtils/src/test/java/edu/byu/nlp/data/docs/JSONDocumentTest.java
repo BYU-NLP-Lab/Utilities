@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package edu.byu.nlp.pipes.doc;
+package edu.byu.nlp.data.docs;
 
 import java.io.FileNotFoundException;
 
@@ -39,7 +39,7 @@ public class JSONDocumentTest {
    */
   @Test
   public void testBuildDataset() throws FileNotFoundException {
-    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances(System.currentTimeMillis()));
+    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances1(System.currentTimeMillis()));
     Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(3);
     Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(5);
     Assertions.assertThat(dataset.getInfo().getNumDocuments()).isEqualTo(8);

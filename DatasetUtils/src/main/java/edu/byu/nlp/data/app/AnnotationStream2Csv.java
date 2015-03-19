@@ -144,10 +144,12 @@ public class AnnotationStream2Csv {
 		    	cumNumAnnotations += inst.getInfo().getNumAnnotations();
 		    	
 				int numCorrectAnnotations = 0;
-				// sum over all the annotators who put the correct answer
-				int correctLabel = inst.getLabel();
-				for (int j=0; j<data.getInfo().getNumAnnotators(); j++){
-					numCorrectAnnotations += inst.getAnnotations().getLabelAnnotations().getRow(j)[correctLabel];
+				// sum over all the annotators who put the correct answer (if available)
+				if (inst.hasLabel()){
+					Integer correctLabel = inst.getLabel();
+					for (int j=0; j<data.getInfo().getNumAnnotators(); j++){
+						numCorrectAnnotations += inst.getAnnotations().getLabelAnnotations().getRow(j)[correctLabel];
+					}
 				}
 				
 				bld.append("NA,");

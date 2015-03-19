@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.byu.nlp.pipes.doc;
+package edu.byu.nlp.data.docs;
 
 import java.util.BitSet;
 

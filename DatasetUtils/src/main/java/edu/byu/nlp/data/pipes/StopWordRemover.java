@@ -32,7 +32,8 @@ import edu.byu.nlp.io.Files2;
  */
 public class StopWordRemover implements Function<List<String>, List<String>> {
 
-	private static final String DEFAULT_STOP_WORDS_FILE = "/mallet_stopwords.txt";
+	private static final String MALLET_STOP_WORDS_FILE = "/mallet_stopwords.txt";
+	private static final String TWITTER_STOP_WORDS_FILE = "/twitter_stopwords.txt";
 	
 	private class StopWordPredicate implements Predicate<String> {
 
@@ -61,9 +62,25 @@ public class StopWordRemover implements Function<List<String>, List<String>> {
 	public List<String> apply(List<String> input) {
 		return Lists.newArrayList(Iterables.filter(input, p));
 	}
+
+	public static Set<String> malletStopWords(){
+		return Sets.newHashSet(Files2.open(StopWordRemover.class, MALLET_STOP_WORDS_FILE));
+	}
+
+	public static Set<String> twitterStopWords(){
+		return Sets.newHashSet(Files2.open(StopWordRemover.class, TWITTER_STOP_WORDS_FILE));
+	}
 	
-	public static StopWordRemover malletStopWords() {
-		return new StopWordRemover(Sets.newHashSet(Files2.open(StopWordRemover.class, DEFAULT_STOP_WORDS_FILE)));
+	public static StopWordRemover fromWords(Set<String> words) {
+		return new StopWordRemover(words);
+	}
+	
+	public static StopWordRemover malletStopWordRemover() {
+		return fromWords(malletStopWords());
+	}
+
+	public static StopWordRemover twitterStopWordRemover() {
+		return fromWords(twitterStopWords());
 	}
 	
 }

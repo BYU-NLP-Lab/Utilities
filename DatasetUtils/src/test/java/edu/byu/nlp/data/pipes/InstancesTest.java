@@ -1,4 +1,4 @@
-package edu.byu.nlp.pipes;
+package edu.byu.nlp.data.pipes;
 
 import org.fest.assertions.Assertions;
 import org.junit.Test;
