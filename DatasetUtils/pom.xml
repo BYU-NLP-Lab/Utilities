@@ -6,7 +6,7 @@
     <version>1.0</version>
   </parent>
   <artifactId>dataset-utils</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1</version>
   <name>BYU NLP Dataset Utilities</name>
   <description>This repository provides a java representation of data instances along with
 their associated labels, continuous metadata values, and annotation values. 
@@ -66,7 +66,7 @@ Also routines for IO from common document corpus formats.</description>
   	<dependency>
   		<groupId>edu.byu.nlp</groupId>
   		<artifactId>commons</artifactId>
-  		<version>1.1-SNAPSHOT</version>
+  		<version>1.1</version>
   	</dependency>
   </dependencies>
 </project>
