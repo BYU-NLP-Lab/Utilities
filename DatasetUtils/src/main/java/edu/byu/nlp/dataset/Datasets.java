@@ -223,7 +223,7 @@ public class Datasets {
 		}
 		
 		// info without counts
-		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex);
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex, instances);
 		
 		// dataset with correct counts
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
@@ -294,8 +294,8 @@ public class Datasets {
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
 			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
 			Indexer<Long> instanceIdIndexer){
-		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0,0,0,0, 
-				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer);
+		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0,0,0, 
+				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer, instances);
 		return infoWithUpdatedCounts(instances, info);
 	}
 	
@@ -303,14 +303,12 @@ public class Datasets {
 
 		int numDocuments = 0, numDocumentsWithAnnotations = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
 		int numTokens = 0, numTokensWithAnnotations = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
-		int numAnnotations = 0;
 		for (DatasetInstance inst: instances){
 			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;
 			if (inst.hasAnnotations()){
-				numAnnotations += inst.getInfo().getNumAnnotations();
 				numDocumentsWithAnnotations++;
 				numTokensWithAnnotations += numTokensInCurrentDocument;
 			}
@@ -327,11 +325,11 @@ public class Datasets {
 		return new BasicDataset.Info(
 				previousInfo.getSource(), 
 				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels,
-				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels, numAnnotations,
+				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels,
 				previousInfo.getAnnotatorIdIndexer(), 
 				previousInfo.getFeatureIndexer(), 
 				previousInfo.getLabelIndexer(), 
-				previousInfo.getInstanceIdIndexer());
+				previousInfo.getInstanceIdIndexer(), instances);
 	}
 
 	public static Dataset join(Dataset... datasets){
@@ -353,9 +351,10 @@ public class Datasets {
 		
 		for (DatasetInstance inst: data){
 			SparseRealMatrices.clear(inst.getAnnotations().getLabelAnnotations());
-			inst.getInfo().updateAnnotationInfo();
+			inst.getInfo().annotationsChanged();
 		}
-		
+		data.getInfo().annotationsChanged();
+
 	}
 	
 //	private static AnnotationSet emptyAnnotationSet(DatasetInfo info) {
@@ -400,6 +399,15 @@ public class Datasets {
 	 * annotatorId must be an int from the annotatorIdIndexer of the 
 	 * dataset.
 	 * 
+	 * Note that this method is the only method that treats Dataset.Info and 
+	 * DatasetInstance.Info as mutable. Because of the iterative nature of 
+	 * adding annotations to a dataset in simulation, it seemed wasteful to 
+	 * regenerate an entirely new dataset+info after each annotation is added.
+	 * The fact that we are mutating info objects that conceptually SHOULD 
+	 * be immutable is unsatisfying and means we should probably do this 
+	 * differently (maybe by adding annotations using AnnotationInstance 
+	 * data representations before compiling into Dataset representations). 
+	 * 
 	 */
 	public static synchronized void addAnnotationToDataset(
 			Dataset dataset, FlatInstance<SparseFeatureVector, Integer> ann){
@@ -428,7 +436,9 @@ public class Datasets {
 				(int)ann.getAnnotator(), ann.getLabel(), 1);
 
 		// update instance info
-		inst.getInfo().updateAnnotationInfo();
+		inst.getInfo().annotationsChanged();
+		// update dataset info
+		dataset.getInfo().annotationsChanged();
 	}
 	
 	public static synchronized void addAnnotationsToDataset(
@@ -875,8 +885,8 @@ public class Datasets {
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
-		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0,0,0,0, 
-						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer()));
+		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0,0,0, 
+						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), instances));
 		return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
 	}
 
@@ -1070,6 +1080,14 @@ public class Datasets {
 	    bld.append("\n"+indent+"Number of annotators = " + data.getInfo().getNumAnnotators());
 	    
 		return bld.toString();
+	}
+	
+	public static int numAnnotationsIn(Iterable<DatasetInstance> instances){
+		int numAnnotations = 0;
+		for (DatasetInstance inst: instances){
+			numAnnotations += inst.getInfo().getNumAnnotations();
+		}
+		return numAnnotations;
 	}
 	
 }

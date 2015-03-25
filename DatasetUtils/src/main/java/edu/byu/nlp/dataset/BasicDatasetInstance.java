@@ -41,7 +41,6 @@ public class BasicDatasetInstance implements DatasetInstance {
 		this(vector,label,isLabelConcealed,regressand,isRegressandConcealed,annotations,
 				new InstanceInfo(
 						instanceId, source, annotations, 
-						Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), Datasets.INT_CAST_THRESHOLD),
 						labelIndexer));
 	}
 	
@@ -133,13 +132,12 @@ public class BasicDatasetInstance implements DatasetInstance {
 	
 	public static class InstanceInfo implements DatasetInstanceInfo{
 		private String source;
-		private int numAnnotations;
+		private int numAnnotations = -1;
 		private long instanceId;
 		private Indexer<String> labelIndexer;
 		private AnnotationSet annotations;
 
-		public InstanceInfo(long instanceId, String source, AnnotationSet annotations, int numAnnotations, Indexer<String> labelIndexer){
-			this.numAnnotations=numAnnotations;
+		public InstanceInfo(long instanceId, String source, AnnotationSet annotations, Indexer<String> labelIndexer){
 			this.annotations=annotations;
 			this.source=source;
 			this.instanceId=instanceId;
@@ -155,11 +153,14 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public int getNumAnnotations() {
+			if (numAnnotations==-1){
+				numAnnotations = Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), Datasets.INT_CAST_THRESHOLD);
+			}
 			return numAnnotations;
 		}
 		@Override
 		public String toString() {
-			return "id="+getInstanceId()+" src="+source+" numannotators="+getNumAnnotators()+" numannotations="+numAnnotations;
+			return "id="+getInstanceId()+" src="+source+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
 		}
 		@Override
 		public long getInstanceId() {
@@ -170,8 +171,8 @@ public class BasicDatasetInstance implements DatasetInstance {
 			return labelIndexer;
 		}
 		@Override
-		public void updateAnnotationInfo() {
-			this.numAnnotations = Integers.fromDouble(SparseRealMatrices.sum(annotations.getLabelAnnotations()), Datasets.INT_CAST_THRESHOLD);
+		public void annotationsChanged() {
+			this.numAnnotations = -1;
 		}
 		
 	}

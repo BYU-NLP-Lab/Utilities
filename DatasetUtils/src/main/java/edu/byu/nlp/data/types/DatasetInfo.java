@@ -51,5 +51,7 @@ public interface DatasetInfo {
 	int getNullLabel();
 	
 	int getNumAnnotators();
+
+	void annotationsChanged();
 	
 }

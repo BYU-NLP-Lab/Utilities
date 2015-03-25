@@ -48,8 +48,8 @@ public class BasicDataset implements Dataset {
 		Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
 		this(instances, new Info(source, 
 				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels, 
-				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels, numAnnotations, 
-				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer));
+				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels,  
+				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer, instances));
 	}
 	
 	/**
@@ -92,18 +92,20 @@ public class BasicDataset implements Dataset {
 		private int numTokensWithAnnotations;
 		private int numTokensWithLabels;
 		private int numTokensWithObservedLabels;
-		private int numAnnotations;
 		private int numFeatures;
 		private int numClasses;
 		private Indexer<String> featureIndexer;
 		private Indexer<String> labelIndexer;
 		private Indexer<Long> annotatorIdIndex;
 		private Indexer<Long> instanceIdIndexer;
+		private Iterable<DatasetInstance> instances;
+		private int numAnnotations = -1;
 
 		public Info(String source, 
 				int numDocuments, int numDocumentsWithAnnotations, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
-				int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels, int numAnnotations,
-				Indexer<Long> annotatorIdIndex, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
+				int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels,
+				Indexer<Long> annotatorIdIndex, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer,
+				Iterable<DatasetInstance> instances){
 			this.source=source;
 			this.numDocuments=numDocuments;
 			this.numDocumentsWithAnnotations=numDocumentsWithAnnotations;
@@ -113,7 +115,7 @@ public class BasicDataset implements Dataset {
 			this.numTokensWithAnnotations=numTokensWithAnnotations;
 			this.numTokensWithLabels=numTokensWithLabels;
 			this.numTokensWithObservedLabels=numTokensWithObservedLabels;
-			this.numAnnotations=numAnnotations;
+			this.instances=instances;
 			this.numFeatures=featureIndexer.size();
 			this.numClasses=labelIndexer.size();
 			this.featureIndexer=featureIndexer;
@@ -243,7 +245,15 @@ public class BasicDataset implements Dataset {
 
 		@Override
 		public int getNumAnnotations() {
+			if (numAnnotations==-1){
+				numAnnotations = Datasets.numAnnotationsIn(instances);
+			}
 			return numAnnotations;
+		}
+
+		@Override
+		public void annotationsChanged() {
+			this.numAnnotations = -1;
 		}
 		
 	}

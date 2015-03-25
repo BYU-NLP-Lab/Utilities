@@ -29,5 +29,5 @@ public interface DatasetInstanceInfo {
 	
 	Indexer<String> getLabelIndexer();
 	
-	void updateAnnotationInfo();
+	void annotationsChanged();
 }
