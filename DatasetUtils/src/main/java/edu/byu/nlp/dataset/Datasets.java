@@ -1067,10 +1067,12 @@ public class Datasets {
 		StringBuilder bld = new StringBuilder();
 
 	    bld.append(indent+"Number of documents = " + data.getInfo().getNumDocuments());
-	    bld.append("\n"+indent+"Number of labeled documents = " + data.getInfo().getNumDocumentsWithObservedLabels());
-	    bld.append("\n"+indent+"Number of unlabeled documents = " + data.getInfo().getNumDocumentsWithoutObservedLabels());
-	    bld.append("\n"+indent+"Number of annotated documents = " + data.getInfo().getNumDocumentsWithAnnotations());
-	    bld.append("\n"+indent+"Number of unannotated documents = " + data.getInfo().getNumDocumentsWithoutAnnotations());
+	    bld.append("\n"+indent+"Number of documents with observed labels = " + data.getInfo().getNumDocumentsWithObservedLabels());
+	    bld.append("\n"+indent+"Number of documents without observed labels = " + data.getInfo().getNumDocumentsWithoutObservedLabels());
+	    bld.append("\n"+indent+"Number of documents with labels = " + data.getInfo().getNumDocumentsWithLabels());
+	    bld.append("\n"+indent+"Number of documents without labels = " + data.getInfo().getNumDocumentsWithoutLabels());
+	    bld.append("\n"+indent+"Number of documents with annotations = " + data.getInfo().getNumDocumentsWithAnnotations());
+	    bld.append("\n"+indent+"Number of documents without annotations = " + data.getInfo().getNumDocumentsWithoutAnnotations());
 	    bld.append("\n"+indent+"Number of annotations = " + data.getInfo().getNumAnnotations());
 	    bld.append("\n"+indent+"Average annotations per document = " + ((double)data.getInfo().getNumAnnotations())/(double)data.getInfo().getNumDocumentsWithAnnotations());
 	    bld.append("\n"+indent+"Number of tokens = " + data.getInfo().getNumTokens());

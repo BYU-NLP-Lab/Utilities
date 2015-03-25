@@ -1,6 +1,10 @@
 rt
 mention
 link
+co
+http
+com
+www
 re
 a
 about
