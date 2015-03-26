@@ -81,7 +81,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	// simple deserialization pojo
 	private static class JSONAnnotation {
 		private String annotator, label, data, source, annotation, datapath;
-		private long startTime, endTime;
+		private long starttime = -1, endtime = -1;
 		private boolean labelObserved;
 
 		@Override
@@ -167,7 +167,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 				String annotationData = null; // data will be passed on only via the labeledinstance to avoid redundant processing 
 				transformedAnnotations.add(new FlatAnnotatedInstance<String,String>(
 						AnnotationInterfaceJavaUtils.newAnnotatedInstance(
-								ann.annotator, ann.annotation, ann.startTime * 1000 * 1000, ann.endTime * 1000 * 1000, 
+								ann.annotator, ann.annotation, ann.starttime * 1000 * 1000, ann.endtime * 1000 * 1000, 
 								ann.source, annotationData)));
 			}
 			
