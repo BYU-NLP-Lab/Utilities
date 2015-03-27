@@ -43,12 +43,12 @@ public class BasicDataset implements Dataset {
 	 * and does not double-check your work.
 	 */
 	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
-			int numDocuments, int numDocumentsWithAnnotations, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
+			int numDocuments, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
 		int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels, int numAnnotations,
 		Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
 		this(instances, new Info(source, 
-				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels, 
-				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels,  
+				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels, 
+				numTokens, numTokensWithLabels, numTokensWithObservedLabels,  
 				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer, instances));
 	}
 	
@@ -85,11 +85,9 @@ public class BasicDataset implements Dataset {
 
 		private String source;
 		private int numDocuments;
-		private int numDocumentsWithAnnotations;
 		private int numDocumentsWithLabels;
 		private int numDocumentsWithObservedLabels;
 		private int numTokens;
-		private int numTokensWithAnnotations;
 		private int numTokensWithLabels;
 		private int numTokensWithObservedLabels;
 		private int numFeatures;
@@ -100,19 +98,19 @@ public class BasicDataset implements Dataset {
 		private Indexer<Long> instanceIdIndexer;
 		private Iterable<DatasetInstance> instances;
 		private int numAnnotations = -1;
+		private int numDocumentsWithAnnotations = -1;
+		private int numTokensWithAnnotations = -1;
 
 		public Info(String source, 
-				int numDocuments, int numDocumentsWithAnnotations, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
-				int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels,
+				int numDocuments, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
+				int numTokens, int numTokensWithLabels, int numTokensWithObservedLabels,
 				Indexer<Long> annotatorIdIndex, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer,
 				Iterable<DatasetInstance> instances){
 			this.source=source;
 			this.numDocuments=numDocuments;
-			this.numDocumentsWithAnnotations=numDocumentsWithAnnotations;
 			this.numDocumentsWithLabels=numDocumentsWithLabels;
 			this.numDocumentsWithObservedLabels=numDocumentsWithObservedLabels;
 			this.numTokens=numTokens;
-			this.numTokensWithAnnotations=numTokensWithAnnotations;
 			this.numTokensWithLabels=numTokensWithLabels;
 			this.numTokensWithObservedLabels=numTokensWithObservedLabels;
 			this.instances=instances;
@@ -136,12 +134,15 @@ public class BasicDataset implements Dataset {
 
 		@Override
 		public int getNumDocumentsWithAnnotations() {
+			if (numDocumentsWithAnnotations ==-1){
+				numDocumentsWithAnnotations = Datasets.numDocumentsWithAnnotationsIn(instances);
+			}
 			return numDocumentsWithAnnotations;
 		}
 
 		@Override
 		public int getNumDocumentsWithoutAnnotations() {
-			return numDocuments - numDocumentsWithAnnotations;
+			return numDocuments - getNumDocumentsWithAnnotations();
 		}
 
 		@Override
@@ -196,12 +197,15 @@ public class BasicDataset implements Dataset {
 
 		@Override
 		public int getNumTokensWithAnnotations() {
+			if (numTokensWithAnnotations ==-1){
+				numTokensWithAnnotations = Datasets.numTokensWithAnnotationsIn(instances);
+			}
 			return numTokensWithAnnotations;
 		}
 
 		@Override
 		public int getNumTokensWithoutAnnotations() {
-			return numTokens - numTokensWithAnnotations;
+			return numTokens - getNumTokensWithAnnotations();
 		}
 
 		@Override
@@ -251,9 +255,16 @@ public class BasicDataset implements Dataset {
 			return numAnnotations;
 		}
 
+		/**
+		 * Annotations are the only mutable aspect of a dataset. They were 
+		 * made mutable purely for expediency reasons--it would probably be more ideal  
+		 * to refactor so that this is not necessary.
+		 */
 		@Override
 		public void annotationsChanged() {
 			this.numAnnotations = -1;
+			this.numTokensWithAnnotations = -1;
+			this.numDocumentsWithAnnotations = -1;
 		}
 		
 	}

@@ -8,6 +8,7 @@ import com.google.common.collect.Multiset;
 
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.math.AbstractRealMatrixPreservingVisitor;
+import edu.byu.nlp.util.Integers;
 import edu.byu.nlp.util.Multisets2;
 
 public class DatasetInstances {
@@ -49,6 +50,11 @@ public class DatasetInstances {
 			}
 		});
 		return Multisets2.maxElement(labelDist, rnd);
+	}
+	
+
+	public static int numTokensIn(DatasetInstance inst){
+		return Integers.fromDouble(inst.asFeatureVector().sum(), Datasets.INT_CAST_THRESHOLD);
 	}
 	
 }

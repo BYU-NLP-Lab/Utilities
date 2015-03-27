@@ -10,7 +10,7 @@ package edu.byu.nlp.data;
  * AutomaticAnnotation (label) and Annotation objects.
  *
  */
-public interface FlatInstance<D,L> extends Comparable<FlatInstance<D,L>> {
+public interface FlatInstance<D,L> {
 
 	public static long NULL_TIMESTAMP = -1;
 	public static long NULL_ID = -1;

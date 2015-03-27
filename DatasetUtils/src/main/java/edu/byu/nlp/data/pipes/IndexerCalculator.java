@@ -59,8 +59,6 @@ public class IndexerCalculator<D, L>  {
 			instanceIndexer.add(inst.getInstanceId());
 		}
 		
-		// remove the special 
-		
 		return new IndexerCalculator<D,L>(wordIndexer, labelIndexer, instanceIndexer, annotatorIndexer);
 	}
 

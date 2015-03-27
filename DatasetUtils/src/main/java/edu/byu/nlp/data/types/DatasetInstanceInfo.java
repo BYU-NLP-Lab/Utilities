@@ -30,4 +30,5 @@ public interface DatasetInstanceInfo {
 	Indexer<String> getLabelIndexer();
 	
 	void annotationsChanged();
+	
 }

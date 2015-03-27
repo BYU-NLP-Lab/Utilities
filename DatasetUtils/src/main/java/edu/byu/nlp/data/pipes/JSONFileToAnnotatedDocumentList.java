@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -82,7 +81,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	private static class JSONAnnotation {
 		private String annotator, label, data, source, annotation, datapath;
 		private long starttime = -1, endtime = -1;
-		private boolean labelObserved;
+		private boolean labelobserved;
 
 		@Override
 		public String toString() {
@@ -95,7 +94,6 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	}
 
 	private class InstancePojo {
-		private List<JSONAnnotation> annotations = Lists.newArrayList();
 		private String label, data, source, datapath;
 		private boolean labelobserved;
 		@Override
@@ -113,63 +111,47 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 		Type collectiontype = new TypeToken<List<JSONAnnotation>>() {
 		}.getType();
 
-		List<JSONAnnotation> data = gson.fromJson(this.jsonReader, collectiontype);
+		List<JSONAnnotation> jsonData = gson.fromJson(this.jsonReader, collectiontype);
 
-		// aggregate items that share a data source into a single instance
-		Map<String, InstancePojo> instanceMap = Maps.newHashMap();
-		for (JSONAnnotation ann : data) {
-			if (!instanceMap.containsKey(ann.source)) {
-				instanceMap.put(ann.source, new InstancePojo());
-			}
-			InstancePojo inst = instanceMap.get(ann.source);
-			inst.data = ann.data;
-			inst.datapath = ann.datapath;
-			inst.source = ann.source;
+		// translate annotations into flatInstances 
+		// and gather instance data 
+		Map<String,InstancePojo> instanceData = Maps.newHashMap();
+		List<FlatInstance<String, String>> transformedAnnotations = Lists.newArrayList();
+		for (JSONAnnotation ann : jsonData) {
+			
 			// annotation
 			if (ann.annotation != null) {
-				inst.annotations.add(ann);
-			}
-			// instance (with optional gold label)
-			if (ann.label != null) {
-				if (inst.label != null && !inst.label.equals(ann.label)) {
-					logger.warn("Multiple differing labels have been specified for the same data instance. ("
-							+ inst.label + " and " + ann.label + ") Choosing " + ann.label + " arbitrarily");
-				}
-				inst.label = ann.label;
-				inst.labelobserved = ann.labelObserved;
-			}
-		}
-
-		// separate labeled (gold standard label) from unlabeled instances
-		List<InstancePojo> observedLabelInstances = Lists.newArrayList();
-		List<InstancePojo> labeledInstances = Lists.newArrayList();
-		List<InstancePojo> unlabeledInstances = Lists.newArrayList();
-		List<String> docSources = Lists.newArrayList(instanceMap.keySet());
-		for (String docSource : docSources) {
-			InstancePojo pojo = instanceMap.get(docSource);
-			if (pojo.labelobserved) {
-				observedLabelInstances.add(instanceMap.get(docSource));
-			} else if (pojo.label != null) {
-				labeledInstances.add(instanceMap.get(docSource));
-			} else {
-				unlabeledInstances.add(instanceMap.get(docSource));
-			}
-		}
-
-		List<FlatInstance<String, String>> transformedInstances = Lists.newArrayList();
-		List<FlatInstance<String, String>> transformedAnnotations = Lists.newArrayList();
-		
-		// assemble iterators over flatInstances
-		for (InstancePojo pojo: Iterables.concat(observedLabelInstances, labeledInstances, unlabeledInstances)){
-			
-			// add annotated instances
-			for (JSONAnnotation ann : pojo.annotations) {
 				String annotationData = null; // data will be passed on only via the labeledinstance to avoid redundant processing 
 				transformedAnnotations.add(new FlatAnnotatedInstance<String,String>(
 						AnnotationInterfaceJavaUtils.newAnnotatedInstance(
 								ann.annotator, ann.annotation, ann.starttime * 1000 * 1000, ann.endtime * 1000 * 1000, 
 								ann.source, annotationData)));
 			}
+			
+			
+			// ensure 1 instance per unique source
+			if (!instanceData.containsKey(ann.source)){
+				instanceData.put(ann.source, new InstancePojo());
+			}
+			InstancePojo inst = instanceData.get(ann.source);
+			// gather instance info
+			inst.source=ann.source;
+			if (inst.data==null){
+				inst.data = ann.data;
+			}
+			if (inst.datapath==null){
+				inst.datapath=ann.datapath;
+			}
+			if (inst.label == null) {
+				inst.label = ann.label;
+				inst.labelobserved = ann.labelobserved;
+			}
+			
+		}
+
+		// create exactly 1 labeled instance for each unique source (even if the label is null)
+		List<FlatInstance<String, String>> transformedInstances = Lists.newArrayList();
+		for (InstancePojo pojo: instanceData.values()){
 			
 			// read data from disk (if necessary)
 			String instData = pojo.data;
@@ -184,41 +166,13 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 				instData = Strings.join(lines, "\n");
 			}
 
-			// add exactly 1 LabeledInstance for each unique source (even if the label is null)
 			transformedInstances.add(new FlatLabeledInstance<String,String>(
 					AnnotationInterfaceJavaUtils.newLabeledInstance(instData, pojo.label, pojo.source, !pojo.labelobserved)));
-			
 		}
 		
-		
-		return Iterators.concat(transformedInstances.iterator(), transformedAnnotations.iterator());
+		return Iterators.concat(transformedAnnotations.iterator(), transformedInstances.iterator());
 		
 	}
 
-//	private static FlatInstance<String, String> jsonPojo2Annotation(InstancePojo pojo, List<Annotation<String, String>> annotations) {
-//
-//		// read data from disk (if necessary)
-//		String data = pojo.data;
-//		if (data == null) {
-//			List<String> lines;
-//			try {
-//				lines = Files.readLines(new File(pojo.datapath), Charset.forName("utf-8"));
-//			} catch (IOException e) {
-//				throw new RuntimeException("unable to read file " + pojo.datapath, e);
-//			}
-//			data = Strings.join(lines, "\n");
-//		}
-//		
-//		// add annotations to the list that was passed in
-//		for (JSONAnnotation ann : pojo.annotations) {
-//			annotations.add(AnnotationInterfaceJavaUtils.newAnnotatedInstance(
-//				ann.annotator, ann.annotation, ann.startTime, ann.endTime, pojo.source, data));
-//		}
-//
-//		// return an instance
-//		return new FlatLabeledInstance<String,String>(
-//				AnnotationInterfaceJavaUtils.newLabeledInstance(data, pojo.label, pojo.source));
-////		BasicInstance.of(pojo.label, pojo.labelobserved, null, pojo.source, data, annotations);
-//	}
 
 }

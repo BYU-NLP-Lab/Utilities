@@ -19,10 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
@@ -223,7 +225,7 @@ public class Datasets {
 		}
 		
 		// info without counts
-		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex, instances);
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex, instances);
 		
 		// dataset with correct counts
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
@@ -294,24 +296,20 @@ public class Datasets {
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
 			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
 			Indexer<Long> instanceIdIndexer){
-		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0,0,0, 
+		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0, 
 				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer, instances);
 		return infoWithUpdatedCounts(instances, info);
 	}
 	
 	public static DatasetInfo infoWithUpdatedCounts(Iterable<DatasetInstance> instances, DatasetInfo previousInfo){
 
-		int numDocuments = 0, numDocumentsWithAnnotations = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
-		int numTokens = 0, numTokensWithAnnotations = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
+		int numDocuments = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
+		int numTokens = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
 		for (DatasetInstance inst: instances){
 			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;
-			if (inst.hasAnnotations()){
-				numDocumentsWithAnnotations++;
-				numTokensWithAnnotations += numTokensInCurrentDocument;
-			}
 			if (inst.hasLabel()){
 				numDocumentsWithLabels++;
 				numTokensWithLabels += numTokensInCurrentDocument;
@@ -324,8 +322,8 @@ public class Datasets {
 		
 		return new BasicDataset.Info(
 				previousInfo.getSource(), 
-				numDocuments, numDocumentsWithAnnotations, numDocumentsWithLabels, numDocumentsWithObservedLabels,
-				numTokens, numTokensWithAnnotations, numTokensWithLabels, numTokensWithObservedLabels,
+				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels,
+				numTokens, numTokensWithLabels, numTokensWithObservedLabels,
 				previousInfo.getAnnotatorIdIndexer(), 
 				previousInfo.getFeatureIndexer(), 
 				previousInfo.getLabelIndexer(), 
@@ -469,6 +467,24 @@ public class Datasets {
 		}
 		return annotations;
 	}
+
+	/**
+	 * Sorts first by end timestamp, then start timestamp, then annotator, then source
+	 */
+	public static <D,L> void sortAnnotations(List<FlatInstance<D, L>> annotations) {
+		annotations.sort(new Comparator<FlatInstance<D, L>>() {
+			@Override
+			public int compare(FlatInstance<D, L> o1, FlatInstance<D, L> o2) {
+				return ComparisonChain.start()
+					.compare(o1.getEndTimestamp(), o2.getEndTimestamp())
+					.compare(o1.getStartTimestamp(), o2.getStartTimestamp())
+					.compare(o1.getAnnotator(), o2.getAnnotator())
+					.compare(o1.getSource(), o2.getSource())
+					.result();
+			}
+		});
+	}
+	
 	
 	public static Collection<String> wordsIn(final DatasetInstance inst, final Indexer<String> featureIndexer){
 		final List<String> words = Lists.newArrayList();
@@ -885,7 +901,7 @@ public class Datasets {
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
-		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0,0,0, 
+		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
 						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), instances));
 		return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
 	}
@@ -1092,4 +1108,45 @@ public class Datasets {
 		return numAnnotations;
 	}
 	
+	public static int numDocumentsWithAnnotationsIn(Iterable<DatasetInstance> instances) {
+		int numDocumentsWithAnnotations = 0;
+		for (DatasetInstance inst: instances){
+			numDocumentsWithAnnotations += inst.hasAnnotations()? 1: 0;
+		}
+		return numDocumentsWithAnnotations;
+	}
+
+	public static int numTokensWithAnnotationsIn(Iterable<DatasetInstance> instances) {
+		int numTokensWithAnnotations = 0;
+		for (DatasetInstance inst: instances){
+			numTokensWithAnnotations += inst.hasAnnotations()? DatasetInstances.numTokensIn(inst): 0;
+		}
+		return numTokensWithAnnotations;
+	}
+
+	/**
+	 * For visually debugging the annotation contents of a dataset
+	 */
+	public static String toAnnotationCsv(Dataset data){
+		StringBuilder bld = new StringBuilder();
+		Joiner join = Joiner.on(",");
+		
+		// header
+		bld.append(join.join(Lists.newArrayList(
+				"source","annotation","annotator","endtime"
+				)));
+
+		// body
+		List<FlatInstance<SparseFeatureVector, Integer>> annotations = annotationsIn(data);
+		sortAnnotations(annotations);
+		for (FlatInstance<SparseFeatureVector, Integer> ann: annotations){
+			Preconditions.checkState(ann.isAnnotation());
+			bld.append(join.join(Lists.newArrayList(
+					"\n"+ann.getSource(),""+ann.getLabel(),""+ann.getAnnotator(),""+ann.getEndTimestamp()
+					)));
+		}
+		
+		return bld.toString();
+	}
+
 }

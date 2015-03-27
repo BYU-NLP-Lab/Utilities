@@ -63,12 +63,6 @@ public class DataSources {
 	// read in all of the data at once to reduce disk reads
 	public static <D, L> List<FlatInstance<D, L>> cache(DataSource<D, L> source) {
 		return Lists.newArrayList(source.getLabeledInstances());
-//		List<FlatInstance<D, L>> cached = Lists.newArrayList();
-//		for (FlatInstance<D, L> instance : source.getLabeledInstances()) {
-////      cached.add(BasicInstance.of(instance.getLabel(), instance.getSource(), instance.getData()));
-//			cached.add(BasicInstance.copyOf(instance));
-//		}
-//		return cached;
 	}
 
 	private static class IterableDataSource<D, L> implements DataSource<D, L> {
