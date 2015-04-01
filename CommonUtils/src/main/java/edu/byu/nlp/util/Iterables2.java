@@ -15,10 +15,15 @@
  */
 package edu.byu.nlp.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+
+import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.collect.Lists;
 
@@ -116,6 +121,11 @@ public class Iterables2 {
 	public static <E> Iterable<E> firstN(final Iterable<E> iterable, final int n) {
 		return subInterval(iterable, 0, n);
 	}
-    
+
+	public static <E> Iterable<E> shuffled(final Iterable<E> iterable, RandomGenerator rnd) {
+		ArrayList<E> retval = Lists.newArrayList(iterable);
+		Collections.shuffle(retval, new Random(rnd.nextLong()));
+		return retval;
+	}
 	
 }
