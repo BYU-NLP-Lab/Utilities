@@ -103,7 +103,7 @@ private String jsonReferencedDataDir;
       @Nullable Function<List<String>, List<String>> tokenTransform,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) throws FileSystemException, FileNotFoundException {
-    this(basedir+"/"+filename, new File(basedir).getParent(), readerOf(basedir+"/"+filename), 
+    this(basedir+"/"+filename, new File(basedir).getAbsolutePath(), readerOf(basedir+"/"+filename), 
         docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
   }
   

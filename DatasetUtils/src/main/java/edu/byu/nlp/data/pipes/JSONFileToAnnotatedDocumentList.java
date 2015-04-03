@@ -67,8 +67,8 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	public JSONFileToAnnotatedDocumentList(String jsonFile, Charset charset)
 			throws FileNotFoundException {
 		// assume the datadir referred to by json will be relative to the parent folder of the dataset (e.g., if 
-		// jsonFile= /aml/data/plf1/cfgroups/cfgroups1000.json then the basedir should be /aml/data/plf1
-		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), new File(jsonFile).getParentFile().getParent());
+		// jsonFile= /aml/data/plf1/cfgroups/cfgroups1000.json then the basedir should be /aml/data/plf1/cfgroups
+		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), new File(jsonFile).getParent());
 	}
 
 	public JSONFileToAnnotatedDocumentList(Reader jsonReader, String jsonReferencedDataDir) {
