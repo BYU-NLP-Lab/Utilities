@@ -14,7 +14,7 @@
 package edu.byu.nlp.data.docs;
 
 import java.io.File;
-import java.util.Collections;
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.vfs2.FileObject;
@@ -25,9 +25,11 @@ import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.pipes.DataSource;
 import edu.byu.nlp.data.pipes.DataSources;
 import edu.byu.nlp.data.pipes.DirectoryReader;
@@ -66,13 +68,16 @@ public class DocumentDatasetBuilder {
   private final FeatureSelectorFactory<String> featureSelectorFactory;
   private Integer featureNormalizationConstant;
   private Function<List<String>, List<String>> tokenTransform;
+private Doc2FeaturesMethod doc2FeatureMethod;
+private String uniqueName;
 
   public DocumentDatasetBuilder(String basedir, String dataset, String split,
       @Nullable Function<String, String> docTransform, 
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
+      Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory) throws FileSystemException {
-    this(basedir, dataset, split, docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, null);
+    this(basedir, dataset, split, docTransform, tokenizerPipe, tokenTransform, doc2FeatureMethod, featureSelectorFactory, null);
   }
   
   /**
@@ -85,6 +90,7 @@ public class DocumentDatasetBuilder {
       @Nullable Function<String, String> docTransform,
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
+      Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) throws FileSystemException {
     // TODO: consider taking the FileObject as a parameter
@@ -92,6 +98,7 @@ public class DocumentDatasetBuilder {
     if (fsManager instanceof DefaultFileSystemManager) {
       ((DefaultFileSystemManager) fsManager).setBaseFile(new File("."));
     }
+    this.uniqueName = Joiner.on('-').join(basedir,dataset,split);
     this.basedir = fsManager.resolveFile(basedir);
     Preconditions.checkNotNull(this.basedir, "%s cannot be resolved", basedir);
     Preconditions.checkArgument(this.basedir.getType() == FileType.FOLDER);
@@ -105,12 +112,13 @@ public class DocumentDatasetBuilder {
     this.docTransform = docTransform;
     this.tokenizerPipe = tokenizerPipe;
     this.tokenTransform = tokenTransform;
+    this.doc2FeatureMethod=doc2FeatureMethod;
     this.featureSelectorFactory = featureSelectorFactory;
     this.featureNormalizationConstant=featureNormalizationConstant;
   }
 
   
-  public Dataset dataset() throws FileSystemException {
+  public Dataset dataset() throws IOException {
     // This pipe leaves data in the form it is expected to be in at test time
     LabeledInstancePipe<String, String, String, String> indexToDocPipe =
         DocPipes.indexToDocPipe(basedir, indexDirectory);
@@ -136,6 +144,8 @@ public class DocumentDatasetBuilder {
     
     // Cross-fold validation would create a new pipe factory for each fold.
     // If we have a static test set, we would only do this on the training data
-    return DocPipes.createDataset(DataSources.from(source, cachedData), featureSelectorFactory, featureNormalizationConstant);
+    return DocPipes.createDataset(DataSources.from(source, cachedData), doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
   }
+  
 }
+

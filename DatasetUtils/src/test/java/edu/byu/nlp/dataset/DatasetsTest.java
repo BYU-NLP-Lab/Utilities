@@ -1,6 +1,6 @@
 package edu.byu.nlp.dataset;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -34,10 +34,10 @@ public class DatasetsTest {
 
 	  /**
 	   * Test method for {@link edu.byu.nlp.data.pipes.StopWordRemover#apply(java.util.List)}.
-	   * @throws FileNotFoundException 
+	 * @throws IOException 
 	   */
 	  @Test
-	  public void testBuildDataset() throws FileNotFoundException {
+	  public void testBuildDataset() throws IOException {
 	    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(4);
 	    Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(4);
@@ -82,7 +82,7 @@ public class DatasetsTest {
 	  }
 
 	  @Test
-	  public void testHideLabelsByClass1() throws FileNotFoundException{
+	  public void testHideLabelsByClass1() throws IOException{
 	    int numObservedLabelsPerClass = 1;
 	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
@@ -100,7 +100,7 @@ public class DatasetsTest {
 	  }
 
 	  @Test
-	  public void testHideLabelsByClass2() throws FileNotFoundException{
+	  public void testHideLabelsByClass2() throws IOException{
 	    int numObservedLabelsPerClass = 2;
 	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    data = Datasets.hideAllLabelsButNPerClass(data, numObservedLabelsPerClass, new MersenneTwister(System.currentTimeMillis()));
@@ -112,7 +112,7 @@ public class DatasetsTest {
 	  }
 
 	  @Test
-	  public void testToFeatureArrayVsToSparseFeatureArray() throws FileNotFoundException{
+	  public void testToFeatureArrayVsToSparseFeatureArray() throws IOException{
 		// run this test on a variety of test datasets
 	    Dataset data1 = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    Dataset data2 = DatasetsTestUtil.mockDataset();
@@ -135,7 +135,7 @@ public class DatasetsTest {
 	  }
 	  
 	  @Test
-	  public void testToFeatureArray() throws FileNotFoundException{
+	  public void testToFeatureArray() throws IOException{
 	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    for (DatasetInstance inst: data){
 	      Assertions.assertThat(
@@ -170,7 +170,7 @@ public class DatasetsTest {
 	  }
 	  
 	  @Test
-	  public void testAddAnnotation() throws FileNotFoundException{
+	  public void testAddAnnotation() throws IOException{
 		// base dataset
 	    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    // annotations

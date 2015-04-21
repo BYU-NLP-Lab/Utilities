@@ -1,6 +1,6 @@
 package edu.byu.nlp.data.util;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collections;
@@ -12,6 +12,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
+import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactory;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TokenizerPipes;
@@ -123,7 +124,7 @@ public class JsonDatasetMocker {
 	    
 	  }
 
-	public static Dataset buildTestDatasetFromJson(String jsonString) throws FileNotFoundException {
+	public static Dataset buildTestDatasetFromJson(String jsonString) throws IOException {
 		Reader jsonReader = new StringReader(jsonString);
 
 		// build dataset
@@ -133,7 +134,7 @@ public class JsonDatasetMocker {
 		Integer featureNormalizationConstant = 1;
 		Function<List<String>, List<String>> tokenTransform = null;
 		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source", null, jsonReader,
-				docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
+				docTransform, tokenizerPipe, tokenTransform, Doc2FeaturesMethod.WORD_COUNTS, featureSelectorFactory, featureNormalizationConstant);
 		return builder.dataset();
 	}
 	

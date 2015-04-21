@@ -22,13 +22,13 @@ import java.util.List;
 
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
-import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
+import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.DocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TokenizerPipes;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
@@ -63,13 +63,13 @@ public class DataExporter {
 	private static int minFeaturesToKeepPerDocument = 10;
 
     // TODO : share code with ClustererEvaluator
-    private static Dataset readData(RandomGenerator rnd) throws FileSystemException {
+    private static Dataset readData(RandomGenerator rnd) throws IOException {
       Function<List<String>, List<String>> tokenTransform = null; // TODO
-      DocumentDatasetBuilder newsgroups =
+      Dataset data =
           new DocumentDatasetBuilder(basedir, dataset, split, new EmailHeaderStripper(),
-              TokenizerPipes.McCallumAndNigam(), tokenTransform , new TopNPerDocumentFeatureSelectorFactory<String>(
-                  minFeaturesToKeepPerDocument));
-      Dataset data = newsgroups.dataset();
+              TokenizerPipes.McCallumAndNigam(), tokenTransform , Doc2FeaturesMethod.WORD_COUNTS, 
+              new TopNPerDocumentFeatureSelectorFactory<String>(minFeaturesToKeepPerDocument))
+      	  .dataset();
   
       // Print for verification
       // new StandardOutSink<Integer, SparseFeatureVector>().process(pipeAndData.getOutput());

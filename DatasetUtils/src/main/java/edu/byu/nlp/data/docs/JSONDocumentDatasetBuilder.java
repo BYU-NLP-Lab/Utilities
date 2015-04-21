@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
@@ -26,10 +27,12 @@ import java.util.List;
 import org.apache.commons.vfs2.FileSystemException;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
+import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.pipes.DataSource;
 import edu.byu.nlp.data.pipes.DataSources;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
@@ -79,14 +82,17 @@ public class JSONDocumentDatasetBuilder {
   private Reader jsonReader;
   private String source;
 private String jsonReferencedDataDir;
+private Doc2FeaturesMethod doc2FeatureMethod;
+private String uniqueName;
 
   public JSONDocumentDatasetBuilder(String basedir, String filename,
       @Nullable Function<String, String> docTransform,
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
+      Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory) 
           throws FileSystemException, FileNotFoundException {
-    this(basedir, filename, docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, null);
+    this(basedir, filename, docTransform, tokenizerPipe, tokenTransform, doc2FeatureMethod, featureSelectorFactory, null);
   }
 
   private static Reader readerOf(String jsonFile) throws FileNotFoundException{
@@ -101,10 +107,11 @@ private String jsonReferencedDataDir;
       @Nullable Function<String, String> docTransform,
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
+      Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) throws FileSystemException, FileNotFoundException {
     this(basedir+"/"+filename, new File(basedir).getAbsolutePath(), readerOf(basedir+"/"+filename), 
-        docTransform, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
+        docTransform, tokenizerPipe, tokenTransform, doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
   }
   
   /**
@@ -117,19 +124,22 @@ private String jsonReferencedDataDir;
       @Nullable Function<String, String> docTransform,
       @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
       @Nullable Function<List<String>, List<String>> tokenTransform,
+      Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) {
+	    this.uniqueName = Joiner.on('-').join(source,jsonReferencedDataDir);
 		this.source=source;
 		this.jsonReferencedDataDir=jsonReferencedDataDir;
 	    this.jsonReader=jsonReader;
 	    this.docTransform = docTransform;
 	    this.tokenizerPipe = tokenizerPipe;
 	    this.tokenTransform=tokenTransform;
+	    this.doc2FeatureMethod=doc2FeatureMethod;
 	    this.featureSelectorFactory = featureSelectorFactory;
 	    this.featureNormalizationConstant=featureNormalizationConstant;
   }
 
-  public Dataset dataset() throws FileNotFoundException {
+  public Dataset dataset() throws IOException {
     // This pipe leaves data in the form it is expected to be in at test time
     LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, jsonReferencedDataDir);
 
@@ -154,13 +164,13 @@ private String jsonReferencedDataDir;
     
     // Cache the data to avoid multiple disk reads
     List<FlatInstance<List<String>, String>> cachedData = DataSources.cache(docSource);
-
+    
     //
     // Cross-fold validation would create a new pipe factory for each fold.
     // If we have a static test set, we would only do this on the training data
     //
     Dataset dataset = DocPipes.createDataset(
-    		DataSources.from(source, cachedData), featureSelectorFactory, featureNormalizationConstant);
+    		DataSources.from(source, cachedData), doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
     
     return dataset;
   }

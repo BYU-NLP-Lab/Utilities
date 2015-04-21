@@ -15,7 +15,6 @@
  */
 package edu.byu.nlp.data.app;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +28,6 @@ import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 import org.apache.commons.math3.ml.distance.EuclideanDistance;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
-import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +41,7 @@ import com.google.common.collect.Sets;
 import edu.byu.nlp.data.annotators.SimulatedAnnotator;
 import edu.byu.nlp.data.annotators.SimulatedAnnotators;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
+import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TokenizerPipes;
@@ -306,7 +305,7 @@ public class AnnotationStream2Annotators {
   }
   
 
-  private static Dataset readData(String jsonStream) throws FileSystemException, FileNotFoundException {
+  private static Dataset readData(String jsonStream) throws IOException {
     // these parameters are not important since we will ignore the data itself and concentrate only on annotations
     // in this script
     int featureCountCutoff = -1;
@@ -320,7 +319,7 @@ public class AnnotationStream2Annotators {
     String folder = Paths.directory(jsonStream);
     String file = Paths.baseName(jsonStream);
     Dataset data = new JSONDocumentDatasetBuilder(folder, file, 
-          docTransform, TokenizerPipes.McCallumAndNigam(), tokenTransform, 
+          docTransform, TokenizerPipes.McCallumAndNigam(), tokenTransform, Doc2FeaturesMethod.WORD_COUNTS,
           FeatureSelectorFactories.conjoin(
               new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
               (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),

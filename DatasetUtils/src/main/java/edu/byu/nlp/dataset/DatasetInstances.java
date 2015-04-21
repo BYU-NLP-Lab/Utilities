@@ -54,7 +54,9 @@ public class DatasetInstances {
 	
 
 	public static int numTokensIn(DatasetInstance inst){
-		return Integers.fromDouble(inst.asFeatureVector().sum(), Datasets.INT_CAST_THRESHOLD);
+//		return Integers.fromDouble(inst.asFeatureVector().sum(), Datasets.INT_CAST_THRESHOLD);
+		// allow fractional features
+		return Integers.fromDouble(inst.asFeatureVector().sum(), 1);
 	}
 	
 }

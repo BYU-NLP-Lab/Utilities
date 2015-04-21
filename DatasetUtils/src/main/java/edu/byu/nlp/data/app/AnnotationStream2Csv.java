@@ -16,7 +16,6 @@
 package edu.byu.nlp.data.app;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.vfs2.FileSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +39,7 @@ import com.google.common.io.Files;
 
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
+import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TokenizerPipes;
@@ -218,7 +217,7 @@ public class AnnotationStream2Csv {
     
   }
 
-  private static Dataset readData(String jsonStream) throws FileSystemException, FileNotFoundException {
+  private static Dataset readData(String jsonStream) throws IOException {
     // these parameters are not important since we will ignore the data itself and concentrate only on annotations
     // in this script
     int featureCountCutoff = -1;
@@ -232,7 +231,7 @@ public class AnnotationStream2Csv {
     String folder = Paths.directory(jsonStream);
     String file = Paths.baseName(jsonStream);
     Dataset data = new JSONDocumentDatasetBuilder(folder, file, 
-          docTransform, TokenizerPipes.McCallumAndNigam(), tokenTransform, 
+          docTransform, TokenizerPipes.McCallumAndNigam(), tokenTransform, Doc2FeaturesMethod.WORD_COUNTS,
           FeatureSelectorFactories.conjoin(
               new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
               (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),

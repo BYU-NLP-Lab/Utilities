@@ -306,7 +306,9 @@ public class Datasets {
 		int numDocuments = 0, numDocumentsWithLabels = 0, numDocumentsWithObservedLabels = 0;
 		int numTokens = 0, numTokensWithLabels = 0, numTokensWithObservedLabels = 0;
 		for (DatasetInstance inst: instances){
-			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD); 
+//			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),INT_CAST_THRESHOLD);
+			// allow fractional document features
+			int numTokensInCurrentDocument = Integers.fromDouble(inst.asFeatureVector().sum(),1); 
 			
 			numDocuments++;
 			numTokens += numTokensInCurrentDocument;

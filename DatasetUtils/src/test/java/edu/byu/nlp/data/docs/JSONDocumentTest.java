@@ -13,7 +13,7 @@
  */
 package edu.byu.nlp.data.docs;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.fest.assertions.Assertions;
 import org.junit.Test;
@@ -35,10 +35,10 @@ public class JSONDocumentTest {
 
   /**
    * Test method for {@link edu.byu.nlp.data.pipes.StopWordRemover#apply(java.util.List)}.
-   * @throws FileNotFoundException 
+ * @throws IOException 
    */
   @Test
-  public void testBuildDataset() throws FileNotFoundException {
+  public void testBuildDataset() throws IOException {
     Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances1(System.currentTimeMillis()));
     Assertions.assertThat(dataset.getInfo().getNumDocumentsWithObservedLabels()).isEqualTo(3);
     Assertions.assertThat(dataset.getInfo().getNumDocumentsWithoutObservedLabels()).isEqualTo(5);
