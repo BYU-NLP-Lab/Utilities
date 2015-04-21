@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.deeplearning4j.models.word2vec.wordstore.inmemory.InMemoryLookupCache;
 import org.deeplearning4j.text.sentenceiterator.BaseSentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
@@ -41,8 +40,6 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.IntArrays;
-import edu.byu.nlp.util.Iterables2;
-import edu.byu.nlp.util.Iterators2;
 
 /**
  * @author plf1
@@ -175,11 +172,13 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory(); // see javadoc for SimpleSentenceIterator
 		Word2Vec word2vec = new Word2Vec.Builder()
 			.iterate(new SimpleSentenceIterator(data))
-			.windowSize(5)
-			.layerSize(300) // how big are word vectors
-			.vocabCache(new InMemoryLookupCache())
-			.learningRate(1e-3)
+			.useAdaGrad(true)
 			.tokenizerFactory(tokenizerFactory)
+			// use defaults for most things (shown here for reference)
+//			.windowSize(5)
+//			.layerSize(50) // how big are word vectors
+//			.vocabCache(new InMemoryLookupCache())
+//			.learningRate(2.5e-1)
 			.build();
 		word2vec.fit();
 		
