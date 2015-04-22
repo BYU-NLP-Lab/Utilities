@@ -17,12 +17,10 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Iterator;
 import java.util.List;
 
-import org.deeplearning4j.models.word2vec.Word2Vec;
+import org.deeplearning4j.models.word2vec.CustomWord2Vec;
 import org.deeplearning4j.text.sentenceiterator.BaseSentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
@@ -70,7 +68,7 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		File cacheFile = new File(cacheDir, CACHE_FILENAME);
 		
 		// get a word2vec instance
-		Word2Vec word2vec;
+		CustomWord2Vec word2vec;
 		if (cacheFile!=null && cacheFile.exists()){
 			logger.info("loading word2vec instance from "+cacheFile);
 			// load word2vec from file
@@ -106,10 +104,10 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 	// Main Class
 	///////////////////////////////
 	
-	private Word2Vec word2vec;
+	private CustomWord2Vec word2vec;
 	private double wordVectorOffset;
 	
-	public Word2VecCountVectorizer(Word2Vec word2vec, double minWord2vecWeight) {
+	public Word2VecCountVectorizer(CustomWord2Vec word2vec, double minWord2vecWeight) {
 		this.word2vec=word2vec;
 		this.wordVectorOffset=Math.max(0,-minWord2vecWeight);
 	}
@@ -167,7 +165,7 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		}
 	}
 
-	private static double minWordVecEntry(Word2Vec word2vec) {
+	private static double minWordVecEntry(CustomWord2Vec word2vec) {
 		double globalMin = Double.POSITIVE_INFINITY;
 		 for (Iterator<INDArray> itr = word2vec.lookupTable().vectors(); itr.hasNext();){
 			 double localMin = itr.next().ravel().min(0).getDouble(0);
@@ -176,11 +174,11 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		 return globalMin;
 	}
 
-	private static Word2Vec buildWord2vec(DataSource<List<String>, String> src, File cacheDir) throws IOException{
+	private static CustomWord2Vec buildWord2vec(DataSource<List<String>, String> src, File cacheDir) throws IOException{
 
 		Iterable<FlatInstance<List<String>, String>> data = src.getLabeledInstances();
 		TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory(); // see javadoc for SimpleSentenceIterator
-		Word2Vec word2vec = new Word2Vec.Builder()
+		CustomWord2Vec word2vec = new CustomWord2Vec.Builder()
 			.iterate(new SimpleSentenceIterator(data))
 			.useAdaGrad(true)
 			.tokenizerFactory(tokenizerFactory)

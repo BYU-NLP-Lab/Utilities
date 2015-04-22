@@ -47,8 +47,22 @@ import com.google.common.util.concurrent.AtomicDouble;
  * numeric vector
  * @author Adam Gibson
  *
+ * 
+ * =================================================================
+ * Note by Paul Felt:
+ * This entire class was copied from dl4j SOLEY to add the 
+ * ability to specify a custom index directory.
+ * We need to be able to customize the index directory so that we 
+ * can potentially run many instances of this at the same time on 
+ * different datasets on the same filesystem. Using reflection to 
+ * change the default index directory doesn't work since it's 
+ * inlined by the JRE and ignored.
+ * 
+ * To find all the places that this class differs from the 
+ * original, simply search for where indexDirectory is used.
+ * =================================================================
  */
-public class Word2Vec extends WordVectorsImpl  {
+public class CustomWord2Vec extends WordVectorsImpl  {
 
 
     protected static final long serialVersionUID = -2367495638286018038L;
@@ -65,7 +79,7 @@ public class Word2Vec extends WordVectorsImpl  {
     //context to use for gathering word frequencies
     protected int window = 5;
     protected transient  RandomGenerator g;
-    protected static Logger log = LoggerFactory.getLogger(Word2Vec.class);
+    protected static Logger log = LoggerFactory.getLogger(CustomWord2Vec.class);
     protected boolean shouldReset = true;
     //number of iterations to run
     protected int numIterations = 1;
@@ -80,7 +94,7 @@ public class Word2Vec extends WordVectorsImpl  {
     protected int workers = Runtime.getRuntime().availableProcessors();
 	public File indexDirectory;
 
-    public Word2Vec() {}
+    public CustomWord2Vec() {}
 
 
 
@@ -194,7 +208,7 @@ public class Word2Vec extends WordVectorsImpl  {
         Parallelization.iterateInParallel(batch2,new Parallelization.RunnableWithParams<List<VocabWord>>() {
             @Override
             public void run(List<VocabWord> sentence, Object[] args) {
-                double alpha = Math.max(minLearningRate, Word2Vec.this.alpha.get() * (1 - (1.0 * numWordsSoFar.get() / (double) totalWords)));
+                double alpha = Math.max(minLearningRate, CustomWord2Vec.this.alpha.get() * (1 - (1.0 * numWordsSoFar.get() / (double) totalWords)));
                 long now = System.currentTimeMillis();
                 long diff = Math.abs(now - lastReported.get());
                 if(numWordsSoFar.get() > 0 && diff > 10000) {
@@ -459,19 +473,6 @@ public class Word2Vec extends WordVectorsImpl  {
         protected WeightLookupTable lookupTable;
 		private File indexDirectory;
 
-        /**
-         * =================================================================
-         * This entire class was copied SOLEY to add this method.
-         * We need to be able to customize the index directory so that we 
-         * can potentially run many instances of this at the same time on 
-         * different datasets on the same filesystem. Using reflection to 
-         * change the default index directory doesn't work since it's 
-         * inlined by the JRE and ignored.
-         * 
-         * To find all the places that this class differs from the 
-         * original, simply search for where indexDirectory is used.
-         * =================================================================
-         */
         public Builder indexDirectory(File indexDirectory) {
             this.indexDirectory = indexDirectory;
             return this;
@@ -596,10 +597,10 @@ public class Word2Vec extends WordVectorsImpl  {
 
 
 
-        public Word2Vec build() {
+        public CustomWord2Vec build() {
 
             if(iter == null) {
-                Word2Vec ret = new Word2Vec();
+                CustomWord2Vec ret = new CustomWord2Vec();
                 ret.window = window;
                 ret.alpha.set(lr);
                 ret.vectorizer = textVectorizer;
@@ -645,7 +646,7 @@ public class Word2Vec extends WordVectorsImpl  {
             }
 
             else {
-                Word2Vec ret = new Word2Vec();
+                CustomWord2Vec ret = new CustomWord2Vec();
                 ret.alpha.set(lr);
                 ret.sentenceIter = iter;
                 ret.window = window;
