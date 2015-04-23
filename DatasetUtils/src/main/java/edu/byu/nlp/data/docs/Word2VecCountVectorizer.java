@@ -127,6 +127,9 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 				 documentVector);
 	}
 
+	 public int getWordVectorSize(){
+		 return word2vec.lookupTable().layerSize();
+	 }
 	
 
 	///////////////////////////////

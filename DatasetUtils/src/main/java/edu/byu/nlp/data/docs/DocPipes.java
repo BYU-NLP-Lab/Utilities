@@ -42,6 +42,7 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Nullable;
+import edu.byu.nlp.util.Pair;
 
 /**
  * Creates a dataset from a data source of documents. This includes creating count vectors,
@@ -103,7 +104,9 @@ public class DocPipes {
     wordIndex = reduceVocab(src, featureSelectorFactory, wordIndex);
 
     // prepare feature extractor
-    Function<List<String>, SparseFeatureVector> featureExtractor = featureExtraction(src, doc2FeatureMethod, featureNormalizationConstant, wordIndex);
+    Pair<Indexer<String>, ? extends Function<List<String>, SparseFeatureVector>> featureInfo = featureExtraction(src, doc2FeatureMethod, featureNormalizationConstant, wordIndex);
+    wordIndex = featureInfo.getFirst();
+    Function<List<String>, SparseFeatureVector> featureExtractor = featureInfo.getSecond();
     
     // convert documents to feature vectors
     LabeledInstancePipe<List<String>, String, SparseFeatureVector, Integer> vectorizer =
@@ -124,7 +127,7 @@ public class DocPipes {
 	/**
 	 * Calculates Document features in several ways
 	 */
-	private static Function<List<String>, SparseFeatureVector> featureExtraction(DataSource<List<String>, String> src, 
+	private static Pair<Indexer<String>, ? extends Function<List<String>, SparseFeatureVector>> featureExtraction(DataSource<List<String>, String> src, 
 			Doc2FeaturesMethod doc2FeatureMethod, 
 			Integer featureNormalizationConstant,
 			Indexer<String> wordIndex) throws IOException {
@@ -136,9 +139,18 @@ public class DocPipes {
 			Functions.compose(
 					new CountNormalizer(featureNormalizationConstant), 
 					new CountVectorizer<String>(wordIndex));
-			return featureExtractor;
+			return Pair.of(wordIndex, featureExtractor);
 		case WORD2VEC:
-			return Word2VecCountVectorizer.build(src);
+			Word2VecCountVectorizer vectorizer = Word2VecCountVectorizer.build(src);
+			
+			// the string->index mapping assumed by much of the code base doesn't exist here. We just have 
+			// arbitrary feature indices. However, we can ensure that models at least have the right number of 
+			// features by constructing an identity mapping word indexer that map, e.g., "0" -> 0.
+			wordIndex = new Indexer<>();
+			for (int i=0; i<vectorizer.getWordVectorSize(); i++){
+				wordIndex.add(""+i);
+			}
+			return Pair.of(wordIndex, vectorizer);
 		default:
 			throw new IllegalArgumentException("unknown document2feature method: "+doc2FeatureMethod);
 		}
