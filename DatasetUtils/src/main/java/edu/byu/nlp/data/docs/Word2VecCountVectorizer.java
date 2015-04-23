@@ -54,7 +54,7 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 	
 	private static Logger logger = LoggerFactory.getLogger(Word2VecCountVectorizer.class);
 
-	public static String TMP_DIR = "/tmp/datasetfeatures/";
+	public static String CACHE_DIRNAME = "word2vec";
 	public static String CACHE_FILENAME = "word2vec.dat";
 	public static String INDEX_DIRNAME = "word2vec-index";
 	
@@ -94,9 +94,9 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 	}
 
 	private static File cacheDir(DataSource<List<String>, String> src){
-		String sanitizedSource = src.getSource().replace("file://", "").replace('/', '-');
+		String sanitizedSource = src.getSource().replace('/', '-');
 		int numInstances = Lists.newArrayList(src.getLabeledInstances()).size();
-		return new File(TMP_DIR+sanitizedSource+"-"+numInstances);
+		return new File(CACHE_DIRNAME,sanitizedSource+"-"+numInstances);
 	}
 	
 
