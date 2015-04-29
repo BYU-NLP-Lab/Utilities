@@ -38,6 +38,18 @@ public class IntArrayCounter {
   public void reset() {
     counts = new DenseCounter[counts.length];
   }
+  
+  public IntArrayCounter clone(){
+	  IntArrayCounter cnt = new IntArrayCounter(counts.length, numCategories);
+	  int[][] values = values();
+	  for (int i=0; i<values.length; i++){
+		  int[] vals = values[i];
+		  for (int c=0; c<vals.length; c++){
+			  cnt.increment(i, c, values[i][c]);
+		  }
+	  }
+	  return cnt;
+  }
 
 //  public void remapLabels(int[] map) {
 //    IntArrayCounter translated = new IntArrayCounter(counts.length,numCategories);
