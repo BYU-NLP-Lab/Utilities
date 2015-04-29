@@ -95,7 +95,12 @@ public class Files2 {
   }
   
   public static String toString(FileObject file, Charset charset) throws IOException {
-    InputStream in = new BufferedInputStream(file.getContent().getInputStream());
-    return new String(ByteStreams.toByteArray(in), charset);
+	  try{
+		  InputStream in = new BufferedInputStream(file.getContent().getInputStream());
+		  return new String(ByteStreams.toByteArray(in), charset);
+	  }
+	  catch(Exception e){
+		  throw new IllegalArgumentException("Cannot get contents of invalid file "+file,e);
+	  }
   }
 }
