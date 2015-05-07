@@ -16,10 +16,8 @@
 package edu.byu.nlp.data.pipes;
 
 import java.io.Serializable;
-import java.util.List;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 
 import edu.byu.nlp.util.PorterStemmerUtil;
 
@@ -27,25 +25,19 @@ import edu.byu.nlp.util.PorterStemmerUtil;
  * @author pfelt
  *
  */
-public class PorterStemmer implements Function<List<String>, List<String>>, Serializable{
+public class PorterStemmer implements Function<String, String>, Serializable {
   private static final long serialVersionUID = 1L;
-  
+
   private PorterStemmerUtil stemmer = new PorterStemmerUtil();
 
   @Override
-  public List<String> apply(List<String> words) {
-    
-    List<String> stemmed = Lists.newArrayList();
-    
-    for (String word: words){
-      char[] wrdArr = word.toCharArray();
-      stemmer.add(wrdArr, wrdArr.length);
-      stemmer.stem();
-      stemmed.add(stemmer.toString());
-    }
-    
-    return stemmed;
-    
+  public String apply(String word) {
+
+    char[] wrdArr = word.toCharArray();
+    stemmer.add(wrdArr, wrdArr.length);
+    stemmer.stem();
+    return stemmer.toString();
+
   }
 
 }

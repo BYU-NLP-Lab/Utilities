@@ -16,32 +16,24 @@
 package edu.byu.nlp.data.pipes;
 
 import java.io.Serializable;
-import java.util.List;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 
 /**
  * @author pfelt
  *
  */
-public class ShortWordFilter implements Function<List<String>, List<String>>, Serializable{
+public class ShortWordFilter implements Function<String, String>, Serializable {
   private static final long serialVersionUID = 1L;
   private int tooShortLength;
 
-  public ShortWordFilter(int tooShortLength){
-    this.tooShortLength=tooShortLength;
+  public ShortWordFilter(int tooShortLength) {
+    this.tooShortLength = tooShortLength;
   }
-  
+
   @Override
-  public List<String> apply(List<String> words) {
-    List<String> filtered = Lists.newArrayList();
-    for (String word: words){
-      // remove single-letter words (lots of contractions get broken up)
-      if (word.length()>tooShortLength){
-        filtered.add(word);
-      }
-    }
-    return filtered;
+  public String apply(String word) {
+    // remove single-letter words (lots of contractions get broken up)
+    return (word.length() > tooShortLength)? word: null;
   }
 }

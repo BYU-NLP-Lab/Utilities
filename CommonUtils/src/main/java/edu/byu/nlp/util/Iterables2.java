@@ -128,4 +128,14 @@ public class Iterables2 {
 		return retval;
 	}
 	
+	public static <E> Iterable<E> flatten(final Iterable<? extends Iterable<E>> outerIt){
+		List<E> retval = Lists.newArrayList();
+		for (Iterable<E> innerIt: outerIt){
+			for (E item: innerIt){
+				retval.add(item);
+			}
+		}
+		return null;
+	}
+	
 }

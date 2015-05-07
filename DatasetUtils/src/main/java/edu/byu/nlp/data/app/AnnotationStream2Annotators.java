@@ -41,10 +41,10 @@ import com.google.common.collect.Sets;
 import edu.byu.nlp.data.annotators.SimulatedAnnotator;
 import edu.byu.nlp.data.annotators.SimulatedAnnotators;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
+import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
-import edu.byu.nlp.data.docs.TokenizerPipes;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.dataset.Datasets;
@@ -312,14 +312,14 @@ public class AnnotationStream2Annotators {
     int topNFeaturesPerDocument = -1;
     Integer featureNormalizer = null;
     Function<String, String> docTransform = null;
-    Function<List<String>, List<String>> tokenTransform = null;
+    Function<String, String> tokenTransform = null;
     
     // data reader pipeline per dataset
     // build a dataset, doing all the tokenizing, stopword removal, and feature normalization
     String folder = Paths.directory(jsonStream);
     String file = Paths.baseName(jsonStream);
     Dataset data = new JSONDocumentDatasetBuilder(folder, file, 
-          docTransform, TokenizerPipes.McCallumAndNigam(), tokenTransform, Doc2FeaturesMethod.WORD_COUNTS,
+          docTransform, DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform, Doc2FeaturesMethod.WORD_COUNTS,
           FeatureSelectorFactories.conjoin(
               new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
               (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),

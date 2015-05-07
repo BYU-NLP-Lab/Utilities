@@ -50,18 +50,19 @@ import edu.byu.nlp.util.IntArrays;
  * http://deeplearning4j.org/word2vec.html
  *
  */
-public class Word2VecCountVectorizer implements Function<List<String>,SparseFeatureVector> {
+public class Word2VecCountVectorizer implements Function<List<List<String>>,SparseFeatureVector> {
 	
 	private static Logger logger = LoggerFactory.getLogger(Word2VecCountVectorizer.class);
 
-	public static String CACHE_DIRNAME = "word2vec";
-	public static String CACHE_FILENAME = "word2vec.dat";
-	public static String INDEX_DIRNAME = "word2vec-index";
+	public static final String CACHE_DIRNAME = "word2vec";
+	public static final String CACHE_FILENAME = "word2vec.dat";
+	public static final String INDEX_DIRNAME = "word2vec-index";
+	public static final int NUM_TRAINING_ITERATIONS=10;
 	
 	///////////////////////////////
 	// Builder
 	///////////////////////////////
-	public static Word2VecCountVectorizer build(DataSource<List<String>, String> src) throws IOException {
+	public static Word2VecCountVectorizer build(DataSource<List<List<String>>, String> src) throws IOException {
 		
 		// cache word vectors per dataset+size 
 		File cacheDir = cacheDir(src);
@@ -77,7 +78,7 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		else{
 			logger.info("fitting new word2vec instance");
 			// create new word2vec instance
-			word2vec = buildWord2vec(src,cacheDir);
+			word2vec = buildWord2Vec(src,cacheDir);
 			
 			if (cacheFile!=null){
 				logger.info("saving word2vec instance to "+cacheFile);
@@ -89,11 +90,10 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		
 		// find the min value in any word vector (so we can adjust for it later)
 		double min = minWordVecEntry(word2vec);
-		
 		return new Word2VecCountVectorizer(word2vec, min);
 	}
 
-	private static File cacheDir(DataSource<List<String>, String> src){
+	private static File cacheDir(DataSource<List<List<String>>, String> src){
 		String sanitizedSource = src.getSource().replace('/', '-');
 		int numInstances = Lists.newArrayList(src.getLabeledInstances()).size();
 		return new File(CACHE_DIRNAME,sanitizedSource+"-"+numInstances);
@@ -112,14 +112,16 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		this.wordVectorOffset=Math.max(0,-minWord2vecWeight);
 	}
 
-	 @Override
-	public SparseFeatureVector apply(List<String> input) {
+	@Override
+	public SparseFeatureVector apply(List<List<String>> sentences) {
 
 		 double[] documentVector = new double[word2vec.lookupTable().layerSize()];
-		 for (String word: input){
-			 double[] wordvec = word2vec.getWordVector(word);
-			 DoubleArrays.addToSelf(wordvec, wordVectorOffset); // ensure doc features are positive
-			 DoubleArrays.addToSelf(documentVector, wordvec);
+		 for (List<String> sentence: sentences){
+			 for (String word: sentence){
+				 double[] wordvec = word2vec.getWordVector(word);
+				 DoubleArrays.addToSelf(wordvec, wordVectorOffset); // ensure doc features are positive
+				 DoubleArrays.addToSelf(documentVector, wordvec);
+			 }
 		 }
 		 // return a dense feature vector
 		 return new BasicSparseFeatureVector(
@@ -136,22 +138,26 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 	// Helper Code
 	///////////////////////////////
 	/**
-	 * Iterates over the sentences in a dataset. This class joins preprocessed
-	 * token simply (a single space) making tokenization trivial (the
-	 * DefaultTokenizerFactory delegates to java.util.StringTokenizer, which
-	 * splits on whitespace. Therefore, the tokens that word2vec receives should
+	 * Iterates over the sentences in a dataset. 
+	 * This class joins preprocessed token simply (a single space) making tokenization trivial 
+	 * (the DefaultTokenizerFactory delegates to java.util.StringTokenizer, 
+	 * which splits on whitespace. Therefore, the tokens that word2vec receives should
 	 * be the same as those in the original dataset).
 	 */
 	private static class SimpleSentenceIterator extends BaseSentenceIterator {
 		private List<String> sentences;
 		private Iterator<String> sentenceIterator;
 
-		public SimpleSentenceIterator(Iterable<FlatInstance<List<String>, String>> instances) {
-			// collect sentences for easy iteration
+		public SimpleSentenceIterator(Iterable<FlatInstance<List<List<String>>, String>> instances) {
+
 			this.sentences = Lists.newArrayList();
-			for (FlatInstance<List<String>, String> inst : instances) {
-				sentences.add(Joiner.on(" ").join(inst.getData()));
+			
+			for (FlatInstance<List<List<String>>,String> inst : instances) {
+				for (List<String> sent: inst.getData()){
+					sentences.add(Joiner.on(" ").join(sent));
+				}
 			}
+			
 			reset();
 		}
 		@Override
@@ -177,16 +183,17 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		 return globalMin;
 	}
 
-	private static CustomWord2Vec buildWord2vec(DataSource<List<String>, String> src, File cacheDir) throws IOException{
+	private static CustomWord2Vec buildWord2Vec(DataSource<List<List<String>>, String> src, File cacheDir) throws IOException{
 
-		Iterable<FlatInstance<List<String>, String>> data = src.getLabeledInstances();
-		TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory(); // see javadoc for SimpleSentenceIterator
+		Iterable<FlatInstance<List<List<String>>, String>> data = src.getLabeledInstances();
+		// see javadoc for SimpleSentenceIterator
+		TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory(); 
 		CustomWord2Vec word2vec = new CustomWord2Vec.Builder()
 			.iterate(new SimpleSentenceIterator(data))
 			.useAdaGrad(true)
 			.tokenizerFactory(tokenizerFactory)
 			.indexDirectory(new File(cacheDir,INDEX_DIRNAME))
-//			.setIndexDirectory(null) // this method SHOULD, but doesn't, exit. So we use the hack above
+			.iterations(NUM_TRAINING_ITERATIONS)
 			// use defaults for most things (shown here for reference)
 //			.windowSize(5)
 //			.layerSize(50) // how big are word vectors
@@ -198,8 +205,7 @@ public class Word2VecCountVectorizer implements Function<List<String>,SparseFeat
 		
 		return word2vec;
 	}
-	
-	
+
 	
 	
 	

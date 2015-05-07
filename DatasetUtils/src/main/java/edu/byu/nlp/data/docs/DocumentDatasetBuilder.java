@@ -23,9 +23,10 @@ import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.data.FlatInstance;
@@ -56,30 +57,26 @@ import edu.byu.nlp.util.Nullable;
  * feature selection. 
  * 
  * @author rah67
+ * @author plf1
  * 
  */
 public class DocumentDatasetBuilder {
+	private static Logger logger = LoggerFactory.getLogger(DocumentDatasetBuilder.class);
+
 
   private final FileObject basedir;
   private final FileObject indexDirectory;
 
   private final Function<String, String> docTransform;
-  private final LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe;
+  private Function<String, List<String>> sentenceSplitter;
+  private Function<String, List<String>> tokenizer;
   private final FeatureSelectorFactory<String> featureSelectorFactory;
   private Integer featureNormalizationConstant;
-  private Function<List<String>, List<String>> tokenTransform;
-private Doc2FeaturesMethod doc2FeatureMethod;
-private String uniqueName;
+  private Function<String, String> tokenTransform;
+  private Doc2FeaturesMethod doc2FeatureMethod;
 
-  public DocumentDatasetBuilder(String basedir, String dataset, String split,
-      @Nullable Function<String, String> docTransform, 
-      @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
-      @Nullable Function<List<String>, List<String>> tokenTransform,
-      Doc2FeaturesMethod doc2FeatureMethod,
-      FeatureSelectorFactory<String> featureSelectorFactory) throws FileSystemException {
-    this(basedir, dataset, split, docTransform, tokenizerPipe, tokenTransform, doc2FeatureMethod, featureSelectorFactory, null);
-  }
-  
+
+
   /**
    * See class description.
    * 
@@ -88,8 +85,9 @@ private String uniqueName;
    */
   public DocumentDatasetBuilder(String basedir, String dataset, String split,
       @Nullable Function<String, String> docTransform,
-      @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
-      @Nullable Function<List<String>, List<String>> tokenTransform,
+      @Nullable Function<String, List<String>> sentenceSplitter,
+      @Nullable Function<String, List<String>> tokenizer,
+      @Nullable Function<String, String> tokenTransform,
       Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) throws FileSystemException {
@@ -98,7 +96,6 @@ private String uniqueName;
     if (fsManager instanceof DefaultFileSystemManager) {
       ((DefaultFileSystemManager) fsManager).setBaseFile(new File("."));
     }
-    this.uniqueName = Joiner.on('-').join(basedir,dataset,split);
     this.basedir = fsManager.resolveFile(basedir);
     Preconditions.checkNotNull(this.basedir, "%s cannot be resolved", basedir);
     Preconditions.checkArgument(this.basedir.getType() == FileType.FOLDER);
@@ -110,7 +107,8 @@ private String uniqueName;
     Preconditions.checkNotNull(indexDirectory, "cannot find split %s", split);
     Preconditions.checkArgument(indexDirectory.getType() == FileType.FOLDER);
     this.docTransform = docTransform;
-    this.tokenizerPipe = tokenizerPipe;
+    this.sentenceSplitter=sentenceSplitter;
+    this.tokenizer = tokenizer;
     this.tokenTransform = tokenTransform;
     this.doc2FeatureMethod=doc2FeatureMethod;
     this.featureSelectorFactory = featureSelectorFactory;
@@ -119,31 +117,38 @@ private String uniqueName;
 
   
   public Dataset dataset() throws IOException {
-    // This pipe leaves data in the form it is expected to be in at test time
-    LabeledInstancePipe<String, String, String, String> indexToDocPipe =
-        DocPipes.indexToDocPipe(basedir, indexDirectory);
+    // Convert a file system index folder (string) to document contents (String) and labels (String)
+    LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.indexToDocPipe(basedir, indexDirectory);
 
-    // Combine the indexToDocPipe, transform (if applicable), and tokenizer.
-    SerialLabeledInstancePipeBuilder<String, String, String, String> builder =
+    // >>>>>>> start pipe builder. A pipe that will apply all processing to these documents to turn them into a Dataset
+    SerialLabeledInstancePipeBuilder<String, String, String, String> docBuilder =
         new SerialLabeledInstancePipeBuilder<String, String, String, String>().add(indexToDocPipe);
-    if (docTransform != null) {
-      builder = builder.addDataTransform(docTransform);
-    }
-    SerialLabeledInstancePipeBuilder<String, String, List<String>, String> tokenbuilder = builder.add(tokenizerPipe);
-    if (tokenTransform!=null){
-      tokenbuilder.addDataTransform(tokenTransform);
-    }
-    LabeledInstancePipe<String, String, List<String>, String> combinedPipe = tokenbuilder.build();
-
-    String source = indexDirectory.toString();
-    DataSource<List<String>, String> docSource =
-        DataSources.connect(new DirectoryReader(source, indexDirectory), combinedPipe);
-
-    // Cache the data to avoid multiple disk reads
-    List<FlatInstance<List<String>, String>> cachedData = DataSources.cache(docSource);
     
-    // Cross-fold validation would create a new pipe factory for each fold.
-    // If we have a static test set, we would only do this on the training data
+    // transform documents (e.g., remove email headers, transform emoticons)
+    if (docTransform != null) {
+      docBuilder = docBuilder.addDataTransform(docTransform);
+    }
+    
+    // split sentences
+    SerialLabeledInstancePipeBuilder<String, String, List<String>, String> sentencebuilder = docBuilder.addDataTransform(sentenceSplitter);
+    
+    // tokenize documents 
+    SerialLabeledInstancePipeBuilder<String, String, List<List<String>>, String> tokenbuilder = sentencebuilder.addDataTransform(DocPipes.tokenSplitter(tokenizer));
+    
+    // transform tokens (e.g., remove stopwords, stemmer, remove short words)
+    if (tokenTransform!=null){
+    	tokenbuilder.addDataTransform(DocPipes.tokenTransform(tokenTransform));
+    }
+    
+    // ========= end pipe builder
+    LabeledInstancePipe<String, String, List<List<String>>, String> combinedPipe = tokenbuilder.build();
+
+    // run pipe over all documents
+    String source = indexDirectory.toString();
+    DataSource<List<List<String>>, String> docSource = DataSources.connect(new DirectoryReader(source, indexDirectory), combinedPipe);
+    List<FlatInstance<List<List<String>>, String>> cachedData = DataSources.cache(docSource); // Cache the data to avoid multiple disk reads
+    
+    // convert from FlatInstances to Dataset 
     return DocPipes.createDataset(DataSources.from(source, cachedData), doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
   }
   

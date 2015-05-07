@@ -15,13 +15,9 @@
  */
 package edu.byu.nlp.data.pipes;
 
-import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import edu.byu.nlp.io.Files2;
@@ -30,37 +26,21 @@ import edu.byu.nlp.io.Files2;
  * @author rah67
  *
  */
-public class StopWordRemover implements Function<List<String>, List<String>> {
+public class StopWordRemover implements Function<String, String> {
 
 	private static final String MALLET_STOP_WORDS_FILE = "/mallet_stopwords.txt";
 	private static final String TWITTER_STOP_WORDS_FILE = "/twitter_stopwords.txt";
 	
-	private class StopWordPredicate implements Predicate<String> {
-
-		private final Set<String> stopWords;
-
-		public StopWordPredicate(Set<String> stopWords) {
-			this.stopWords = stopWords;
-		}
-
-		/** {@inheritDoc} */
-		@Override
-		public boolean apply(String word) {
-			return !stopWords.contains(word.toLowerCase());
-		}
-		
-	}
-
-	private final StopWordPredicate p;
+  private Set<String> stopWords;
 	
 	public StopWordRemover(Set<String> stopWords) {
-		this.p = new StopWordPredicate(stopWords);
+		this.stopWords = stopWords;
 	}
 	
 	/** {@inheritDoc} */
 	@Override
-	public List<String> apply(List<String> input) {
-		return Lists.newArrayList(Iterables.filter(input, p));
+	public String apply(String word) {
+	  return (stopWords.contains(word.toLowerCase()))? null: word;
 	}
 
 	public static Set<String> malletStopWords(){

@@ -12,11 +12,10 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
+import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactory;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
-import edu.byu.nlp.data.docs.TokenizerPipes;
-import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.types.Dataset;
 
 public class JsonDatasetMocker {
@@ -129,12 +128,13 @@ public class JsonDatasetMocker {
 
 		// build dataset
 		Function<String, String> docTransform = null;
-		LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe = TokenizerPipes.McCallumAndNigam();
+		Function<String, List<String>> tokenizerPipe = DocPipes.McCallumAndNigamTokenizer();
+		Function<String, List<String>> sentenceSplitter = DocPipes.opennlpSentenceSplitter();
 		FeatureSelectorFactory<String> featureSelectorFactory = new CountCutoffFeatureSelectorFactory<String>(-1);
 		Integer featureNormalizationConstant = 1;
-		Function<List<String>, List<String>> tokenTransform = null;
+		Function<String, String> tokenTransform = null;
 		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source", null, jsonReader,
-				docTransform, tokenizerPipe, tokenTransform, Doc2FeaturesMethod.WORD_COUNTS, featureSelectorFactory, featureNormalizationConstant);
+				docTransform, sentenceSplitter, tokenizerPipe, tokenTransform, Doc2FeaturesMethod.WORD_COUNTS, featureSelectorFactory, featureNormalizationConstant);
 		return builder.dataset();
 	}
 	

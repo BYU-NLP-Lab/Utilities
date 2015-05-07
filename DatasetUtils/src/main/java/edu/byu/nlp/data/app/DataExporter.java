@@ -18,7 +18,6 @@ package edu.byu.nlp.data.app;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -28,9 +27,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
+import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.DocumentDatasetBuilder;
-import edu.byu.nlp.data.docs.TokenizerPipes;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
 import edu.byu.nlp.data.pipes.EmailHeaderStripper;
 import edu.byu.nlp.data.types.Dataset;
@@ -64,11 +63,12 @@ public class DataExporter {
 
     // TODO : share code with ClustererEvaluator
     private static Dataset readData(RandomGenerator rnd) throws IOException {
-      Function<List<String>, List<String>> tokenTransform = null; // TODO
-      Dataset data =
+      Function<String, String> tokenTransform = null; // TODO
+      Integer featureNormalizationConstant = null;
+	Dataset data =
           new DocumentDatasetBuilder(basedir, dataset, split, new EmailHeaderStripper(),
-              TokenizerPipes.McCallumAndNigam(), tokenTransform , Doc2FeaturesMethod.WORD_COUNTS, 
-              new TopNPerDocumentFeatureSelectorFactory<String>(minFeaturesToKeepPerDocument))
+        	  DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform, Doc2FeaturesMethod.WORD_COUNTS, 
+              new TopNPerDocumentFeatureSelectorFactory<String>(minFeaturesToKeepPerDocument), featureNormalizationConstant )
       	  .dataset();
   
       // Print for verification

@@ -27,7 +27,6 @@ import java.util.List;
 import org.apache.commons.vfs2.FileSystemException;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
@@ -75,25 +74,16 @@ import edu.byu.nlp.util.Nullable;
 public class JSONDocumentDatasetBuilder {
 
   private final Function<String, String> docTransform;
-  private final LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe;
-  private Function<List<String>, List<String>> tokenTransform;
+  private Function<String, List<String>> sentenceSplitter;
+  private Function<String, List<String>> tokenizer;
+  private Function<String, String> tokenTransform;
   private final FeatureSelectorFactory<String> featureSelectorFactory;
   private Integer featureNormalizationConstant;
   private Reader jsonReader;
   private String source;
-private String jsonReferencedDataDir;
-private Doc2FeaturesMethod doc2FeatureMethod;
-private String uniqueName;
+  private String jsonReferencedDataDir;
+  private Doc2FeaturesMethod doc2FeatureMethod;
 
-  public JSONDocumentDatasetBuilder(String basedir, String filename,
-      @Nullable Function<String, String> docTransform,
-      @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
-      @Nullable Function<List<String>, List<String>> tokenTransform,
-      Doc2FeaturesMethod doc2FeatureMethod,
-      FeatureSelectorFactory<String> featureSelectorFactory) 
-          throws FileSystemException, FileNotFoundException {
-    this(basedir, filename, docTransform, tokenizerPipe, tokenTransform, doc2FeatureMethod, featureSelectorFactory, null);
-  }
 
   private static Reader readerOf(String jsonFile) throws FileNotFoundException{
     try {
@@ -105,13 +95,14 @@ private String uniqueName;
   
   public JSONDocumentDatasetBuilder(String basedir, String filename,
       @Nullable Function<String, String> docTransform,
-      @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
-      @Nullable Function<List<String>, List<String>> tokenTransform,
+      @Nullable Function<String, List<String>> sentenceSplitter,
+      @Nullable Function<String, List<String>> tokenizer,
+      @Nullable Function<String, String> tokenTransform,
       Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) throws FileSystemException, FileNotFoundException {
     this(basedir+"/"+filename, new File(basedir).getAbsolutePath(), readerOf(basedir+"/"+filename), 
-        docTransform, tokenizerPipe, tokenTransform, doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
+        docTransform, sentenceSplitter, tokenizer, tokenTransform, doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
   }
   
   /**
@@ -122,17 +113,18 @@ private String uniqueName;
    */
   public JSONDocumentDatasetBuilder(String source, String jsonReferencedDataDir, Reader jsonReader,
       @Nullable Function<String, String> docTransform,
-      @Nullable LabeledInstancePipe<String, String, List<String>, String> tokenizerPipe,
-      @Nullable Function<List<String>, List<String>> tokenTransform,
+      @Nullable Function<String, List<String>> sentenceSplitter,
+      @Nullable Function<String, List<String>> tokenizer,
+      @Nullable Function<String, String> tokenTransform,
       Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) {
-	    this.uniqueName = Joiner.on('-').join(source,jsonReferencedDataDir);
 		this.source=source;
 		this.jsonReferencedDataDir=jsonReferencedDataDir;
 	    this.jsonReader=jsonReader;
 	    this.docTransform = docTransform;
-	    this.tokenizerPipe = tokenizerPipe;
+	    this.sentenceSplitter=sentenceSplitter;
+	    this.tokenizer = tokenizer;
 	    this.tokenTransform=tokenTransform;
 	    this.doc2FeatureMethod=doc2FeatureMethod;
 	    this.featureSelectorFactory = featureSelectorFactory;
@@ -143,35 +135,38 @@ private String uniqueName;
     // This pipe leaves data in the form it is expected to be in at test time
     LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, jsonReferencedDataDir);
 
-    // Combine the indexToDocPipe, transform (if applicable), and tokenizer.
-    SerialLabeledInstancePipeBuilder<String, String, String, String> builder =
+    // >>>>>>> start pipe builder. A pipe that will apply all processing to these documents to turn them into a Dataset
+    SerialLabeledInstancePipeBuilder<String, String, String, String> docBuilder =
         new SerialLabeledInstancePipeBuilder<String, String, String, String>().add(indexToDocPipe);
+    
+    // transform documents (e.g., remove email headers, transform emoticons)
     if (docTransform != null) {
-      builder = builder.addDataTransform(docTransform);
+      docBuilder = docBuilder.addDataTransform(docTransform);
     }
-    SerialLabeledInstancePipeBuilder<String, String, List<String>, String> tokenbuilder = builder.add(tokenizerPipe);
+    
+    // split sentences
+    SerialLabeledInstancePipeBuilder<String, String, List<String>, String> sentencebuilder = docBuilder.addDataTransform(sentenceSplitter);
+    
+    // tokenize documents 
+    SerialLabeledInstancePipeBuilder<String, String, List<List<String>>, String> tokenbuilder = sentencebuilder.addDataTransform(DocPipes.tokenSplitter(tokenizer));
+    
+    // transform tokens (e.g., remove stopwords, stemmer, remove short words)
     if (tokenTransform!=null){
-      tokenbuilder.addDataTransform(tokenTransform);
+    	tokenbuilder.addDataTransform(DocPipes.tokenTransform(tokenTransform));
     }
-    LabeledInstancePipe<String, String, List<String>, String> combinedPipe = tokenbuilder.build();
+    
+    // ========= end pipe builder
+    LabeledInstancePipe<String, String, List<List<String>>, String> combinedPipe = tokenbuilder.build();
 
-    // prime the pump: start the pipe with a dummy instance 
+    // run pipe over all documents
+    // (prime the pump: start the pipe with a dummy instance) 
     DataSource<String, String> jsonSource = DataSources.<String,String>from(source, Collections.singletonList(
     		(FlatInstance<String,String>) new FlatLabeledInstance<String,String>(
     				AnnotationInterfaceJavaUtils.newLabeledInstance("", "", "", false))));
-    // connect the rest of the pipe
-    DataSource<List<String>, String> docSource = DataSources.connect(jsonSource, combinedPipe);
-    
-    // Cache the data to avoid multiple disk reads
-    List<FlatInstance<List<String>, String>> cachedData = DataSources.cache(docSource);
-    
-    //
-    // Cross-fold validation would create a new pipe factory for each fold.
-    // If we have a static test set, we would only do this on the training data
-    //
-    Dataset dataset = DocPipes.createDataset(
-    		DataSources.from(source, cachedData), doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
-    
-    return dataset;
+    DataSource<List<List<String>>, String> docSource = DataSources.connect(jsonSource, combinedPipe); // connect the rest of the pipe
+    List<FlatInstance<List<List<String>>, String>> cachedData = DataSources.cache(docSource); // Cache the data to avoid multiple disk reads
+
+    // convert from FlatInstances to Dataset 
+    return DocPipes.createDataset(DataSources.from(source, cachedData), doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
   }
 }

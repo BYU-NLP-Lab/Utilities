@@ -21,6 +21,7 @@ import org.junit.Test;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.pipes.StopWordRemover;
 
 /**
@@ -35,7 +36,7 @@ public class StopWordRemoverTest {
   @Test
   public void testApply() {
     StopWordRemover stopWordRemover = new StopWordRemover(Sets.newHashSet("a", "b"));
-    List<String> actual = stopWordRemover.apply(Lists.newArrayList("a", "b", "c", "d", "a", "b", "c", "d"));
+    List<String> actual = DocPipes.sentenceTransform(stopWordRemover).apply(Lists.newArrayList("a", "b", "c", "d", "a", "b", "c", "d"));
     Assertions.assertThat(actual).containsExactly("c", "d", "c", "d");
   }
 }

@@ -27,12 +27,13 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.util.Counters;
 import edu.byu.nlp.util.Indexer;
+import edu.byu.nlp.util.Iterables2;
 
 /**
  * @author rah67
  *
  */
-public class CountVectorizer<E> implements Function<List<E>, SparseFeatureVector> {
+public class CountVectorizer<E> implements Function<List<List<E>>, SparseFeatureVector> {
 	
 	private final Indexer<E> indexer;
 	
@@ -42,9 +43,12 @@ public class CountVectorizer<E> implements Function<List<E>, SparseFeatureVector
 	
 	/** {@inheritDoc} */
 	@Override
-	public SparseFeatureVector apply(List<E> words) {
+	public SparseFeatureVector apply(List<List<E>> sentences) {
 		IntArrayList features = new IntArrayList();
 		DoubleArrayList counts = new DoubleArrayList();
+		
+		Iterable<E> words = Iterables2.flatten(sentences);
+		
 		for (Entry<E, Integer> wordAndCount : Counters.count(words).entrySet()) {
 			int index = indexer.indexOf(wordAndCount.getKey());
 			// Skip words that weren't seen

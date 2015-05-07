@@ -36,13 +36,13 @@ public class IndexerCalculator<D, L>  {
 		return annotatorIndexer;
 	}
 	
-	public static <D,L> IndexerCalculator<D,L> calculate(Iterable<FlatInstance<List<D>, L>> data) {
+	public static <D,L> IndexerCalculator<D,L> calculate(Iterable<FlatInstance<List<List<D>>, L>> data) {
 		Indexer<D> wordIndexer = new Indexer<D>();
 		Indexer<L> labelIndexer = new Indexer<L>();
 		Indexer<Long> annotatorIndexer = new Indexer<Long>();
 		Indexer<Long> instanceIndexer = new Indexer<Long>();
 		
-		for (FlatInstance<List<D>, L> inst: data){
+		for (FlatInstance<List<List<D>>, L> inst: data){
 			if (inst.isAnnotation()){
 				// only record annotation id of annotations
 				// (this avoids adding automatic annotator to the indexer)
@@ -50,8 +50,10 @@ public class IndexerCalculator<D, L>  {
 			}
 			else{
 				// only record data if it's a label
-				for (D word: inst.getData()){
-					wordIndexer.add(word);
+				for (List<D> sentence: inst.getData()){
+					for (D word: sentence){
+						wordIndexer.add(word);
+					}
 				}
 			}
 
