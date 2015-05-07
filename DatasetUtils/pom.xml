@@ -20,10 +20,6 @@ Also routines for IO from common document corpus formats.</description>
 			<id>byunlp-thirdparty</id>
 			<name>BYU NLP Third Party Dependencies</name>
 			<url>http://apps.nlp.cs.byu.edu/nexus/content/repositories/byunlp-thirdparty</url>
-		</repository>
-		<repository>
-			<id>byunlp-snapshots</id>
-			<name>BYU NLP Snapshots</name>
 			<releases>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
@@ -32,7 +28,6 @@ Also routines for IO from common document corpus formats.</description>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
-			<url>http://apps.nlp.cs.byu.edu/nexus/content/repositories/byunlp-snapshots</url>
 			<layout>default</layout>
 		</repository>
 	</repositories>
