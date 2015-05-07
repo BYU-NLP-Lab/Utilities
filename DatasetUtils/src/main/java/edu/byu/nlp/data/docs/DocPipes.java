@@ -251,9 +251,10 @@ public class DocPipes {
 	}
 
 	
-	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent.bin";
+	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent-1.0.bin";
 	public static Function<String, List<String>> opennlpSentenceSplitter() throws IOException {
-		final SentenceDetectorME detector = new SentenceDetectorME(new SentenceModel(new File(ENGLISH_SENTENCE_DETECTOR)));
+		File modelFile = new File(ENGLISH_SENTENCE_DETECTOR);
+		final SentenceDetectorME detector = new SentenceDetectorME(new SentenceModel(modelFile));
 		return new Function<String, List<String>>() {
 			@Override
 			public List<String> apply(String doc) {
