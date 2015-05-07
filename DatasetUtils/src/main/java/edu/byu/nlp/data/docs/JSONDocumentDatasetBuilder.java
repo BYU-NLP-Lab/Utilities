@@ -147,11 +147,12 @@ public class JSONDocumentDatasetBuilder {
     // split sentences
     SerialLabeledInstancePipeBuilder<String, String, List<String>, String> sentencebuilder = docBuilder.addDataTransform(sentenceSplitter);
     
-    // tokenize documents 
+    // tokenize documents (removes punctuation)
     SerialLabeledInstancePipeBuilder<String, String, List<List<String>>, String> tokenbuilder = sentencebuilder.addDataTransform(DocPipes.tokenSplitter(tokenizer));
     
-    // transform tokens (e.g., remove stopwords, stemmer, remove short words)
-    if (tokenTransform!=null){
+    // word2vec requires data where tokens have not been transformed or filtered 
+    if (doc2FeatureMethod!=Doc2FeaturesMethod.WORD2VEC & tokenTransform!=null){
+      // transform tokens (e.g., remove stopwords, stemmer, remove short words)
     	tokenbuilder.addDataTransform(DocPipes.tokenTransform(tokenTransform));
     }
     

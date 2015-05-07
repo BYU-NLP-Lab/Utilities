@@ -33,6 +33,10 @@ public class ShortWordFilter implements Function<String, String>, Serializable {
 
   @Override
   public String apply(String word) {
+    if (word==null){
+      return null;
+    }
+    
     // remove single-letter words (lots of contractions get broken up)
     return (word.length() > tooShortLength)? word: null;
   }

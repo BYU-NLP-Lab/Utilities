@@ -135,7 +135,7 @@ public class Iterables2 {
 				retval.add(item);
 			}
 		}
-		return null;
+		return retval;
 	}
 	
 }

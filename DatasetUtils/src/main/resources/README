@@ -1,0 +1,5 @@
+File Origins:
+
+mallet_stopwords - came from mallet
+twitter_stopwords - defined by paul felt through error analysis on the sentiment-annotated weather tweets dataset
+en-sent.bin - a sentence detection model that came from pre-defined opennlp models (trained on penn treebank) (http://opennlp.sourceforge.net/models-1.5/)

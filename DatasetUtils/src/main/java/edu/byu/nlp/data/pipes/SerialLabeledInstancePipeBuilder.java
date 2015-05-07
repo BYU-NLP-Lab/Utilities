@@ -22,6 +22,14 @@ public class SerialLabeledInstancePipeBuilder<ID, IL, OD, OL> {
 	@SuppressWarnings("rawtypes")
 	private List<LabeledInstancePipe> pipes = Lists.newArrayList();
 	
+	public SerialLabeledInstancePipeBuilder(){}
+	
+	public SerialLabeledInstancePipeBuilder<ID, IL, OD, OL> clone(){
+	  SerialLabeledInstancePipeBuilder<ID, IL, OD, OL> newBuilder = new SerialLabeledInstancePipeBuilder<>();
+	  newBuilder.pipes = Lists.newArrayList(pipes); 
+	  return newBuilder;
+	}
+	
 	public <D, L> SerialLabeledInstancePipeBuilder<ID, IL, D, L> add(LabeledInstancePipe<OD, OL, D, L> p) {
 		pipes.add(p);
 		return (SerialLabeledInstancePipeBuilder<ID, IL, D, L>) this;

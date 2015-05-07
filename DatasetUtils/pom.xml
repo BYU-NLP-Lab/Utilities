@@ -13,33 +13,7 @@
 their associated labels, continuous metadata values, and annotation values. 
 Also routines for IO from common document corpus formats.</description>
 
-
-	<!-- Custom 3rd party dependency (for pre-trained net.opennlp.models) -->
-	<repositories>
-		<repository>
-			<id>byunlp-thirdparty</id>
-			<name>BYU NLP Third Party Dependencies</name>
-			<url>http://apps.nlp.cs.byu.edu/nexus/content/repositories/byunlp-thirdparty</url>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-				<checksumPolicy>fail</checksumPolicy>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<layout>default</layout>
-		</repository>
-	</repositories>
-
-
 	<dependencies>
-		<dependency>
-			<groupId>net.opennlp.models</groupId>
-			<artifactId>en-sent</artifactId>
-			<version>1.0</version>
-			<type>bin</type>
-		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
@@ -107,5 +81,4 @@ Also routines for IO from common document corpus formats.</description>
 			<version>1.2-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
-
 </project>

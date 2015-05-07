@@ -287,8 +287,8 @@ public class CustomWord2Vec extends WordVectorsImpl  {
         if(invertedIndex == null)
             invertedIndex = new LuceneInvertedIndex.Builder()
         			.indexDir(indexDirectory)
-                    .cache(vocab()).stopWords(stopWords)
-                    .build();
+              .cache(vocab()).stopWords(stopWords)
+              .build();
         //vectorizer will handle setting up vocab meta data
         if(vectorizer == null) {
             vectorizer = new TfidfVectorizer.Builder().index(invertedIndex)

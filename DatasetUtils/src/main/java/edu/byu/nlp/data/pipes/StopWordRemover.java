@@ -40,6 +40,10 @@ public class StopWordRemover implements Function<String, String> {
 	/** {@inheritDoc} */
 	@Override
 	public String apply(String word) {
+	  if (word==null){
+	    return null;
+	  }
+	  
 	  return (stopWords.contains(word.toLowerCase()))? null: word;
 	}
 

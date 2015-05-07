@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
@@ -251,16 +253,21 @@ public class DocPipes {
 	}
 
 	
-	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent-1.0.bin";
+	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent.bin";
 	public static Function<String, List<String>> opennlpSentenceSplitter() throws IOException {
-		File modelFile = new File(ENGLISH_SENTENCE_DETECTOR);
+	  
+	  URL modelUrl = Thread.currentThread().getContextClassLoader().getResource(ENGLISH_SENTENCE_DETECTOR);
+		File modelFile = new File(modelUrl.getFile());
 		final SentenceDetectorME detector = new SentenceDetectorME(new SentenceModel(modelFile));
+		
 		return new Function<String, List<String>>() {
 			@Override
 			public List<String> apply(String doc) {
-				return Lists.newArrayList(detector.sentDetect(doc));
+				ArrayList<String> retval = Lists.newArrayList(detector.sentDetect(doc));
+				return retval;
 			}
 		};
+		
 	}
 
 

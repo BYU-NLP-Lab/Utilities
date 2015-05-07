@@ -32,6 +32,9 @@ public class PorterStemmer implements Function<String, String>, Serializable {
 
   @Override
   public String apply(String word) {
+    if (word==null){
+      return null;
+    }
 
     char[] wrdArr = word.toCharArray();
     stemmer.add(wrdArr, wrdArr.length);

@@ -25,7 +25,6 @@ import org.deeplearning4j.text.sentenceiterator.BaseSentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.deeplearning4j.util.SerializationUtils;
-import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +56,6 @@ public class Word2VecCountVectorizer implements Function<List<List<String>>,Spar
 	public static final String CACHE_DIRNAME = "word2vec";
 	public static final String CACHE_FILENAME = "word2vec.dat";
 	public static final String INDEX_DIRNAME = "word2vec-index";
-	public static final int NUM_TRAINING_ITERATIONS=10;
 	
 	///////////////////////////////
 	// Builder
@@ -74,6 +72,7 @@ public class Word2VecCountVectorizer implements Function<List<List<String>>,Spar
 			logger.info("loading word2vec instance from "+cacheFile);
 			// load word2vec from file
 			word2vec = SerializationUtils.readObject(cacheFile);
+      logger.info("done loading");
 		}
 		else{
 			logger.info("fitting new word2vec instance");
@@ -85,12 +84,12 @@ public class Word2VecCountVectorizer implements Function<List<List<String>>,Spar
 				// cache word2vec for future use
 				Files.createParentDirs(cacheFile);
 				SerializationUtils.saveObject(word2vec, cacheFile);
+        logger.info("done saving");
 			}
 		}
 		
 		// find the min value in any word vector (so we can adjust for it later)
-		double min = minWordVecEntry(word2vec);
-		return new Word2VecCountVectorizer(word2vec, min);
+		return new Word2VecCountVectorizer(word2vec);
 	}
 
 	private static File cacheDir(DataSource<List<List<String>>, String> src){
@@ -105,24 +104,24 @@ public class Word2VecCountVectorizer implements Function<List<List<String>>,Spar
 	///////////////////////////////
 	
 	private CustomWord2Vec word2vec;
-	private double wordVectorOffset;
 	
-	public Word2VecCountVectorizer(CustomWord2Vec word2vec, double minWord2vecWeight) {
+	public Word2VecCountVectorizer(CustomWord2Vec word2vec) {
 		this.word2vec=word2vec;
-		this.wordVectorOffset=Math.max(0,-minWord2vecWeight);
 	}
 
 	@Override
-	public SparseFeatureVector apply(List<List<String>> sentences) {
+	public SparseFeatureVector apply(List<List<String>> doc) {
 
 		 double[] documentVector = new double[word2vec.lookupTable().layerSize()];
-		 for (List<String> sentence: sentences){
+		 for (List<String> sentence: doc){
 			 for (String word: sentence){
 				 double[] wordvec = word2vec.getWordVector(word);
-				 DoubleArrays.addToSelf(wordvec, wordVectorOffset); // ensure doc features are positive
+//				 word2vec.wordsNearest("king", 5);
+//				 word2vec.wordsNearest("computer", 5);
 				 DoubleArrays.addToSelf(documentVector, wordvec);
 			 }
 		 }
+		 
 		 // return a dense feature vector
 		 return new BasicSparseFeatureVector(
 				 IntArrays.sequence(0, documentVector.length),
@@ -151,10 +150,11 @@ public class Word2VecCountVectorizer implements Function<List<List<String>>,Spar
 		public SimpleSentenceIterator(Iterable<FlatInstance<List<List<String>>, String>> instances) {
 
 			this.sentences = Lists.newArrayList();
-			
 			for (FlatInstance<List<List<String>>,String> inst : instances) {
 				for (List<String> sent: inst.getData()){
-					sentences.add(Joiner.on(" ").join(sent));
+				  if (sent.size()>1){
+				    sentences.add(Joiner.on(" ").join(sent));
+				  }
 				}
 			}
 			
@@ -174,27 +174,20 @@ public class Word2VecCountVectorizer implements Function<List<List<String>>,Spar
 		}
 	}
 
-	private static double minWordVecEntry(CustomWord2Vec word2vec) {
-		double globalMin = Double.POSITIVE_INFINITY;
-		 for (Iterator<INDArray> itr = word2vec.lookupTable().vectors(); itr.hasNext();){
-			 double localMin = itr.next().ravel().min(0).getDouble(0);
-			 globalMin = Math.min(globalMin, localMin);
-		 }
-		 return globalMin;
-	}
-
 	private static CustomWord2Vec buildWord2Vec(DataSource<List<List<String>>, String> src, File cacheDir) throws IOException{
 
 		Iterable<FlatInstance<List<List<String>>, String>> data = src.getLabeledInstances();
-		// see javadoc for SimpleSentenceIterator
-		TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory(); 
 		CustomWord2Vec word2vec = new CustomWord2Vec.Builder()
 			.iterate(new SimpleSentenceIterator(data))
-			.useAdaGrad(true)
-			.tokenizerFactory(tokenizerFactory)
+//			.useAdaGrad(true) // when active, word2vec produces nonsense (cosine angle almost 0 among all words)
+			.tokenizerFactory(new DefaultTokenizerFactory())
 			.indexDirectory(new File(cacheDir,INDEX_DIRNAME))
-			.iterations(NUM_TRAINING_ITERATIONS)
-			// use defaults for most things (shown here for reference)
+			// custom
+      .layerSize(300) // how big are word vectors
+//      .learningRate(1e-3)
+      .minWordFrequency(5)
+			// defaults (shown here for reference)
+//			.iterations(1)
 //			.windowSize(5)
 //			.layerSize(50) // how big are word vectors
 //			.vocabCache(new InMemoryLookupCache())
