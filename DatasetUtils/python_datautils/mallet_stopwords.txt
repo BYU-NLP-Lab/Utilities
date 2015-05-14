@@ -1,0 +1,1 @@
+../src/main/resources/mallet_stopwords.txt

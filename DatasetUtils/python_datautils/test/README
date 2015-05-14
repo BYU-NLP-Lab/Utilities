@@ -1,0 +1,7 @@
+These are not proper tests. They are just development 
+snippets for debugging and seeing how the scripts work.
+
+./testdoc2vec.sh
+  generates models
+ipython3 -i testmodels.py
+  load models into an interactive session so you can play with them

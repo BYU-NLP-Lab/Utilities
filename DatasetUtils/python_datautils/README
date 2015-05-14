@@ -1,0 +1,12 @@
+A set of python tools to work with nlp data. The pipes.py 
+replicates much of the java data import pipeline. 
+pipes.py was written mostly to support the doc2vec.py script.
+
+The doc2vec.py script allows you to train gensim 
+models and use them to convert documents into 
+continuous vectors using a pretty reputable, 
+community-favored package (gensim). 
+We went this way (pre-processing the data with python)
+rather than finding native java models because the best 
+java framework we could find, dl4j, hadn't yet tested 
+their implementation of doc2vec.
