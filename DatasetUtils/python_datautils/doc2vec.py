@@ -36,7 +36,7 @@ if __name__ == "__main__":
   parser.add_argument('--method',default="LDA",help="Which vectorization method to use. Options include LDA, WORD2VEC, PARAVEC (mikolov's paragraph vectors)")
   parser.add_argument('--size',default=100,help="How large should document vectors be?")
   parser.add_argument('--num-workers',default=8,help="How many cores to use")
-  parser.add_argument('--model-cache-dir',default="/tmp/doc2vec-models",help="Where to cache trained models for reference.")
+  parser.add_argument('--modeldir',default="/tmp/doc2vec-models",help="Where to cache trained models for reference.")
   parser.add_argument('--content-encoding',default="latin-1",help="How are dataset documents encoded?")
   parser.add_argument('--index-encoding',default="utf-8",help="How are dataset index files encoded?")
   parser.add_argument('--min-count',default=5,help="Drop features with <min-count occurences.")
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
   # ensure models dir exists
   args.method = args.method.upper()
-  modelpath = model_path(args.method,args.model_cache_dir,args.dataset_split)
+  modelpath = model_path(args.method,args.modeldir,args.dataset_split)
   os.makedirs(os.path.dirname(modelpath), exist_ok=True)
 
   transformed_data = {}

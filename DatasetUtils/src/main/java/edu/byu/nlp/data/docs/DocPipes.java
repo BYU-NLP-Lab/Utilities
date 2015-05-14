@@ -51,7 +51,6 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Nullable;
-import edu.byu.nlp.util.Pair;
 
 /**
  * Creates a dataset from a data source of documents. This includes creating
@@ -105,12 +104,10 @@ public class DocPipes {
 		labelIndex = removeNullLabel(labelIndex);
 		wordIndex = reduceVocab(src, featureSelectorFactory, wordIndex);
 
-		// prepare feature extractor
-		Pair<Indexer<String>, ? extends Function<List<List<String>>, SparseFeatureVector>> featureInfo = featureExtraction(
-				src, doc2FeatureMethod, featureNormalizationConstant, wordIndex);
-		wordIndex = featureInfo.getFirst();
-		Function<List<List<String>>, SparseFeatureVector> featureExtractor = featureInfo.getSecond();
-
+    // prepare feature extractor
+    Function<List<List<String>>, SparseFeatureVector> featureExtractor = Functions.compose(new CountNormalizer(
+        featureNormalizationConstant), new CountVectorizer<String>(wordIndex));
+		
 		// convert documents to feature vectors
 		LabeledInstancePipe<List<List<String>>, String, SparseFeatureVector, Integer> vectorizer = new SerialLabeledInstancePipeBuilder<List<List<String>>, String, List<List<String>>, String>()
 				.addLabelTransform(new FieldIndexer<String>(labelIndex))
@@ -125,39 +122,6 @@ public class DocPipes {
 		// convert FlatInstances to a Dataset
 		return Datasets.convert(src.getSource(), vectors, wordIndex, labelIndex, instanceIdIndexer, annotatorIdIndexer,
 				true);
-	}
-
-	/**
-	 * Calculates Document features in several ways
-	 */
-	private static Pair<Indexer<String>, ? extends Function<List<List<String>>, SparseFeatureVector>> featureExtraction(
-			DataSource<List<List<String>>, String> src, Doc2FeaturesMethod doc2FeatureMethod,
-			Integer featureNormalizationConstant, Indexer<String> wordIndex) throws IOException {
-
-		switch (doc2FeatureMethod) {
-		case WORD_COUNTS:
-			// extract features
-			Function<List<List<String>>, SparseFeatureVector> featureExtractor = Functions.compose(new CountNormalizer(
-					featureNormalizationConstant), new CountVectorizer<String>(wordIndex));
-			return Pair.of(wordIndex, featureExtractor);
-		case WORD2VEC:
-			Word2VecCountVectorizer vectorizer = Word2VecCountVectorizer.build(src);
-
-			// the string->index mapping assumed by much of the code base
-			// doesn't exist here. We just have
-			// arbitrary feature indices. However, we can ensure that models at
-			// least have the right number of
-			// features by constructing an identity mapping word indexer that
-			// map, e.g., "0" -> 0.
-			wordIndex = new Indexer<>();
-			for (int i = 0; i < vectorizer.getWordVectorSize(); i++) {
-				wordIndex.add("" + i);
-			}
-			return Pair.of(wordIndex, vectorizer);
-		default:
-			throw new IllegalArgumentException("unknown document2feature method: " + doc2FeatureMethod);
-		}
-
 	}
 
 	/**
