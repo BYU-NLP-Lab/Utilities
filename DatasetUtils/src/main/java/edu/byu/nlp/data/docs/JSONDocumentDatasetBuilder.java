@@ -13,30 +13,23 @@
  */
 package edu.byu.nlp.data.docs;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.vfs2.FileSystemException;
 
 import com.google.common.base.Function;
 
-import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
-import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.pipes.DataSource;
 import edu.byu.nlp.data.pipes.DataSources;
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
-import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
 import edu.byu.nlp.data.types.Dataset;
+import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.dataset.Datasets;
+import edu.byu.nlp.util.Indexers;
 import edu.byu.nlp.util.Nullable;
 
 /**
@@ -79,31 +72,9 @@ public class JSONDocumentDatasetBuilder {
   private Function<String, String> tokenTransform;
   private final FeatureSelectorFactory<String> featureSelectorFactory;
   private Integer featureNormalizationConstant;
-  private Reader jsonReader;
-  private String source;
+  private String jsonAnnotationStream;
   private String jsonReferencedDataDir;
-  private Doc2FeaturesMethod doc2FeatureMethod;
 
-
-  private static Reader readerOf(String jsonFile) throws FileNotFoundException{
-    try {
-      return new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile),"utf-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("Invalid json file",e);
-    }
-  }
-  
-  public JSONDocumentDatasetBuilder(String basedir, String filename,
-      @Nullable Function<String, String> docTransform,
-      @Nullable Function<String, List<String>> sentenceSplitter,
-      @Nullable Function<String, List<String>> tokenizer,
-      @Nullable Function<String, String> tokenTransform,
-      Doc2FeaturesMethod doc2FeatureMethod,
-      FeatureSelectorFactory<String> featureSelectorFactory,
-      @Nullable Integer featureNormalizationConstant) throws FileSystemException, FileNotFoundException {
-    this(basedir+"/"+filename, new File(basedir).getAbsolutePath(), readerOf(basedir+"/"+filename), 
-        docTransform, sentenceSplitter, tokenizer, tokenTransform, doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
-  }
   
   /**
    * See class description.
@@ -111,63 +82,50 @@ public class JSONDocumentDatasetBuilder {
    * @throws FileSystemException if there is a problem finding the specified directories on the
    *     filesystem.
    */
-  public JSONDocumentDatasetBuilder(String source, String jsonReferencedDataDir, Reader jsonReader,
+  public JSONDocumentDatasetBuilder(String basedir, String filename,
       @Nullable Function<String, String> docTransform,
       @Nullable Function<String, List<String>> sentenceSplitter,
       @Nullable Function<String, List<String>> tokenizer,
       @Nullable Function<String, String> tokenTransform,
-      Doc2FeaturesMethod doc2FeatureMethod,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) {
-		this.source=source;
-		this.jsonReferencedDataDir=jsonReferencedDataDir;
-	    this.jsonReader=jsonReader;
-	    this.docTransform = docTransform;
-	    this.sentenceSplitter=sentenceSplitter;
-	    this.tokenizer = tokenizer;
-	    this.tokenTransform=tokenTransform;
-	    this.doc2FeatureMethod=doc2FeatureMethod;
-	    this.featureSelectorFactory = featureSelectorFactory;
-	    this.featureNormalizationConstant=featureNormalizationConstant;
+	  this.jsonAnnotationStream=basedir+"/"+filename;
+	  this.jsonReferencedDataDir=new File(basedir).getAbsolutePath();
+    this.docTransform = docTransform;
+    this.sentenceSplitter=sentenceSplitter;
+    this.tokenizer = tokenizer;
+    this.tokenTransform=tokenTransform;
+    this.featureSelectorFactory = featureSelectorFactory;
+    this.featureNormalizationConstant=featureNormalizationConstant;
   }
 
   public Dataset dataset() throws IOException {
-    // This pipe leaves data in the form it is expected to be in at test time
-    LabeledInstancePipe<String, String, String, String> indexToDocPipe = DocPipes.jsonToDocPipe(jsonReader, jsonReferencedDataDir);
 
-    // >>>>>>> start pipe builder. A pipe that will apply all processing to these documents to turn them into a Dataset
-    SerialLabeledInstancePipeBuilder<String, String, String, String> docBuilder =
-        new SerialLabeledInstancePipeBuilder<String, String, String, String>().add(indexToDocPipe);
-    
-    // transform documents (e.g., remove email headers, transform emoticons)
-    if (docTransform != null) {
-      docBuilder = docBuilder.addDataTransform(docTransform);
-    }
-    
-    // split sentences
-    SerialLabeledInstancePipeBuilder<String, String, List<String>, String> sentencebuilder = docBuilder.addDataTransform(sentenceSplitter);
-    
-    // tokenize documents (removes punctuation)
-    SerialLabeledInstancePipeBuilder<String, String, List<List<String>>, String> tokenbuilder = sentencebuilder.addDataTransform(DocPipes.tokenSplitter(tokenizer));
-    
-    // word2vec requires data where tokens have not been transformed or filtered 
-    if (doc2FeatureMethod!=Doc2FeaturesMethod.WORD2VEC & tokenTransform!=null){
-      // transform tokens (e.g., remove stopwords, stemmer, remove short words)
-    	tokenbuilder.addDataTransform(DocPipes.tokenTransform(tokenTransform));
-    }
-    
-    // ========= end pipe builder
-    LabeledInstancePipe<String, String, List<List<String>>, String> combinedPipe = tokenbuilder.build();
+    // pipe to import input files into strings and do greedy feature transformation/selection (e.g., filter short words)
+    LabeledInstancePipe<String, String, List<List<String>>, String> inputPipe = DocPipes.index2SentencePipe(
+        DocPipes.jsonToDocPipe(jsonReferencedDataDir), docTransform, sentenceSplitter, tokenizer, tokenTransform);
 
-    // run pipe over all documents
+    // apply first pipeline (input)
     // (prime the pump: start the pipe with a dummy instance) 
-    DataSource<String, String> jsonSource = DataSources.<String,String>from(source, Collections.singletonList(
-    		(FlatInstance<String,String>) new FlatLabeledInstance<String,String>(
-    				AnnotationInterfaceJavaUtils.newLabeledInstance("", "", "", false))));
-    DataSource<List<List<String>>, String> docSource = DataSources.connect(jsonSource, combinedPipe); // connect the rest of the pipe
-    List<FlatInstance<List<List<String>>, String>> cachedData = DataSources.cache(docSource); // Cache the data to avoid multiple disk reads
+    DataSource<String, String> fileSystemDatasetSource = DataSources.fromPath(jsonAnnotationStream);
+    // Cache the data to avoid multiple disk reads
+    List<FlatInstance<List<List<String>>, String>> sentenceData = DataSources.cache(DataSources.connect(fileSystemDatasetSource, inputPipe)); 
 
-    // convert from FlatInstances to Dataset 
-    return DocPipes.createDataset(DataSources.from(source, cachedData), doc2FeatureMethod, featureSelectorFactory, featureNormalizationConstant);
+    // feature selection
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(sentenceData);
+    indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
+    indexers.setWordIndexer(DocPipes.selectFeatures(sentenceData, featureSelectorFactory, indexers.getWordIndexer()));
+
+    // second pipe to convert data to vectors and labels to numbers 
+    LabeledInstancePipe<List<List<String>>, String, SparseFeatureVector, Integer> vectorizingPipe = 
+        DocPipes.sentence2FeatureVectorPipe(sentenceData, indexers, featureNormalizationConstant);
+    
+    // apply second pipe (vectorization)
+    DataSource<List<List<String>>, String> vectorDatasetSource = DataSources.from(jsonAnnotationStream, sentenceData);
+    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataSources.cache(DataSources.connect(vectorDatasetSource, vectorizingPipe));
+
+    // convert FlatInstances to a Dataset
+    return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);
+    
   }
 }

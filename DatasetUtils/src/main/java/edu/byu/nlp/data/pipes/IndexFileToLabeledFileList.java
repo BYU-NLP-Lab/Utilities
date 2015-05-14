@@ -8,6 +8,7 @@ import java.util.Iterator;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.VFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,41 +25,42 @@ import edu.byu.nlp.io.Paths;
 
 /**
  * @author robbie
+ * @author plf1
  * 
  */
 public class IndexFileToLabeledFileList implements OneToManyLabeledInstanceFunction<String, String, String> {
 
 	private static final Logger logger = LoggerFactory.getLogger(IndexFileToLabeledFileList.class);
 
-	private final FileObject basedir;
 	private final Charset charset;
 
-	public IndexFileToLabeledFileList(FileObject basedir) {
-		this(basedir, Charset.defaultCharset());
+	public IndexFileToLabeledFileList() {
+		this(Charset.defaultCharset());
 	}
 
-	public IndexFileToLabeledFileList(FileObject basedir, Charset charset) {
+	public IndexFileToLabeledFileList(Charset charset) {
 		Preconditions.checkNotNull(charset);
-		this.basedir = basedir;
 		this.charset = charset;
 	}
 
 	@Override
 	public Iterator<FlatInstance<String, String>> apply(final FlatInstance<String, String> indexFile) {
 		try {
+
 			String indexFilename = indexFile.getData();
-			String indexFilePath = indexFile.getSource();
+			String indexDir = indexFile.getSource();
+			final String indexFilePath = indexDir + "/" + indexFilename;
+			FileObject indexFileObject = VFS.getManager().resolveFile(indexFilePath);
 			
 			logger.info("Processing " + indexFilename);
 			
 			final String label = Paths.splitExtension(indexFilename).getFirst();
-			final String source = indexFilePath + "/" + indexFilename;
-			Iterable<String> lineIterable = Files2.open(basedir.resolveFile(indexFilename), charset);
+			Iterable<String> lineIterable = Files2.open(indexFileObject, charset);
 			return Iterators.transform(lineIterable.iterator(), new Function<String, FlatInstance<String, String>>() {
 				@Override
 				public FlatInstance<String, String> apply(String filedata) {
 					return new FlatLabeledInstance<String,String>(
-							AnnotationInterfaceJavaUtils.newLabeledInstance(filedata, label, source, false));
+							AnnotationInterfaceJavaUtils.newLabeledInstance(filedata, label, indexFilePath, false));
 				}
 
 			});

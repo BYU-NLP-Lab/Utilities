@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -19,7 +20,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -57,23 +57,9 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 
 	private static final Logger logger = LoggerFactory.getLogger(JSONFileToAnnotatedDocumentList.class);
 
-	private Reader jsonReader;
 	private String jsonReferencedDataDir;
 
-	public JSONFileToAnnotatedDocumentList(String basedir) throws FileNotFoundException {
-		this(basedir, Charset.defaultCharset());
-	}
-
-	public JSONFileToAnnotatedDocumentList(String jsonFile, Charset charset)
-			throws FileNotFoundException {
-		// assume the datadir referred to by json will be relative to the parent folder of the dataset (e.g., if 
-		// jsonFile= /aml/data/plf1/cfgroups/cfgroups1000.json then the basedir should be /aml/data/plf1/cfgroups
-		this(new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile), charset)), new File(jsonFile).getParent());
-	}
-
-	public JSONFileToAnnotatedDocumentList(Reader jsonReader, String jsonReferencedDataDir) {
-		Preconditions.checkNotNull(jsonReader);
-		this.jsonReader = jsonReader;
+	public JSONFileToAnnotatedDocumentList(String jsonReferencedDataDir) {
 		this.jsonReferencedDataDir=jsonReferencedDataDir;
 	}
 
@@ -105,13 +91,14 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 	@Override
 	public Iterator<FlatInstance<String, String>> apply(FlatInstance<String, String> indexFilename) {
 		logger.info("Processing " + indexFilename.getData());
+		Reader jsonReader = readerOf(indexFilename.getData());
 
 		// parse json
 		Gson gson = new Gson();
 		Type collectiontype = new TypeToken<List<JSONAnnotation>>() {
 		}.getType();
 
-		List<JSONAnnotation> jsonData = gson.fromJson(this.jsonReader, collectiontype);
+		List<JSONAnnotation> jsonData = gson.fromJson(jsonReader, collectiontype);
 
 		// translate annotations into flatInstances 
 		// and gather instance data 
@@ -174,5 +161,14 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 		
 	}
 
+  private static Reader readerOf(String jsonFile) {
+    try {
+      return new BufferedReader(new InputStreamReader(new FileInputStream(jsonFile),"utf-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException("Invalid json file",e);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("Non-existent json file",e);
+    }
+  }
 
 }

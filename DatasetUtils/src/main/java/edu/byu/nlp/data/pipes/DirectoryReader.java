@@ -22,7 +22,6 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.UnmodifiableIterator;
 
@@ -88,10 +87,10 @@ public class DirectoryReader implements DataSource<String, String> {
 	private FileObject directory;
 	private String source;
 
-	public DirectoryReader(String source, FileObject directory) throws FileSystemException {
+	public DirectoryReader(FileObject directory) throws FileSystemException {
 		Preconditions.checkNotNull(directory);
 		Preconditions.checkArgument(directory.getType() == FileType.FOLDER, directory + " is not a directory");
-		this.source=source;
+		this.source=directory.toString();
 		this.directory = directory;
 	}
 

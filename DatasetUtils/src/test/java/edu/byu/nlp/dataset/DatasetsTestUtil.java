@@ -11,6 +11,7 @@ import edu.byu.nlp.data.FlatAnnotatedInstance;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.pipes.FieldIndexer;
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
 import edu.byu.nlp.data.pipes.Pipes;
 import edu.byu.nlp.data.types.Dataset;
@@ -142,7 +143,7 @@ public class DatasetsTestUtil {
 				annotatorIdFieldIndexer);
 		Iterable<FlatInstance<SparseFeatureVector, Integer>> indexTransformedInstances = indexingPipe.apply(labels);
 		
-		return Datasets.convert(datasetSource, indexTransformedInstances, featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex, true);
+		return Datasets.convert(datasetSource, indexTransformedInstances, new IndexerCalculator<>(featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex), true);
 	}
 	
 	

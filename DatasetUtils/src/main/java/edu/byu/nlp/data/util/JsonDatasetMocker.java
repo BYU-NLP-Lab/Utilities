@@ -1,19 +1,19 @@
 package edu.byu.nlp.data.util;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
 import edu.byu.nlp.data.docs.DocPipes;
-import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactory;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.types.Dataset;
@@ -23,16 +23,16 @@ public class JsonDatasetMocker {
 	 public static String jsonInstances1(long seed){ 
 	    List<String> jsonInstances = Lists.newArrayList(
 	        // "1" has 2 annotations + label
-	      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":-1, \"label\":\"0\", \"labelObserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
+	      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":-1, \"label\":\"0\", \"labelobserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
 	      "{\"batch\": 1, \"data\":\"KLM\", \"endTime\":1, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
 	      "{\"batch\": 2, \"data\":\"KLM\", \"endTime\":2, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
 	      "{\"batch\": 3, \"data\":\"HIJ\", \"endTime\":-1,                                            \"source\":1,     \"startTime\":0 }", // bare ref to the same doc
 	      
 	      // "2" has label
-	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":-1, \"label\":\"1\", \"labelObserved\":true,   \"source\":\"2\", \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":-1, \"label\":\"1\", \"labelobserved\":true,   \"source\":\"2\", \"startTime\":0 }", // labeled
 
 	      // "3" has label
-	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":-1, \"label\":\"1\", \"labelObserved\":true,   \"source\":3,     \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":-1, \"label\":\"1\", \"labelobserved\":true,   \"source\":3,     \"startTime\":0 }", // labeled
 
 	      // "4" has 2 annotations
 	      "{\"batch\": 0, \"data\":\"HIJ\", \"endTime\":3, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation
@@ -62,21 +62,21 @@ public class JsonDatasetMocker {
 	  public static String jsonInstances2(long seed){ 
 	    List<String> jsonInstances = Lists.newArrayList(
 	        // "1" has 2 annotations + label
-	      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":0, \"label\":\"0\", \"labelObserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
+	      "{\"batch\": 0, \"data\":\"ABC\", \"endTime\":0, \"label\":\"0\", \"labelobserved\":true,   \"source\":1,     \"startTime\":0 }", // labeled 
 	      "{\"batch\": 1, \"data\":\"ABC\", \"endTime\":1, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
 	      "{\"batch\": 2, \"data\":\"ABC\", \"endTime\":2, \"annotation\":\"1\", \"annotator\":\"B\", \"source\":1,     \"startTime\":0 }", // annotation to the same doc
-	      "{\"batch\": 3, \"data\":\"ABC\", \"endTime\":3,                                            \"source\":1,     \"startTime\":0 }", // bare ref to the same doc
+	      "{\"batch\": 3, \"data\":\"ABC\", \"endTime\":3,                                            \"source\":1,     \"startTime\":0 }", // bare ref to the same doc 
 	      
 	      // "2" has 2 annotations + label
-	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":4, \"label\":\"1\", \"labelObserved\":true,   \"source\":\"2\", \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":4, \"label\":\"1\", \"labelobserved\":true,   \"source\":\"2\", \"startTime\":0 }", // labeled
 	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":5, \"annotation\":\"1\", \"annotator\":\"C\", \"source\":\"2\", \"startTime\":0 }", // annotation
 	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":6, \"annotation\":\"0\", \"annotator\":\"C\", \"source\":\"2\", \"startTime\":0 }", // annotation
 
 	      // "3" has label
-	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":7, \"label\":\"0\", \"labelObserved\":true,   \"source\":3,     \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":7, \"label\":\"0\", \"labelobserved\":true,   \"source\":3,     \"startTime\":0 }", // labeled
 
 	      // "4" has 2 annotations + label
-	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":8, \"label\":\"1\", \"labelObserved\":true,   \"source\":4,     \"startTime\":0 }", // labeled
+	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":8, \"label\":\"1\", \"labelobserved\":true,   \"source\":4,     \"startTime\":0 }", // labeled
 	      "{\"batch\": 0, \"data\":\"DEF\", \"endTime\":9, \"annotation\":\"0\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation
 	      "{\"batch\": 3, \"data\":\"DEF\", \"endTime\":10, \"annotation\":\"1\", \"annotator\":\"A\", \"source\":4,     \"startTime\":0 }", // annotation to same doc
 	      
@@ -124,7 +124,10 @@ public class JsonDatasetMocker {
 	  }
 
 	public static Dataset buildTestDatasetFromJson(String jsonString) throws IOException {
-		Reader jsonReader = new StringReader(jsonString);
+	  File basedir = new File("/tmp/dataset-utils-json-testdir");
+	  basedir.mkdirs();
+	  File jsonFile = new File(basedir,"testFile"+jsonString.hashCode());
+	  Files.write(jsonString, jsonFile, Charsets.UTF_8);
 
 		// build dataset
 		Function<String, String> docTransform = null;
@@ -133,8 +136,8 @@ public class JsonDatasetMocker {
 		FeatureSelectorFactory<String> featureSelectorFactory = new CountCutoffFeatureSelectorFactory<String>(-1);
 		Integer featureNormalizationConstant = 1;
 		Function<String, String> tokenTransform = null;
-		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder("dummy source", null, jsonReader,
-				docTransform, sentenceSplitter, tokenizerPipe, tokenTransform, Doc2FeaturesMethod.WORD_COUNTS, featureSelectorFactory, featureNormalizationConstant);
+		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder(basedir.getAbsolutePath(), jsonFile.getName(),
+				docTransform, sentenceSplitter, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
 		return builder.dataset();
 	}
 	

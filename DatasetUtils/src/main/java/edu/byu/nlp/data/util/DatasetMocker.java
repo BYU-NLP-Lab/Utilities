@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
@@ -80,8 +81,7 @@ public class DatasetMocker {
 		}
 
 		// Create Dataset
-		return new BasicDataset("", instances, annotatorIdIndexer, featureIndexer, labelIndexer,
-				instanceIdIndexer);
+		return new BasicDataset("", instances, new IndexerCalculator<>(featureIndexer, labelIndexer, instanceIdIndexer, annotatorIdIndexer));
 	}
 	
 

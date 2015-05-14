@@ -40,7 +40,6 @@ import com.google.common.io.Files;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
 import edu.byu.nlp.data.docs.DocPipes;
-import edu.byu.nlp.data.docs.DocPipes.Doc2FeaturesMethod;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
@@ -231,7 +230,7 @@ public class AnnotationStream2Csv {
     String folder = Paths.directory(jsonStream);
     String file = Paths.baseName(jsonStream);
     Dataset data = new JSONDocumentDatasetBuilder(folder, file, 
-            docTransform, DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform, Doc2FeaturesMethod.WORD_COUNTS,
+            docTransform, DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform,
             FeatureSelectorFactories.conjoin(
                 new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
                 (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),

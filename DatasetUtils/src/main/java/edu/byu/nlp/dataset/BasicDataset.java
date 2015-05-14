@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
@@ -34,8 +35,8 @@ public class BasicDataset implements Dataset {
 	 * Creates a dataset with info calculated from instances.
 	 */
 	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
-		Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
-		this(instances, Datasets.infoWithCalculatedCounts(instances, source, annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer));
+	    IndexerCalculator<String, String> indexers){
+		this(instances, Datasets.infoWithCalculatedCounts(instances, source, indexers));
 	}
 
 	/**
@@ -45,11 +46,11 @@ public class BasicDataset implements Dataset {
 	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
 			int numDocuments, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
 		int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels, int numAnnotations,
-		Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer){
+    IndexerCalculator<String, String> indexers){
 		this(instances, new Info(source, 
 				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels, 
 				numTokens, numTokensWithLabels, numTokensWithObservedLabels,  
-				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer, instances));
+				indexers, instances));
 	}
 	
 	/**
@@ -92,10 +93,7 @@ public class BasicDataset implements Dataset {
 		private int numTokensWithObservedLabels;
 		private int numFeatures;
 		private int numClasses;
-		private Indexer<String> featureIndexer;
-		private Indexer<String> labelIndexer;
-		private Indexer<Long> annotatorIdIndex;
-		private Indexer<Long> instanceIdIndexer;
+		private IndexerCalculator<String, String> indexers;
 		private Iterable<DatasetInstance> instances;
 		private int numAnnotations = -1;
 		private int numDocumentsWithAnnotations = -1;
@@ -104,7 +102,7 @@ public class BasicDataset implements Dataset {
 		public Info(String source, 
 				int numDocuments, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
 				int numTokens, int numTokensWithLabels, int numTokensWithObservedLabels,
-				Indexer<Long> annotatorIdIndex, Indexer<String> featureIndexer, Indexer<String> labelIndexer, Indexer<Long> instanceIdIndexer,
+				IndexerCalculator<String, String> indexers, 
 				Iterable<DatasetInstance> instances){
 			this.source=source;
 			this.numDocuments=numDocuments;
@@ -114,12 +112,9 @@ public class BasicDataset implements Dataset {
 			this.numTokensWithLabels=numTokensWithLabels;
 			this.numTokensWithObservedLabels=numTokensWithObservedLabels;
 			this.instances=instances;
-			this.numFeatures=featureIndexer.size();
-			this.numClasses=labelIndexer.size();
-			this.featureIndexer=featureIndexer;
-			this.labelIndexer=labelIndexer;
-			this.annotatorIdIndex=annotatorIdIndex;
-			this.instanceIdIndexer=instanceIdIndexer;
+			this.numFeatures=indexers.getWordIndexer().size();
+			this.numClasses=indexers.getLabelIndexer().size();
+			this.indexers=indexers;
 		}
 		
 		@Override
@@ -177,17 +172,17 @@ public class BasicDataset implements Dataset {
 
 		@Override
 		public Indexer<String> getLabelIndexer() {
-			return labelIndexer;
+			return indexers.getLabelIndexer();
 		}
 
 		@Override
 		public Indexer<String> getFeatureIndexer() {
-			return featureIndexer;
+			return indexers.getWordIndexer();
 		}
 
 		@Override
 		public Indexer<Long> getAnnotatorIdIndexer() {
-			return annotatorIdIndex;
+			return indexers.getAnnotatorIdIndexer();
 		}
 
 		@Override
@@ -230,7 +225,7 @@ public class BasicDataset implements Dataset {
 
 		@Override
 		public Indexer<Long> getInstanceIdIndexer() {
-			return instanceIdIndexer;
+			return indexers.getInstanceIdIndexer();
 		}
 		@Override
 		public String toString() {
@@ -239,12 +234,12 @@ public class BasicDataset implements Dataset {
 
 		@Override
 		public int getNullLabel() {
-			return labelIndexer.indexOf(null);
+			return getLabelIndexer().indexOf(null);
 		}
 
 		@Override
 		public int getNumAnnotators() {
-			return annotatorIdIndex.size();
+			return getAnnotatorIdIndexer().size();
 		}
 
 		@Override

@@ -42,6 +42,7 @@ import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators.ClusteringMethod;
+import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
@@ -139,8 +140,7 @@ public class Datasets {
 	public static Dataset convert(
 			String datasetSource,
 			Iterable<FlatInstance<SparseFeatureVector, Integer>> flatInstances,
-			Indexer<String> featureIndex, Indexer<String> labelIndex, 
-			Indexer<Long> instanceIdIndex, Indexer<Long> annotatorIdIndex, 
+			IndexerCalculator<String, String> indexers, 
 			boolean preserveRawAnnotations) {
 		
 		TableCounter<Long, Long, Integer> annotationCounter = TableCounter.create();
@@ -206,7 +206,7 @@ public class Datasets {
 			
 			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
-					instanceIndex, annotatorIdIndex.size(), labelIndex.size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
+					instanceIndex, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
 			
 			// dataset instance
 			DatasetInstance inst = new BasicDatasetInstance(
@@ -218,14 +218,14 @@ public class Datasets {
 					annotationSet, 
 					instanceIndex, 
 					sourceMap.get(instanceIndex),
-					labelIndex);
+					indexers.getLabelIndexer());
 			
 			instances.add(inst);
 			
 		}
 		
 		// info without counts
-		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0, annotatorIdIndex, featureIndex, labelIndex, instanceIdIndex, instances);
+		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0, indexers, instances);
 		
 		// dataset with correct counts
 		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
@@ -294,10 +294,9 @@ public class Datasets {
 	}
 
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
-			Indexer<Long> annotatorIdIndexer, Indexer<String> featureIndexer, Indexer<String> labelIndexer,
-			Indexer<Long> instanceIdIndexer){
+	    IndexerCalculator<String, String> indexers){
 		BasicDataset.Info info = new BasicDataset.Info(source, 0,0,0,0,0,0, 
-				annotatorIdIndexer, featureIndexer, labelIndexer, instanceIdIndexer, instances);
+				indexers, instances);
 		return infoWithUpdatedCounts(instances, info);
 	}
 	
@@ -326,10 +325,8 @@ public class Datasets {
 				previousInfo.getSource(), 
 				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels,
 				numTokens, numTokensWithLabels, numTokensWithObservedLabels,
-				previousInfo.getAnnotatorIdIndexer(), 
-				previousInfo.getFeatureIndexer(), 
-				previousInfo.getLabelIndexer(), 
-				previousInfo.getInstanceIdIndexer(), instances);
+				new IndexerCalculator<>(previousInfo.getFeatureIndexer(), previousInfo.getLabelIndexer(), previousInfo.getInstanceIdIndexer(), previousInfo.getAnnotatorIdIndexer()), 
+				instances);
 	}
 
 	public static Dataset join(Dataset... datasets){
@@ -642,8 +639,9 @@ public class Datasets {
 		br.close();
 
 		String source = inPath;
-		return new BasicDataset(instances, infoWithCalculatedCounts(instances, 
-		        source, annotatorIdIndexer, wordIndex, labelIndex, instanceIdIndexer));
+		return new BasicDataset(instances, infoWithCalculatedCounts(
+		    instances, source, 
+		    new IndexerCalculator<>(wordIndex, labelIndex, instanceIdIndexer, annotatorIdIndexer)));
 	}
 
 	/**
@@ -904,7 +902,7 @@ public class Datasets {
 		
 		// dataset with the new instances and the new annotatorIdIndexer
 		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
-						annotatorIdIndexer, info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), instances));
+						new IndexerCalculator<>(info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), annotatorIdIndexer), instances));
 		return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
 	}
 
@@ -1070,9 +1068,9 @@ public class Datasets {
 				transformedFlatInstances.add(new FlatAnnotatedInstance<>(xann));
 			}
 		}
-		return convert(data.getInfo().getSource(), transformedFlatInstances, 
-				data.getInfo().getFeatureIndexer(), data.getInfo().getLabelIndexer(), data.getInfo().getInstanceIdIndexer(), 
-				Indexers.indexerOfLongs(numAnnotatorClusters), // annotator id indexer (one annotator per cluster)
+		return convert(data.getInfo().getSource(), transformedFlatInstances,
+		    new IndexerCalculator<>(data.getInfo().getFeatureIndexer(), data.getInfo().getLabelIndexer(), data.getInfo().getInstanceIdIndexer(), 
+		        Indexers.indexerOfLongs(numAnnotatorClusters)), // annotator id indexer (one annotator per cluster)
 				true); // "true" preserves raw annotations
 		
 	}

@@ -15,11 +15,14 @@
  */
 package edu.byu.nlp.data.pipes;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.FlatLabeledInstance;
 
 
 
@@ -90,7 +93,28 @@ public class DataSources {
 			Iterable<FlatInstance<D, L>> labelIt) {
 		return new IterableDataSource<D, L>(source,labelIt);
 	}
+	
 
+	/**
+	 * Create a simple data source that contains a single items:
+	 * a flatinstance whose data is equal to String value 
+	 * (probably a filesystem path to a file that indexes a 
+	 * corpus that is being used to initialize a pipe). 
+	 * 
+	 * The source's name is also set to the same String value.
+	 */
+  public static DataSource<String, String> fromPath(
+      String path){
+    return singletonSource(path, 
+        (FlatInstance<String,String>) new FlatLabeledInstance<String,String>(
+            AnnotationInterfaceJavaUtils.newLabeledInstance(path, "", "", false)));
+  }
+      
+
+	public static <D,L> DataSource<D,L> singletonSource(String source, FlatInstance<D, L> item){
+	  return new IterableDataSource<>(source, Collections.singletonList(item));
+	}
+	
 	/**
 	public static <L, W> List<FlatInstance<L, List<W>>> cacheSequenceData(DataSource<L, List<W>> source) {
 		List<FlatInstance<L, List<W>>> cached = Lists.newArrayList();
