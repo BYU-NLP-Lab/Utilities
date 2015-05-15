@@ -25,6 +25,14 @@ public class Indexers {
 		return true;
 	}
 
+  public static Indexer<String> indexerOfStrings(int numLongs){
+    Indexer<String> indexer = new Indexer<String>();
+    for (long i=0; i<numLongs; i++){
+      indexer.add(""+i);
+    }
+    return indexer;
+  }
+  
 	public static Indexer<Long> indexerOfLongs(int numLongs){
 		Indexer<Long> indexer = new Indexer<Long>();
 		for (long i=0; i<numLongs; i++){

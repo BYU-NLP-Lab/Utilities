@@ -106,10 +106,8 @@ public class JSONDocumentDatasetBuilder {
         DocPipes.jsonToDocPipe(jsonReferencedDataDir), docTransform, sentenceSplitter, tokenizer, tokenTransform);
 
     // apply first pipeline (input)
-    // (prime the pump: start the pipe with a dummy instance) 
-    DataSource<String, String> fileSystemDatasetSource = DataSources.fromPath(jsonAnnotationStream);
-    // Cache the data to avoid multiple disk reads
-    List<FlatInstance<List<List<String>>, String>> sentenceData = DataSources.cache(DataSources.connect(fileSystemDatasetSource, inputPipe)); 
+    List<FlatInstance<List<List<String>>, String>> sentenceData = DataSources.cache(
+        DataSources.connect(DataSources.fromPath(jsonAnnotationStream), inputPipe)); 
 
     // feature selection
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(sentenceData);
@@ -128,4 +126,5 @@ public class JSONDocumentDatasetBuilder {
     return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);
     
   }
+  
 }

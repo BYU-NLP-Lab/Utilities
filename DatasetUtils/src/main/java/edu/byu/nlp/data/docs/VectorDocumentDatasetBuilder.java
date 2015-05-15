@@ -39,7 +39,6 @@ import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
-import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Indexers;
 import edu.byu.nlp.util.Nullable;
 
@@ -106,19 +105,15 @@ public class VectorDocumentDatasetBuilder {
     
     // indexing pipe converts labels to numbers 
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(sentenceData);
-    Indexer<Long> annotatorIdIndexer = indexers.getAnnotatorIdIndexer();
-    Indexer<Long> instanceIdIndexer = indexers.getInstanceIdIndexer();
-    Indexer<String> labelIndex = indexers.getLabelIndexer();
-
-    // post-processing
-    labelIndex = Indexers.removeNullLabel(labelIndex);
+    indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
+    indexers.setWordIndexer(Indexers.indexerOfStrings(sentenceData.get(0).getData().length())); // identity feature-mapping
     
     // index columns
     LabeledInstancePipe<SparseFeatureVector, String, SparseFeatureVector, Integer> indexerPipe = 
         new SerialLabeledInstancePipeBuilder<SparseFeatureVector, String, SparseFeatureVector, String>()
-        .addLabelTransform(new FieldIndexer<String>(labelIndex))
-        .addAnnotatorIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(annotatorIdIndexer)))
-        .addInstanceIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(instanceIdIndexer)))
+        .addLabelTransform(new FieldIndexer<String>(indexers.getLabelIndexer()))
+        .addAnnotatorIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getAnnotatorIdIndexer())))
+        .addInstanceIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getInstanceIdIndexer())))
         .build();
     
     // apply second pipeline (vectorization)
