@@ -40,7 +40,7 @@ if __name__ == "__main__":
   parser.add_argument('--content-encoding',default="latin-1",help="How are dataset documents encoded?")
   parser.add_argument('--index-encoding',default="utf-8",help="How are dataset index files encoded?")
   parser.add_argument('--min-count',default=5,help="Drop features with <min-count occurences.")
-  parser.add_argument('--window',default=7,help="The context size considered by neural langauge models.")
+  parser.add_argument('--window',default=7,help="The context size considered by neural language models.")
   args = parser.parse_args()
 
   # ensure models dir exists
@@ -80,7 +80,7 @@ if __name__ == "__main__":
   elif args.method=="WORD2VEC":
     # read a list of sentences
     # example: [ ["whanne","that",...], ...]
-    sentences = pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding)
+    sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
     if os.path.exists(modelpath):
       model = Word2Vec.load(modelpath)
     else:
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     # translate data
     if args.outdir is not None:
-      logger.info("transforming documents to lda vectors")
+      logger.info("transforming documents to word2vec vectors")
       for label, src, content in sentences:
         transformed_data[src] = np.zeros(args.size)
         for word in content:
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     # translate data
     if args.outdir is not None:
-      logger.info("transforming documents to lda vectors")
+      logger.info("transforming documents to paragraph-vector model (doc2vec) vectors")
       for label, src, content in sentences:
         if src not in model:
           logger.warn("not found in model: document "+src)

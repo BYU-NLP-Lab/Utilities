@@ -91,10 +91,14 @@ def pipe_txt2list_sentence_splitter(pipe,index=0,split_regex="[^a-zA-Z]+"):
         yield transformed_item(item,index,tokens)
 
 def pipe_list2txt_flatten(pipe,index=0,split_regex="[^a-zA-Z]+"):
-    ''' make a separate data item for every item in a list '''
+    ''' make a separate data item for every item in a list. 
+        if a list is empty, return a single empty string. '''
     for item in pipe:
         tokens = item[index] 
         assert isinstance(tokens,list)
+        if len(tokens)==0:
+            # empty lists shouldn't entirely disappear
+            yield transformed_item(item,index,"") 
         for subitem in tokens:
             yield transformed_item(item,index,subitem)
 
@@ -136,7 +140,7 @@ def pipe_list2list_remove_short_tokens(pipe,min_token_len,index=0):
         newtokens = []
         for token in tokens:
             assert isinstance(token,str)
-            if len(token)>min_token_len:
+            if len(token)>=min_token_len:
                 newtokens.append(token)
             else:
                 logger.debug("removing short word",token)
@@ -196,6 +200,7 @@ def combination_index2sentences(dataset_basedir,dataset_splitdir,index_encoding=
     pipe = pipe_list2txt_flatten(pipe,index=2)
     pipe = pipe_txt2txt_lower(pipe,index=2)
     pipe = pipe_txt2list_tokenize(pipe,index=2)
+    pipe = pipe_list2list_remove_short_tokens(pipe,1,index=2) # strip empty strings
     return pipe
 
 def combination_index2bow(dataset_basedir,dataset_splitdir,index_encoding='utf-8', content_encoding='utf-8'):
@@ -206,7 +211,7 @@ def combination_index2bow(dataset_basedir,dataset_splitdir,index_encoding='utf-8
     pipe = pipe_txt2txt_lower(pipe,index=2)
     pipe = pipe_txt2txt_emailheader_stripper(pipe,index=2)
     pipe = pipe_txt2list_tokenize(pipe,index=2)
-    pipe = pipe_list2list_remove_short_tokens(pipe,2,index=2)
+    pipe = pipe_list2list_remove_short_tokens(pipe,3,index=2)
     pipe = pipe_list2list_remove_stopwords(pipe,index=2)
     pipe = pipe_list2list_porter_stemmer(pipe,index=2)
     pipe = pipe_list2list_count_cutoff(pipe,5,index=2)
