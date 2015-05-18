@@ -51,6 +51,7 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
 import edu.byu.nlp.math.AbstractRealMatrixPreservingVisitor;
 import edu.byu.nlp.math.SparseRealMatrices;
+import edu.byu.nlp.util.ArgMinMaxTracker.MinMaxTracker;
 import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.Doubles;
 import edu.byu.nlp.util.Enumeration;
@@ -1148,5 +1149,48 @@ public class Datasets {
 		
 		return bld.toString();
 	}
+
+  public static Dataset scaleFeatureValues(Dataset dataset, final int targetMin, final int targetMax) {
+    DatasetInfo info = dataset.getInfo();
+    List<DatasetInstance> instances = Lists.newArrayList();
+
+    MinMaxTracker<Double> tracker = MinMaxTracker.newMinMaxTracker(); 
+    for (DatasetInstance inst: dataset){
+      tracker.offer(inst.asFeatureVector().sum());
+    }
+    final double curMin = tracker.min(), curRange = tracker.max()-tracker.min();
+    final double targetRange = targetMax-targetMin;
+    
+    for (DatasetInstance inst: dataset){
+      final Map<Integer,Double> entries = Maps.newHashMap();
+      inst.asFeatureVector().visitSparseEntries(new EntryVisitor() {
+        @Override
+        public void visitEntry(int index, double value) {
+          double scaledValue = (value-curMin) * 1.0/curRange * targetRange;
+          entries.put(index, scaledValue);
+        }
+      });
+      BasicSparseFeatureVector scaledFeatures = new BasicSparseFeatureVector(entries);
+      
+      // instance with the new features
+      instances.add(new BasicDatasetInstance(scaledFeatures, 
+          inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
+          inst.getRegressand(), DatasetInstances.isRegressandConcealed(inst), 
+          inst.getAnnotations(), inst.getInfo().getInstanceId(), inst.getInfo().getSource(), dataset.getInfo().getLabelIndexer()));
+    }
+    
+    // dataset with the new instances and the new annotatorIdIndexer
+    BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
+            new IndexerCalculator<>(info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), info.getAnnotatorIdIndexer()), instances));
+    return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
+  }
+
+  public static double minFeatureValue(Dataset data) {
+    MinMaxTracker<Double> tracker = MinMaxTracker.newMinMaxTracker(); 
+    for (DatasetInstance inst: data){
+      tracker.offer(inst.asFeatureVector().sum());
+    }
+    return tracker.min();
+  }
 
 }

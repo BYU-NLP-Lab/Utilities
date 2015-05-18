@@ -18,6 +18,7 @@ package edu.byu.nlp.dataset;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.math3.linear.OpenMapRealVector;
 import org.apache.commons.math3.linear.SparseRealVector;
@@ -118,7 +119,19 @@ public class BasicSparseFeatureVector implements SparseFeatureVector {
 		}
 		return new BasicSparseFeatureVector(IntArrays.fromList(indices), DoubleArrays.fromList(values));
 	}
-	
+
+  public BasicSparseFeatureVector(Map<Integer,Double> sparseValues) {
+    Preconditions.checkNotNull(sparseValues);
+    List<Integer> indices = Lists.newArrayList();
+    List<Double> values = Lists.newArrayList();
+    for (java.util.Map.Entry<Integer, Double> entry: sparseValues.entrySet()){
+      indices.add(entry.getKey());
+      values.add(entry.getValue());
+    }
+    this.indices = IntArrays.fromList(indices);
+    this.values = DoubleArrays.fromList(values);
+  }
+  
 	public BasicSparseFeatureVector(int[] indices, double[] values) {
 		Preconditions.checkNotNull(indices);
 		Preconditions.checkNotNull(values);
