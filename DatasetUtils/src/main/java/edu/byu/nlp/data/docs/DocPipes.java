@@ -16,7 +16,6 @@ package edu.byu.nlp.data.docs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -165,10 +164,9 @@ public class DocPipes {
 	}
 
 	
-	public static final String ENGLISH_SENTENCE_DETECTOR = "/en-sent.bin";
+	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent.bin";
 	public static Function<String, List<String>> opennlpSentenceSplitter() throws IOException {
-	  
-	  File modelFile = new File(DocPipes.class.getResource(ENGLISH_SENTENCE_DETECTOR).getFile());
+	  File modelFile = Files2.temporaryFileFromResource(DocPipes.class, ENGLISH_SENTENCE_DETECTOR);
 		final SentenceDetectorME detector = new SentenceDetectorME(new SentenceModel(modelFile));
 		
 		return new Function<String, List<String>>() {

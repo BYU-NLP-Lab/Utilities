@@ -16,6 +16,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.VFS;
@@ -83,6 +84,10 @@ public class Files2 {
 	  Writers.writeLines(writer, it);
 	  writer.close();
   }
+  
+  public static void write(String content, File f) throws IOException {
+    write(content, f.getAbsolutePath());
+  }
 
   public static void write(String content, String fn) throws IOException {
 	  ArrayList<String> lines = Lists.newArrayList(content.split("\n"));
@@ -103,4 +108,18 @@ public class Files2 {
 		  throw new IllegalArgumentException("Cannot get contents of invalid file "+file,e);
 	  }
   }
+  
+  /**
+   * Unfortunately, some apis require File, which does not allow us to use 
+   * getResourceAsStream to access data inside the resources of a dependency jar.
+   * We can get around this by writing the file to a temporaray 
+   */
+  public static File temporaryFileFromResource(Class<?> clazz, String resource) throws IOException{
+    File tmp = File.createTempFile("jar-resource-file-", "");
+    FileOutputStream outstream = new FileOutputStream(tmp);
+    IOUtils.copy(clazz.getClassLoader().getResourceAsStream(resource), outstream);
+    outstream.close();
+   return tmp;
+  }
+  
 }
