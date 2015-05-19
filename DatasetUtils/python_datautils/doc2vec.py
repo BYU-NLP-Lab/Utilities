@@ -34,13 +34,13 @@ if __name__ == "__main__":
   parser.add_argument('--dataset-split',help="A split containing index files for some classification dataset. Index files are label names containing files with entries pointing to data files (one entry per line)")
   parser.add_argument('--outdir',default="out",help="Where to write the new dataset (organized into index and data)")
   parser.add_argument('--method',default="LDA",help="Which vectorization method to use. Options include LDA, WORD2VEC, PARAVEC (mikolov's paragraph vectors)")
-  parser.add_argument('--size',default=100,help="How large should document vectors be?")
-  parser.add_argument('--num-workers',default=8,help="How many cores to use")
+  parser.add_argument('--size',default=100,type=int,help="How large should document vectors be?")
+  parser.add_argument('--num-workers',default=8,type=int,help="How many cores to use")
   parser.add_argument('--modeldir',default="/tmp/doc2vec-models",help="Where to cache trained models for reference.")
   parser.add_argument('--content-encoding',default="latin-1",help="How are dataset documents encoded?")
   parser.add_argument('--index-encoding',default="utf-8",help="How are dataset index files encoded?")
-  parser.add_argument('--min-count',default=5,help="Drop features with <min-count occurences.")
-  parser.add_argument('--window',default=7,help="The context size considered by neural language models.")
+  parser.add_argument('--min-count',default=5,type=int,help="Drop features with <min-count occurences.")
+  parser.add_argument('--window',default=7,type=int,help="The context size considered by neural language models.")
   args = parser.parse_args()
 
   # ensure models dir exists
