@@ -6,7 +6,7 @@ from os import path
 import os
 import gensim
 import pipes
-from gensim.models import LdaModel,LdaMulticore,Word2Vec,Doc2Vec
+from gensim.models import LdaModel,LdaModel,Word2Vec,Doc2Vec
 from gensim.models.doc2vec import LabeledSentence
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -58,10 +58,10 @@ if __name__ == "__main__":
     # example: [ [(0,1),(1,1)], ...]
     bow_data,id2word = pipes.combination_index2bow(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding)
     if os.path.exists(modelpath):
-      model = LdaMulticore.load(modelpath)
+      model = LdaModel.load(modelpath)
     else:
       logger.info("training lda model")
-      model = LdaMulticore(list(pipes.select_index(bow_data,index=2)), id2word=id2word, num_topics=args.size, passes=20, iterations=100)
+      model = LdaModel(list(pipes.select_index(bow_data,index=2)), alpha='auto', id2word=id2word, num_topics=args.size, passes=20, iterations=100)
       model.save(modelpath)
 
     # translate data
