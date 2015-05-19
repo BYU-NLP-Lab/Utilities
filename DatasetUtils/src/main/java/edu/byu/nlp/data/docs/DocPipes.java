@@ -46,6 +46,7 @@ import edu.byu.nlp.data.pipes.RegexpTokenizer;
 import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
+import edu.byu.nlp.io.Files2;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.IntArrays;
 import edu.byu.nlp.util.Nullable;
@@ -164,11 +165,10 @@ public class DocPipes {
 	}
 
 	
-	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent.bin";
+	public static final String ENGLISH_SENTENCE_DETECTOR = "/en-sent.bin";
 	public static Function<String, List<String>> opennlpSentenceSplitter() throws IOException {
 	  
-	  URL modelUrl = Thread.currentThread().getContextClassLoader().getResource(ENGLISH_SENTENCE_DETECTOR);
-		File modelFile = new File(modelUrl.getFile());
+	  File modelFile = new File(DocPipes.class.getResource(ENGLISH_SENTENCE_DETECTOR).getFile());
 		final SentenceDetectorME detector = new SentenceDetectorME(new SentenceModel(modelFile));
 		
 		return new Function<String, List<String>>() {
