@@ -19,7 +19,7 @@ def model_path(modelname,cachedir,dataset_split):
 
 def labeled_sentence_objects(sentences):
   for i,item in enumerate(sentences):
-    src, content = item['label'], item['data']
+    src, content = item['source'], item['data']
     # we set the label to doc id so we can look up an embedding for that doc later
     #sentence_labels = [src,"SENT_%d"%i]
     sentence_labels = [src]
@@ -48,9 +48,9 @@ if __name__ == "__main__":
 
   transformed_data = {}
 
-  ######################################################################################33
+  #####################################################################################
   ### PARAVEC (see http://radimrehurek.com/2014/12/doc2vec-tutorial/)
-  ######################################################################################33
+  #####################################################################################
   # read a list of LabeledSentences (defined by gensim)
   sentences = list(pipes.combination_json2sentences(args.dataset_basedir, args.json_annotation_stream, filepath_attr="datapath",data_attr="data", index_encoding=args.index_encoding, content_encoding=args.content_encoding))
   if os.path.exists(modelpath):
@@ -68,9 +68,9 @@ if __name__ == "__main__":
         logger.warn("not found in model: document "+src)
       transformed_data[src] = model[src] if src in model else np.zeros(args.size)
 
-  ######################################################################################33
+  #####################################################################################
   ### Output transformed dataset
-  ######################################################################################33
+  #####################################################################################
   # translate dataset, copying index and converting data to vectors
   outbasedir = args.outdir
   if outbasedir is not None:

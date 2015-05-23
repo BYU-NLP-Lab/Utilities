@@ -39,22 +39,7 @@ def input_json(json_path,encoding=None):
         for obj in json.load(json_file):
             yield obj
 
-def input_index(dataset_splitdir,filepath_attr="src",encoding=None):
-    ''' A pipe (generator) that yields a list of filepath, one for each 
-        entry in index files (whose name are their labels, ignored) 
-        found in the dataset_splitdir '''
-    count = 0
-    for root, dirs, files in os.walk(dataset_splitdir):
-        for index_filename in files:
-            encoding = autodetect_encoding(os.path.join(root,index_filename),encoding)
-            with open(os.path.join(root,index_filename),encoding=encoding) as indexfile:
-                for datafile in indexfile:
-                    count += 1
-                    if count%100==0:
-                        logger.info("processing document %d"%count)
-                    yield {filepath_attr:datafile.strip()}
-
-def input_labeledindex(dataset_splitdir,filepath_attr="src",label_attr="label",encoding=None):
+def input_index(dataset_splitdir,filepath_attr="src",label_attr="label",encoding=None):
     ''' A pipe (generator) that yields (label,filepath), one for each 
         entry in index files (whose name are their label) 
         found in the dataset_splitdir '''
@@ -75,6 +60,7 @@ def input_labeledindex(dataset_splitdir,filepath_attr="src",label_attr="label",e
 def pipe_select_attr(pipe,attr,default_value=None):
     ''' Transform each dict into a list formed by indexing into the dict with each attr in turn. '''
     for item in pipe:
+        assert isinstance(item,dict)
         yield item.get(attr,default_value)
 
 def pipe_groupby_attrs(pipe,groupby_attrs,default_value=None):
@@ -82,6 +68,7 @@ def pipe_groupby_attrs(pipe,groupby_attrs,default_value=None):
     groupby_attrs = list(groupby_attrs)
     groupmap = {}
     for item in pipe:
+        assert isinstance(item,dict)
         val = tuple(item.get(v,default_value) for v in groupby_attrs)
         # find (or create) the group representative
         if val not in groupmap:
@@ -214,7 +201,6 @@ def pipe_list2list_remove_short_tokens(pipe,min_token_len,attr="data"):
                 newtokens.append(token)
             else:
                 logger.debug("removing short word",token)
-        print('ready',transformed_item(item,attr,newtokens))
         yield transformed_item(item,attr,newtokens)
 
 def pipe_list2list_remove_stopwords(pipe,attr="data",stopwords_path=None,encoding=None):
@@ -281,16 +267,16 @@ def combination_json2sentences(dataset_basedir,json_path,filepath_attr="datapath
     pipe = pipe_groupby_attrs(pipe,groupby_attrs=["source","datapath","label","labelobserved"])
     return combination_filepath2sentences(pipe,dataset_basedir,filepath_attr=filepath_attr,filecontent_attr=data_attr,content_encoding=content_encoding)
 
-def combination_index2sentences(dataset_basedir,dataset_splitdir,label_attr="label",filepath_attr,data_attr="data",index_encoding=None,content_encoding=None):
+def combination_index2sentences(dataset_basedir,dataset_splitdir,label_attr="label",filepath_attr="datapath",data_attr="data",index_encoding=None,content_encoding=None):
     ''' returns a pipe (generator) of dicts {label_attr:'', filepath_attr:'', data_attr:[[]]}. Where the data_attr content is indexed by [sentence][token]. '''
-    pipe = input_labeledindex(dataset_splitdir,label_attr,filepath_attr=filepath_attr,encoding=index_encoding)
-    pipe = combination_filepath2sentences(pipe,filepath_attr=filepath_attr,filecontent_attr=data_attr,content_encoding=content_encoding)
-    return pipe_select_attr(pipe,attr=data_attr)
+    pipe = input_index(dataset_splitdir,label_attr=label_attr,filepath_attr=filepath_attr,encoding=index_encoding)
+    pipe = combination_filepath2sentences(pipe,dataset_basedir,filepath_attr=filepath_attr,filecontent_attr=data_attr,content_encoding=content_encoding)
+    return pipe
 
-def combination_index2bow(dataset_basedir,dataset_splitdir,filepath_attr="source",filecontent_attr="data",label_attr="label",index_encoding=None, content_encoding=None):
+def combination_index2bow(dataset_basedir,dataset_splitdir,filepath_attr="datapath",filecontent_attr="data",label_attr="label",index_encoding=None, content_encoding=None):
     ''' returns a pipe (generator) of dicts {label_attr:'', filepath_attr:'', data_attr:[[]]}. Where the data_attr content has been tokenized, filtered, stemmed, counted, and indexed. 
         Also returns a reverse index to allow you to look up words based on their id. '''
-    pipe = input_labeledindex(dataset_splitdir,label_attr=label_attr,encoding=index_encoding)
+    pipe = input_index(dataset_splitdir,filepath_attr=filepath_attr,label_attr=label_attr,encoding=index_encoding)
     pipe = pipe_append_filecontent(pipe,dataset_basedir,filepath_attr=filepath_attr,filecontent_attr=filecontent_attr,encoding=content_encoding)
     pipe = pipe_txt2txt_lower(pipe,attr=filecontent_attr)
     pipe = pipe_txt2txt_emailheader_stripper(pipe,attr=filecontent_attr)
