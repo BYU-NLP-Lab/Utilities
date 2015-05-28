@@ -89,7 +89,7 @@ public class JSONDocumentDatasetBuilder {
       @Nullable Function<String, String> tokenTransform,
       FeatureSelectorFactory<String> featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) {
-	  this.jsonAnnotationStream=basedir+"/"+filename;
+	  this.jsonAnnotationStream=filename;
 	  this.jsonReferencedDataDir=new File(basedir).getAbsolutePath();
     this.docTransform = docTransform;
     this.sentenceSplitter=sentenceSplitter;
@@ -102,7 +102,7 @@ public class JSONDocumentDatasetBuilder {
   public Dataset dataset() throws IOException {
 
     // pipe to import input files into strings and do greedy feature transformation/selection (e.g., filter short words)
-    LabeledInstancePipe<String, String, List<List<String>>, String> inputPipe = DocPipes.index2SentencePipe(
+    LabeledInstancePipe<String, String, List<List<String>>, String> inputPipe = DocPipes.inputSentencePipe(
         DocPipes.jsonToDocPipe(jsonReferencedDataDir), docTransform, sentenceSplitter, tokenizer, tokenTransform);
 
     // apply first pipeline (input)

@@ -71,9 +71,7 @@ public class DocPipes {
 	}
 
 	public static LabeledInstancePipe<String, String, String, String> jsonToDocPipe(String jsonReferencedDataDir) throws FileNotFoundException {
-		return new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-		    .add(Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir)))
-				.build();
+	  return Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir));
 	}
 
 	/**
@@ -208,7 +206,7 @@ public class DocPipes {
    * Pipeline converts from a dataset index directory to labeled documents 
    * composed of tokenized sentences 
    */
-  public static LabeledInstancePipe<String, String, List<List<String>>, String> index2SentencePipe(
+  public static LabeledInstancePipe<String, String, List<List<String>>, String> inputSentencePipe(
       LabeledInstancePipe<String, String, String, String> indexToDocPipe, 
       @Nullable Function<String, String> docTransform, 
       @Nullable Function<String, List<String>> sentenceSplitter, 

@@ -118,7 +118,7 @@ public class DocumentDatasetBuilder {
   public Dataset dataset() throws IOException {
     
     // first pipe - to import input files into strings and do greedy feature transformation/selection (e.g., filter short words)
-    LabeledInstancePipe<String, String, List<List<String>>, String> inputPipe = DocPipes.index2SentencePipe(
+    LabeledInstancePipe<String, String, List<List<String>>, String> inputPipe = DocPipes.inputSentencePipe(
         DocPipes.indexToDocPipe(basedir), docTransform, sentenceSplitter, tokenizer, tokenTransform);
     
     // apply first pipeline (input)
