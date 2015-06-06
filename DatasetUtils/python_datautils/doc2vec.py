@@ -19,7 +19,7 @@ def model_path(modelname,cachedir,dataset_split):
 
 def labeled_sentence_objects(sentences):
   for i,item in enumerate(sentences):
-    label, src, content = item
+    src, content = item['source'], item['data']
     # we set the label to doc id so we can look up an embedding for that doc later
     #sentence_labels = [src,"SENT_%d"%i]
     sentence_labels = [src]
@@ -77,7 +77,8 @@ if __name__ == "__main__":
     # translate data
     if args.outdir is not None:
       logger.info("transforming documents to lda vectors")
-      for label, src, content in bow_data:
+      for item in bow_data:
+        src, content = item['source'], item['data']
         #doctuples = model[content] # for some reason omits topics <= .01
         doctuples = model.__getitem__(content, eps=0)
         docdict = dict(doctuples)
@@ -105,7 +106,8 @@ if __name__ == "__main__":
     # translate data
     if args.outdir is not None:
       logger.info("transforming documents to word2vec vectors")
-      for label, src, content in sentences:
+      for item in sentences:
+        src, content = item['source'], item['data']
         transformed_data[src] = np.zeros(args.size)
         for word in content:
           if word in model:
@@ -126,7 +128,8 @@ if __name__ == "__main__":
     # translate data
     if args.outdir is not None:
       logger.info("transforming documents to paragraph-vector model (doc2vec) vectors")
-      for label, src, content in sentences:
+      for item in sentences:
+        src, content = item['source'], item['data']
         if src not in model:
           logger.warn("not found in model: document "+src)
         transformed_data[src] = model[src] if src in model else np.zeros(args.size)

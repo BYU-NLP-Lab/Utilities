@@ -267,13 +267,13 @@ def combination_json2sentences(dataset_basedir,json_path,filepath_attr="datapath
     pipe = pipe_groupby_attrs(pipe,groupby_attrs=["source","datapath","label","labelobserved"])
     return combination_filepath2sentences(pipe,dataset_basedir,filepath_attr=filepath_attr,filecontent_attr=data_attr,content_encoding=content_encoding)
 
-def combination_index2sentences(dataset_basedir,dataset_splitdir,label_attr="label",filepath_attr="datapath",data_attr="data",index_encoding=None,content_encoding=None):
+def combination_index2sentences(dataset_basedir,dataset_splitdir,label_attr="label",filepath_attr="source",data_attr="data",index_encoding=None,content_encoding=None):
     ''' returns a pipe (generator) of dicts {label_attr:'', filepath_attr:'', data_attr:[[]]}. Where the data_attr content is indexed by [sentence][token]. '''
     pipe = input_index(dataset_splitdir,label_attr=label_attr,filepath_attr=filepath_attr,encoding=index_encoding)
     pipe = combination_filepath2sentences(pipe,dataset_basedir,filepath_attr=filepath_attr,filecontent_attr=data_attr,content_encoding=content_encoding)
     return pipe
 
-def combination_index2bow(dataset_basedir,dataset_splitdir,filepath_attr="datapath",filecontent_attr="data",label_attr="label",index_encoding=None, content_encoding=None):
+def combination_index2bow(dataset_basedir,dataset_splitdir,filepath_attr="source",filecontent_attr="data",label_attr="label",index_encoding=None, content_encoding=None):
     ''' returns a pipe (generator) of dicts {label_attr:'', filepath_attr:'', data_attr:[[]]}. Where the data_attr content has been tokenized, filtered, stemmed, counted, and indexed. 
         Also returns a reverse index to allow you to look up words based on their id. '''
     pipe = input_index(dataset_splitdir,filepath_attr=filepath_attr,label_attr=label_attr,encoding=index_encoding)

@@ -17,16 +17,35 @@ def model_path(modelname,cachedir,dataset_split):
   modelname = "%s-%s.model" % (modelname,dataname)
   return os.path.join(cachedir,modelname)
 
+def info_from(item):
+  ''' return (source, annotators, annotations) where annotators and 
+      annotations are parallel lists '''
+  src, annotators, annotations = item['source'], item['annotator'], item['annotation']
+  # ensure list type
+  annotators = [annotators] if isinstance(annotators,int) else annotators
+  annotations = [annotations] if isinstance(annotations,int) else annotations
+  assert len(annotators)==len(annotations)
+  return src,annotators,annotations
+
+def sentence_labels(item):
+  ''' generate sentence labels for the given sentence. In order to redunce the number of parameters we have to 
+      work with, we only add document id (src) for documents that have at least one annotation. '''
+  sentence_labels = []
+  if 'annotator' in item:
+    src, annotators, annotations = info_from(item)
+    sentence_labels = [src]
+    # an embedding for each annotator+annotation pair
+    sentence_labels.extend(["%s-%s"%(a,v) for a,v in zip(annotators,annotations)])
+    # an embedding for each annotation value
+    sentence_labels.extend(annotations)
+  return sentence_labels
+
 def labeled_sentence_objects(sentences):
   for i,item in enumerate(sentences):
-    src, content = item['source'], item['data']
-    # we set the label to doc id so we can look up an embedding for that doc later
-    #sentence_labels = [src,"SENT_%d"%i]
-    sentence_labels = [src]
-    yield LabeledSentence(labels=sentence_labels,words=content) 
-
-def to_vector(model,doc):
-  return "bogus"
+    content = item['data'] 
+    # an embedding for each doc id 
+    # an embedding for each annotation and annotator+annotation pair
+    yield LabeledSentence(labels=sentence_labels(item),words=content) 
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='''Convert annotated documents into vectors (a distributed representation) using the doc2vec algorithm with both word information and annotation information. Requires gensim and nltk (`pip3 install -U gensim`; pip install -U nltk)''')
@@ -39,7 +58,7 @@ if __name__ == "__main__":
   parser.add_argument('--content-encoding',default="latin-1",help="How are dataset documents encoded?")
   parser.add_argument('--index-encoding',default="utf-8",help="How are dataset index files encoded?")
   parser.add_argument('--min-count',default=5,type=int,help="Drop features with <min-count occurences.")
-  parser.add_argument('--window',default=7,type=int,help="The context size considered by neural language models.")
+  parser.add_argument('--window',default=5,type=int,help="The context size considered by neural language models.")
   args = parser.parse_args()
 
   # ensure models dir exists
@@ -63,10 +82,24 @@ if __name__ == "__main__":
   if args.outdir is not None:
     logger.info("transforming documents to paragraph-vector model (doc2vec) vectors")
     for sent in sentences:
-      src = sent['source']
-      if src not in model:
-        logger.warn("not found in model: document "+src)
-      transformed_data[src] = model[src] if src in model else np.zeros(args.size)
+      vec = np.zeros(args.size*2)
+      if 'annotation' in sent:
+        labels = sentence_labels(sent)
+        src_label = labels[0]
+        other_labels = labels[1:]
+
+        # empty documents may have been dropped due to feature selection
+        if src_label not in model:
+          logger.warn("not found in model: document "+src_label)
+
+        # first half for doc vectors
+        vec[:args.size] += model[src_label] if src_label in model else np.zeros(args.size)
+        # second half for annotation vectors
+        for label in other_labels:
+          vec[args.size:] += model[label] if label in model else np.zeros(args.size)
+        
+      # the doc vector will be computed once per sentence, redundantly. Remember only the last
+      transformed_data[sent['source']] = vec
 
   #####################################################################################
   ### Output transformed dataset
