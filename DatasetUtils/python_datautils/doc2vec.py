@@ -37,15 +37,25 @@ if __name__ == "__main__":
   parser.add_argument('--size',default=100,type=int,help="How large should document vectors be?")
   parser.add_argument('--num-workers',default=8,type=int,help="How many cores to use")
   parser.add_argument('--modeldir',default="/tmp/doc2vec-models",help="Where to cache trained models for reference.")
+  parser.add_argument('--modelpath',default=None,help="A specific model file to load")
   parser.add_argument('--content-encoding',default="latin-1",help="How are dataset documents encoded?")
   parser.add_argument('--index-encoding',default="utf-8",help="How are dataset index files encoded?")
   parser.add_argument('--min-count',default=5,type=int,help="Drop features with <min-count occurences.")
   parser.add_argument('--window',default=7,type=int,help="The context size considered by neural language models.")
   args = parser.parse_args()
 
+  # check args
+  assert args.modelpath is None or os.path.exists(args.modelpath), "--modelpath does not exist"
+
+  def load_word2vec_model(modelpath):
+    try:
+      return Word2Vec.load(modelpath)
+    except:
+      return Word2Vec.load_word2vec_format(modelpath,binary=True)
+
   # ensure models dir exists
   args.method = args.method.upper()
-  modelpath = model_path(args.method,args.modeldir,args.dataset_split)
+  modelpath = args.modelpath or model_path(args.method,args.modeldir,args.dataset_split)
   os.makedirs(os.path.dirname(modelpath), exist_ok=True)
 
   transformed_data = {}
@@ -82,7 +92,8 @@ if __name__ == "__main__":
     # example: [ ["whanne","that",...], ...]
     sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
     if os.path.exists(modelpath):
-      model = Word2Vec.load(modelpath)
+      model = load_word2vec_model(modelpath)
+      args.size=model.layer1_size
     else:
       logger.info("training word2vec model")
       model = Word2Vec(list(pipes.pipe_select_attr(sentences,attr="data")), size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
