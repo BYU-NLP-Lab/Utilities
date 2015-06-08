@@ -109,9 +109,12 @@ if __name__ == "__main__":
       for item in sentences:
         src, content = item['source'], item['data']
         transformed_data[src] = np.zeros(args.size)
+        num_addends = 0.0
         for word in content:
           if word in model:
+            num_addends += 1.0
             transformed_data[src] += model[word] # sum together all word vectors in doc
+        transformed_data[src] /= num_addends or 1.0 # average word vectors
 
   ######################################################################################
   ### PARAVEC (see http://radimrehurek.com/2014/12/doc2vec-tutorial/)
