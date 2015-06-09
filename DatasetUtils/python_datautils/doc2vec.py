@@ -25,14 +25,13 @@ def labeled_sentence_objects(sentences):
     sentence_labels = [src]
     yield LabeledSentence(labels=sentence_labels,words=content) 
 
-def to_vector(model,doc):
-  return "bogus"
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='''Convert documents into vectors (a distributed representation). Requires gensim and nltk (`pip3 install -U gensim`; pip install -U nltk)''')
   parser.add_argument('--dataset-basedir',help="The base directory of a dataset. This is prepended to the paths found in index files")
   parser.add_argument('--dataset-split',help="A split containing index files for some classification dataset. Index files are label names containing files with entries pointing to data files (one entry per line)")
-  parser.add_argument('--outdir',default="out",help="Where to write the new dataset (organized into index and data)")
+  parser.add_argument('--outdir',default=None,required=True,help="Where to write the new dataset (organized into index and data)")
   parser.add_argument('--method',default="LDA",help="Which vectorization method to use. Options include LDA, WORD2VEC, PARAVEC (mikolov's paragraph vectors)")
   parser.add_argument('--size',default=100,type=int,help="How large should document vectors be?")
   parser.add_argument('--num-workers',default=8,type=int,help="How many cores to use")
@@ -46,12 +45,6 @@ if __name__ == "__main__":
 
   # check args
   assert args.modelpath is None or os.path.exists(args.modelpath), "--modelpath does not exist"
-
-  def load_word2vec_model(modelpath):
-    try:
-      return Word2Vec.load(modelpath)
-    except:
-      return Word2Vec.load_word2vec_format(modelpath,binary=True)
 
   # ensure models dir exists
   args.method = args.method.upper()
@@ -93,12 +86,12 @@ if __name__ == "__main__":
     # example: [ ["whanne","that",...], ...]
     sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
     if os.path.exists(modelpath):
-      model = load_word2vec_model(modelpath)
+      model = Word2Vec.load_word2vec_format(modelpath,binary=True)
       args.size=model.layer1_size
     else:
       logger.info("training word2vec model")
       model = Word2Vec(list(pipes.pipe_select_attr(sentences,attr="data")), size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
-      model.save(modelpath)
+      model.save_word2vec_format(modelpath,binary=True)
       #model.most_similar(positive=["Tuesday"],negative=[])
       #model.similarity("blue","green")
       #model["computer"]
@@ -123,10 +116,19 @@ if __name__ == "__main__":
     # read a list of LabeledSentences (defined by gensim)
     sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
     if os.path.exists(modelpath):
-      model = Doc2Vec.load(modelpath)
+      # load google vectors into a doc2vec model
+      w2v = Word2Vec.load_word2vec_format(modelpath,binary=True)
+      model = Doc2Vec()
+      model.vocab=w2v.vocab
+      model.syn0=w2v.syn0
+      model.index2word=w2v.index2word
+      model.precalc_sampling()
+      # now freeze the word vectors and train the doc vectors
+      model.train_words = False
+      model.train(list(labeled_sentence_objects(sentences)))
     else:
       model = Doc2Vec(list(labeled_sentence_objects(sentences)), size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
-      model.save(modelpath)
+    model.save(modelpath)
 
     # translate data
     if args.outdir is not None:
