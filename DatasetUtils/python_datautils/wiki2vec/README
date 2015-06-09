@@ -1,0 +1,7 @@
+scripts to turn a full wikipedia dump into a gensim word2vec model
+
+* wiki2lines.py converts a wiki dump (e.g., http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2) into a big document, one line per article
+
+* lines2vec.py trains a word2vec model on the lines document
+
+* wiki2vec.sh runs previous mentioned scripts in a pipeline

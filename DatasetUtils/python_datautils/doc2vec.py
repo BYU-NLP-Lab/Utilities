@@ -121,6 +121,7 @@ if __name__ == "__main__":
       model = Doc2Vec()
       model.vocab=w2v.vocab
       model.syn0=w2v.syn0
+      model.syn1=w2v.syn1
       model.index2word=w2v.index2word
       model.precalc_sampling()
       # now freeze the word vectors and train the doc vectors
