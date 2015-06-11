@@ -1,19 +1,20 @@
 #!/usr/bin/python3
+import pickle
 import numpy as np
 import shutil
 import argparse
-from os import path
 import os
 import gensim
 import pipes
 from gensim.models import LdaModel,LdaModel,Word2Vec,Doc2Vec
 from gensim.models.doc2vec import LabeledSentence
+from gensim.models.word2vec import Vocab
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("datautils.doc2vec")
 
-def model_path(modelname,cachedir,dataset_split):
-  dataname = dataset_split.replace('/','-')[1:]
+def model_path(modelname,cachedir,dataset_indexdir):
+  dataname = dataset_indexdir.replace('/','-')[1:]
   modelname = "%s-%s.model" % (modelname,dataname)
   return os.path.join(cachedir,modelname)
 
@@ -25,47 +26,78 @@ def labeled_sentence_objects(sentences):
     sentence_labels = [src]
     yield LabeledSentence(labels=sentence_labels,words=content) 
 
+def add_rows_to_matrix(m,num_rows):
+  # create a larger matrix
+  newm = np.zeros((m.shape[0]+num_rows,m.shape[1]), dtype=m.dtype)
+  # copy old content over
+  newm[0:m.shape[0],0:m.shape[1]] = m
+  return newm
 
+def extend_model_with_labels(model,labeled_sentences):
+  newvocab = {}
+  # get all the new vocab terms (and their counts)
+  for lsent in labeled_sentences:
+    for label in lsent.labels:
+      if label not in model:
+        if label not in newvocab:
+          newvocab[label] = Vocab(count=0)
+        newvocab[label].count += len(lsent.words)
+  logger.info("extending d2v vocabulary with %d document labels"%len(newvocab))
+  # extend the model's vocabulary and index
+  for w,v in newvocab.items():
+    v.index = len(model.vocab)
+    assert len(model.index2word)==v.index and len(model.vocab)==v.index
+    model.vocab[w] = v
+    model.index2word.append(w)
+  model.create_binary_tree()
+  model.precalc_sampling()
+  model.syn0 = add_rows_to_matrix(model.syn0,len(newvocab))
+  model.syn1 = add_rows_to_matrix(model.syn1,len(newvocab))
+  logger.info("finished extending d2v vocabulary with %d document labels"%len(newvocab))
+
+def exists(loc):
+  return loc is not None and os.path.exists(loc)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='''Convert documents into vectors (a distributed representation). Requires gensim and nltk (`pip3 install -U gensim`; pip install -U nltk)''')
   parser.add_argument('--dataset-basedir',help="The base directory of a dataset. This is prepended to the paths found in index files")
-  parser.add_argument('--dataset-split',help="A split containing index files for some classification dataset. Index files are label names containing files with entries pointing to data files (one entry per line)")
+  parser.add_argument('--dataset-indexdir',help="A folder containing index files for some classification dataset. Index files are label names containing files with entries pointing to data files (one entry per line)")
   parser.add_argument('--outdir',default=None,required=True,help="Where to write the new dataset (organized into index and data)")
   parser.add_argument('--method',default="LDA",help="Which vectorization method to use. Options include LDA, WORD2VEC, PARAVEC (mikolov's paragraph vectors)")
   parser.add_argument('--size',default=100,type=int,help="How large should document vectors be?")
   parser.add_argument('--num-workers',default=8,type=int,help="How many cores to use")
-  parser.add_argument('--modeldir',default="/tmp/doc2vec-models",help="Where to cache trained models for reference.")
-  parser.add_argument('--modelpath',default=None,help="A specific model file to load")
+  parser.add_argument('--cached-modelpath',default=None,help="A model that should be used as-is (with no additional training).")
+  parser.add_argument('--init-modelpath',default=None,help="A model that should be used to initialize prior to training.")
+  parser.add_argument('--out-modelpath',required=True,help="Where to save the model that was used.")
   parser.add_argument('--content-encoding',default="latin-1",help="How are dataset documents encoded?")
   parser.add_argument('--index-encoding',default="utf-8",help="How are dataset index files encoded?")
   parser.add_argument('--min-count',default=5,type=int,help="Drop features with <min-count occurences.")
   parser.add_argument('--window',default=7,type=int,help="The context size considered by neural language models.")
   args = parser.parse_args()
 
-  # check args
-  assert args.modelpath is None or os.path.exists(args.modelpath), "--modelpath does not exist"
-
   # ensure models dir exists
   args.method = args.method.upper()
-  modelpath = args.modelpath or model_path(args.method,args.modeldir,args.dataset_split)
-  os.makedirs(os.path.dirname(modelpath), exist_ok=True)
+  os.makedirs(os.path.dirname(args.out_modelpath), exist_ok=True)
 
   transformed_data = {}
 
-  ######################################################################################
+  #####################################################################################
   ### LDA
-  ######################################################################################
+  #####################################################################################
   if args.method=="LDA":
     # read a bag of words corpus (bow_corpus)
     # example: [ [(0,1),(1,1)], ...]
-    bow_data,id2word = pipes.combination_index2bow(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding)
-    if os.path.exists(modelpath):
-      model = LdaModel.load(modelpath)
+    bow_data,id2word = pipes.combination_index2bow(args.dataset_basedir, args.dataset_indexdir, index_encoding=args.index_encoding, content_encoding=args.content_encoding)
+    if exists(args.cached_modelpath):
+      logger.info("loading lda model %s and using as-is" % args.cached_modelpath)
+      model = LdaModel.load(args.cached_modelpath)
+    elif exists(args.init_modelpath):
+      raise Exception("incremental model training not implemented for LDA. Remove --init-modelpath and try again.")
     else:
-      logger.info("training lda model")
+      logger.info("training lda model from scratch")
       model = LdaModel(list(pipes.pipe_select_attr(bow_data,attr='data')), alpha='auto', id2word=id2word, num_topics=args.size, passes=20, iterations=100)
-      model.save(modelpath)
+      logger.info("saving lda model to %s"%args.out_modelpath)
+      model.save(args.out_modelpath)
 
     # translate data
     if args.outdir is not None:
@@ -78,30 +110,36 @@ if __name__ == "__main__":
         docvec = [str(docdict[i]) for i in range(len(docdict))] # enforce consistent topic order
         transformed_data[src] = docvec
 
-  ######################################################################################
+  #####################################################################################
   ### WORD2VEC (see http://radimrehurek.com/2013/09/word2vec-in-python-part-two-optimizing/)
-  ######################################################################################
+  #####################################################################################
   elif args.method=="WORD2VEC":
     # read a list of sentences
     # example: [ ["whanne","that",...], ...]
-    sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
-    if os.path.exists(modelpath):
-      model = Word2Vec.load_word2vec_format(modelpath,binary=True)
-      args.size=model.layer1_size
+    sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_indexdir, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
+    traindata = list(pipes.pipe_select_attr(sentences,attr="data"))
+    if exists(args.cached_modelpath):
+      logger.info("loading word2vec model %s and using as-is" % args.cached_modelpath)
+      model = Word2Vec.load(args.cached_modelpath)
     else:
-      logger.info("training word2vec model")
-      model = Word2Vec(list(pipes.pipe_select_attr(sentences,attr="data")), size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
-      model.save_word2vec_format(modelpath,binary=True)
-      #model.most_similar(positive=["Tuesday"],negative=[])
-      #model.similarity("blue","green")
-      #model["computer"]
+      if exists(args.init_modelpath):
+        logger.info("initializing word2vec model with %s and then training" % args.init_modelpath)
+        model = Word2Vec.load(args.init_modelpath)
+        model.train(traindata)
+      else:
+        logger.info("training word2vec model from scratch")
+        model = Word2Vec(traindata, size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
+      # trim unneeded model memory = use (much) less RAM
+      model.init_sims(replace=True)
+      logger.info("saving word2vec model to %s"%args.out_modelpath)
+      model.save(args.out_modelpath)
 
     # translate data
     if args.outdir is not None:
       logger.info("transforming documents to word2vec vectors")
       for item in sentences:
         src, content = item['source'], item['data']
-        transformed_data[src] = np.zeros(args.size)
+        transformed_data[src] = np.zeros(model.layer1_size)
         num_addends = 0.0
         for word in content:
           if word in model:
@@ -114,22 +152,34 @@ if __name__ == "__main__":
   ######################################################################################
   elif args.method=="PARAVEC":
     # read a list of LabeledSentences (defined by gensim)
-    sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_split, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
-    if os.path.exists(modelpath):
-      # load google vectors into a doc2vec model
-      w2v = Word2Vec.load_word2vec_format(modelpath,binary=True)
-      model = Doc2Vec()
-      model.vocab=w2v.vocab
-      model.syn0=w2v.syn0
-      model.syn1=w2v.syn1
-      model.index2word=w2v.index2word
-      model.precalc_sampling()
-      # now freeze the word vectors and train the doc vectors
-      model.train_words = False
-      model.train(list(labeled_sentence_objects(sentences)))
+    sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_indexdir, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
+    traindata = list(labeled_sentence_objects(sentences))
+    pickle.dump(traindata,open('/tmp/d2v-train','wb'))
+    if exists(args.cached_modelpath):
+      logger.info("loading doc2vec model %s and using as-is" % args.cached_modelpath)
+      model = Doc2Vec.load(args.cached_modelpath)
     else:
-      model = Doc2Vec(list(labeled_sentence_objects(sentences)), size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
-    model.save(modelpath)
+      if exists(args.init_modelpath):
+        logger.info("initializing doc2vec model with %s and then training" % args.init_modelpath)
+        # load google vectors into a doc2vec model
+        w2v = Word2Vec.load(args.init_modelpath)
+        model = Doc2Vec()
+        model.vocab=w2v.vocab
+        model.syn0=w2v.syn0
+        model.syn1=w2v.syn1
+        model.index2word=w2v.index2word
+        # now tweak word embeddings and learn doc embeddings for current dataset 
+        model.train_words = False
+        extend_model_with_labels(model,traindata)
+        num_words = sum([len(s.words) for s in traindata])
+        for i in range(20):
+          model.train(traindata,total_words=num_words)
+      else:
+        model = Doc2Vec(traindata, size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
+      # trim unneeded model memory = use (much) less RAM
+      #model.init_sims(replace=True)
+      logger.info("saving doc2vec model to %s"%args.out_modelpath)
+      model.save(args.out_modelpath)
 
     # translate data
     if args.outdir is not None:
@@ -138,15 +188,15 @@ if __name__ == "__main__":
         src, content = item['source'], item['data']
         if src not in model:
           logger.warn("not found in model: document "+src)
-        transformed_data[src] = model[src] if src in model else np.zeros(args.size)
+        transformed_data[src] = model[src] if src in model else np.zeros(model.layer1_size)
 
   else:
     raise Exception("unknown method",args.method)
 
 
-  ######################################################################################
+  #####################################################################################
   ### Output transformed dataset
-  ######################################################################################
+  #####################################################################################
   # translate dataset, copying index and converting data to vectors
   outbasedir = args.outdir
   if outbasedir is not None:
@@ -159,9 +209,9 @@ if __name__ == "__main__":
       with open(outpath,'w') as outfile:
         outfile.write('\n'.join([str(v) for v in docvec]))
     # copy index as is (since paths in the index are relative)
-    assert args.dataset_basedir in args.dataset_split, "The dataset split dir is assumed to be inside the basedir"
-    outsplit = os.path.join(outbasedir, args.dataset_split.replace(args.dataset_basedir+'/',''))
-    shutil.rmtree(outsplit, ignore_errors=True)
-    logger.info("copying indices from %s to %s" % (args.dataset_split, outsplit))
-    shutil.copytree(args.dataset_split, outsplit)
+    assert args.dataset_basedir in args.dataset_indexdir, "The dataset indexdir is assumed to be inside the basedir"
+    outindex = os.path.join(outbasedir, args.dataset_indexdir.replace(args.dataset_basedir+'/',''))
+    shutil.rmtree(outindex, ignore_errors=True)
+    logger.info("copying indices from %s to %s" % (args.dataset_indexdir, outindex))
+    shutil.copytree(args.dataset_indexdir, outindex)
 

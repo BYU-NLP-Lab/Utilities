@@ -44,6 +44,7 @@ def input_index(dataset_splitdir,filepath_attr="src",label_attr="label",encoding
         entry in index files (whose name are their label) 
         found in the dataset_splitdir '''
     count = 0
+    print("splitdir",dataset_splitdir)
     for root, dirs, files in os.walk(dataset_splitdir):
         for index_filename in files:
             encoding = autodetect_encoding(os.path.join(root,index_filename),encoding)
@@ -52,6 +53,7 @@ def input_index(dataset_splitdir,filepath_attr="src",label_attr="label",encoding
                     count += 1
                     if count%100==0:
                         logger.info("processing document %d"%count)
+                    #print(datafile.strip())
                     yield {label_attr:index_filename, filepath_attr:datafile.strip()}
 
 ###########################################################################
