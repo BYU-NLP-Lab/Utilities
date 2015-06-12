@@ -46,6 +46,7 @@ import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.io.Files2;
+import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.IntArrays;
 import edu.byu.nlp.util.Nullable;
@@ -192,12 +193,19 @@ public class DocPipes {
       @Override
       public double[] apply(String input) {
         Preconditions.checkNotNull(input);
-        String[] parts = input.split("\n");
-        double[] retval = new double[parts.length];
-        for (int i=0; i<parts.length; i++){
-          retval[i] = Double.parseDouble(parts[i]);
+        // try for a json-style array
+        if (input.contains("[")){
+          return DoubleArrays.parseDoubleArray(input);
         }
-        return retval;
+        // otherwise assume numbers are one per line
+        else{
+          String[] parts = input.split("\n");
+          double[] retval = new double[parts.length];
+          for (int i=0; i<parts.length; i++){
+            retval[i] = Double.parseDouble(parts[i]);
+          }
+          return retval;
+        }
       }
     };
   }
