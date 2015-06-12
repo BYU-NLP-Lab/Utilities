@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import pickle
 import numpy as np
 import shutil
 import argparse
@@ -9,6 +8,7 @@ import pipes
 from gensim.models import LdaModel,LdaModel,Word2Vec,Doc2Vec
 from gensim.models.doc2vec import LabeledSentence
 from gensim.models.word2vec import Vocab
+from plf1_python import doc2vec_util
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("datautils.doc2vec")
@@ -17,43 +17,6 @@ def model_path(modelname,cachedir,dataset_indexdir):
   dataname = dataset_indexdir.replace('/','-')[1:]
   modelname = "%s-%s.model" % (modelname,dataname)
   return os.path.join(cachedir,modelname)
-
-def labeled_sentence_objects(sentences):
-  for i,item in enumerate(sentences):
-    src, content = item['source'], item['data']
-    # we set the label to doc id so we can look up an embedding for that doc later
-    #sentence_labels = [src,"SENT_%d"%i]
-    sentence_labels = [src]
-    yield LabeledSentence(labels=sentence_labels,words=content) 
-
-def add_rows_to_matrix(m,num_rows):
-  # create a larger matrix
-  newm = np.zeros((m.shape[0]+num_rows,m.shape[1]), dtype=m.dtype)
-  # copy old content over
-  newm[0:m.shape[0],0:m.shape[1]] = m
-  return newm
-
-def extend_model_with_labels(model,labeled_sentences):
-  newvocab = {}
-  # get all the new vocab terms (and their counts)
-  for lsent in labeled_sentences:
-    for label in lsent.labels:
-      if label not in model:
-        if label not in newvocab:
-          newvocab[label] = Vocab(count=0)
-        newvocab[label].count += len(lsent.words)
-  logger.info("extending d2v vocabulary with %d document labels"%len(newvocab))
-  # extend the model's vocabulary and index
-  for w,v in newvocab.items():
-    v.index = len(model.vocab)
-    assert len(model.index2word)==v.index and len(model.vocab)==v.index
-    model.vocab[w] = v
-    model.index2word.append(w)
-  model.create_binary_tree()
-  model.precalc_sampling()
-  model.syn0 = add_rows_to_matrix(model.syn0,len(newvocab))
-  model.syn1 = add_rows_to_matrix(model.syn1,len(newvocab))
-  logger.info("finished extending d2v vocabulary with %d document labels"%len(newvocab))
 
 def exists(loc):
   return loc is not None and os.path.exists(loc)
@@ -153,27 +116,13 @@ if __name__ == "__main__":
   elif args.method=="PARAVEC":
     # read a list of LabeledSentences (defined by gensim)
     sentences = list(pipes.combination_index2sentences(args.dataset_basedir, args.dataset_indexdir, index_encoding=args.index_encoding, content_encoding=args.content_encoding))
-    traindata = list(labeled_sentence_objects(sentences))
-    pickle.dump(traindata,open('/tmp/d2v-train','wb'))
+    traindata = list(doc2vec_util.labeled_sentence_objects(sentences))
     if exists(args.cached_modelpath):
       logger.info("loading doc2vec model %s and using as-is" % args.cached_modelpath)
       model = Doc2Vec.load(args.cached_modelpath)
     else:
       if exists(args.init_modelpath):
-        logger.info("initializing doc2vec model with %s and then training" % args.init_modelpath)
-        # load google vectors into a doc2vec model
-        w2v = Word2Vec.load(args.init_modelpath)
-        model = Doc2Vec()
-        model.vocab=w2v.vocab
-        model.syn0=w2v.syn0
-        model.syn1=w2v.syn1
-        model.index2word=w2v.index2word
-        # now tweak word embeddings and learn doc embeddings for current dataset 
-        model.train_words = False
-        extend_model_with_labels(model,traindata)
-        num_words = sum([len(s.words) for s in traindata])
-        for i in range(20):
-          model.train(traindata,total_words=num_words)
+        model = doc2vec_util.train_doc2vec_from_word2vec(args.init_modelpath, traindata, train_iterations=20)
       else:
         model = Doc2Vec(traindata, size=args.size, window=args.window, min_count=args.min_count, workers=args.num_workers)
       # trim unneeded model memory = use (much) less RAM
