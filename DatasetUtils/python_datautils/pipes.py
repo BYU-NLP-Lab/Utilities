@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import csv
 import chardet
 import itertools
 import nltk.data
@@ -6,13 +7,13 @@ from nltk.stem.porter import PorterStemmer
 import re
 from collections import Counter
 import os
-import pkg_resources
-from data_structures import Indexer
 import sys
 import json
 # ensure cwd is scanned for modules in case we are running from there but 
 # haven't taken the trouble to put python_datutils on our PYTHONPATH
 sys.path.append(os.path.dirname(os.getcwd()))
+from python_datautils.data_structures import Indexer
+import pkg_resources
 mallet_stopwords = set(str(pkg_resources.resource_string('python_datautils','mallet_stopwords.txt'),encoding='utf-8').split())
 import logging
 logger = logging.getLogger("pipes")
@@ -31,6 +32,14 @@ def autodetect_encoding(path,encoding=None):
 ###########################################################################
 # Inputs
 ###########################################################################
+def input_csv(csv_path,encoding=None):
+    ''' A pipe (generator) that yields a list of dicts, one for 
+        each row of a csv file '''
+    encoding = autodetect_encoding(csv_path,encoding)
+    with open(csv_path,encoding=encoding) as csv_file:
+        for obj in csv.DictReader(csv_file):
+            yield obj
+
 def input_json(json_path,encoding=None):
     ''' A pipe (generator) that yields a list of dicts, one for each 
         entry in a json file'''
@@ -59,11 +68,55 @@ def input_index(dataset_splitdir,filepath_attr="src",label_attr="label",encoding
 ###########################################################################
 # Pipes
 ###########################################################################
+def pipe_tee(*pipes):
+    for pipe in pipes:
+        for item in pipe:
+            assert isinstance(item,dict)
+            yield item
+
+def pipe_split_attrs(pipe,move_attrs,copy_attrs=[]):
+    ''' For every item, remove the indicated attributes (move_attrs) and add them to a new item.
+        If copy_attrs are indicated, then copy these to the new item without removing them 
+        from the old. Items that contain no move_attrs are not affect (no new item is created).'''
+    assert isinstance(move_attrs,list) or isinstance(move_attrs,tuple), "move_attrs must be a tuple or list: %s"%move_attrs
+    assert isinstance(copy_attrs,list) or isinstance(copy_attrs,tuple), "copy_attrs must be a tuple or list: %s"%copy_attrs
+    for item in pipe:
+        assert isinstance(item,dict)
+        # yield non-trivial newitem
+        if len(set(move_attrs).intersection(item.keys()))>0:
+            yield {k:v for k,v in item.items() if k in move_attrs or k in copy_attrs}
+        # yield original item (minus moved fields)
+        yield {k:v for k,v in item.items() if k not in move_attrs}
+
 def pipe_select_attr(pipe,attr,default_value=None):
     ''' Transform each dict into a list formed by indexing into the dict with each attr in turn. '''
     for item in pipe:
         assert isinstance(item,dict)
         yield item.get(attr,default_value)
+
+def pipe_rename_attr(pipe,attr,rename_to):
+    ''' Transform each dict into a list formed by indexing into the dict with each attr in turn. '''
+    for item in pipe:
+        assert isinstance(item,dict)
+        item = item.copy() # protect original object
+        if attr in item:
+            item[rename_to] = item[attr]
+            del item[attr]
+        yield item
+
+def pipe_txt2txt_dictionary_lookup(pipe,attr,lookup,word_delim=" "):
+    ''' transform a text field by substituting each 'word' in the text field with 
+        the value obtained from a lookup table '''
+    for item in pipe:
+        item = item.copy() # protect original data
+        if attr in item:
+            # split out sentence
+            words = item[attr].split(word_delim)
+            # transform each word (via dictionary lookup)
+            words = [lookup.get(word.lower(),word) for word in words]
+            # reconstitute sentence 
+            item[attr] = word_delim.join(words)
+        yield item
 
 def pipe_groupby_attrs(pipe,groupby_attrs,default_value=None):
     ''' Combine all dicts with same values for the set groupby_attrs. (other values are concatenated in a list)'''
@@ -90,6 +143,12 @@ def pipe_groupby_attrs(pipe,groupby_attrs,default_value=None):
     # yield results
     for item in groupmap.values():
         yield item
+
+def pipe_retain_attrs(pipe,attrs):
+    ''' retain only the indicated attributes '''
+    for item in pipe:
+        assert isinstance(item,dict)
+        yield {k:v for k,v in item.items() if k in attrs}
 
 def pipe_select_attr_list(pipe,attrs,default_value=None):
     ''' Transform each dict into a list formed by indexing into the dict with each attr in turn. '''
@@ -134,7 +193,7 @@ def pipe_txt2txt_lower(pipe,attr="data"):
 # Punkt sentence detector described here:
 #    Kiss, Tibor and Strunk, Jan (2006): Unsupervised Multilingual Sentence
 #    Boundary Detection.  Computational Linguistics 32: 485-525.
-nltk.download('punkt')
+nltk.download('punkt',quiet=True)
 sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 def pipe_txt2list_sentence_splitter(pipe,attr="data",split_regex="[^a-zA-Z]+"):
     ''' split text into sentences based on an nltk module '''
@@ -144,6 +203,15 @@ def pipe_txt2list_sentence_splitter(pipe,attr="data",split_regex="[^a-zA-Z]+"):
         assert isinstance(text,str)
         tokens = sent_detector.tokenize(text)
         yield transformed_item(item,attr,tokens)
+
+def pipe_list2txt_stringcast(pipe,attr="data"):
+    ''' Cast a list-valued attribute to a string. '''
+    for item in pipe:
+        assert isinstance(item,dict)
+        item = item.copy() # protect original object
+        if attr in item:
+            item[attr] = str(item[attr])
+        yield item
 
 def pipe_list2txt_flatten(pipe,attr="data",split_regex="[^a-zA-Z]+"):
     ''' make a separate data item for every item in a list. 
@@ -222,6 +290,17 @@ def pipe_list2list_remove_stopwords(pipe,attr="data",stopwords_path=None,encodin
             else:
                 logger.debug("removing stopword",token)
         yield transformed_item(item,attr,newtokens)
+
+def pipe_txt2txt_substitute(pipe,attr,pattern,subval):
+    ''' split text into tokens based on a regex '''
+    for item in pipe:
+        assert isinstance(item,dict)
+        item = item.copy() # protect original object
+        if attr in item:
+            text = item[attr] 
+            assert isinstance(text,str)
+            item[attr] = re.sub(pattern,subval,text)
+        yield item
 
 def pipe_txt2list_tokenize(pipe,attr="data",split_regex="[^a-zA-Z]+"):
     ''' split text into tokens based on a regex '''

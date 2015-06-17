@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import pickle
 import numpy as np
 import shutil
 import argparse
@@ -129,6 +130,9 @@ if __name__ == "__main__":
       #model.init_sims(replace=True)
       logger.info("saving doc2vec model to %s"%args.out_modelpath)
       model.save(args.out_modelpath)
+      f = open('/tmp/pickled2v','wb') # DELME
+      pickle.dump(traindata,f) # DELME
+      f.close() # DELME
 
     # translate data
     if args.outdir is not None:
