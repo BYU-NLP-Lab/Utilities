@@ -66,7 +66,7 @@ def train_doc2vec_from_word2vec(w2vmodel,traindata,train_iterations=20,train_wor
     # load vectors into a doc2vec model
     if isinstance(w2vmodel,str):
         logger.info("initializing doc2vec model with %s and then training" % w2vmodel)
-        w2v = Word2Vec.load(w2vpath)
+        w2v = Word2Vec.load(w2vmodel)
     else: 
         w2v = w2vmodel
     d2v = Doc2Vec()
@@ -129,7 +129,7 @@ def pipe_txt2list_word2vec(pipe,attr,model,word_delim=" "):
     logger.info("Embedding text with word2vec...")
 
     if isinstance(model,str):
-        w2v = Word2Vec.load(modelpath)
+        w2v = Word2Vec.load(model)
     else:
         w2v = model
 
