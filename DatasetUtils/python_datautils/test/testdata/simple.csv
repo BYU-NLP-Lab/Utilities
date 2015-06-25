@@ -1,0 +1,6 @@
+worker,time,data,annotation,instance_id
+1,8/24/2013 20:27:15,"Once upon a time","yes","doc1"
+1,8/24/2013 20:27:17,"in a galaxy far, far, away","no","doc2"
+1,8/24/2013 20:27:19,"Whanne that Aprille with his shoures soote","yes","doc3"
+2,8/24/2013 20:27:21,"the quick brown fox","no","doc1"
+2,8/24/2013 20:27:23,"jumps over the lazy dog","no","doc2"

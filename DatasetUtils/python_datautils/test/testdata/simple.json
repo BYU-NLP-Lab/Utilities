@@ -1,0 +1,37 @@
+[
+  {
+    "annotation": "yes",
+    "time": "8/24/2013 20:27:15",
+    "instance_id": "doc1",
+    "worker": "1",
+    "data": "Once upon a time"
+  },
+  {
+    "annotation": "no",
+    "time": "8/24/2013 20:27:17",
+    "instance_id": "doc2",
+    "worker": "1",
+    "data": "in a galaxy far, far, away"
+  },
+  {
+    "annotation": "yes",
+    "time": "8/24/2013 20:27:19",
+    "instance_id": "doc3",
+    "worker": "1",
+    "data": "Whanne that Aprille with his shoures soote"
+  },
+  {
+    "annotation": "no",
+    "time": "8/24/2013 20:27:21",
+    "instance_id": "doc1",
+    "worker": "2",
+    "data": "the quick brown fox"
+  },
+  {
+    "annotation": "no",
+    "time": "8/24/2013 20:27:23",
+    "instance_id": "doc2",
+    "worker": "2",
+    "data": "jumps over the lazy dog"
+  }
+]

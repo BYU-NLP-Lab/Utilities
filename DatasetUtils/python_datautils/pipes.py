@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import numpy as np
 import calendar
 import dateutil.parser
 import csv
@@ -14,6 +15,7 @@ import json
 # ensure cwd is scanned for modules in case we are running from there but 
 # haven't taken the trouble to put python_datutils on our PYTHONPATH
 sys.path.append(os.path.dirname(os.getcwd()))
+from python_datautils import annotation_pipes
 from python_datautils.data_structures import Indexer
 import pkg_resources
 mallet_stopwords = set(str(pkg_resources.resource_string('python_datautils','mallet_stopwords.txt'),encoding='utf-8').split())
@@ -137,8 +139,8 @@ def pipe_select_attr_list(pipe,attrs,default_value=None,copy=False):
             arr.append(item.get(attr,default_value))
         yield arr
 
-def pipe_drop_by_attr_value(pipe,attr,pattern,reverse=False,copy=False):
-    ''' retain only items whose indicated attribute has a 
+def pipe_drop_by_regex(pipe,attr,pattern,reverse=False,copy=False):
+    ''' drop items whose indicated attribute has a 
         value (cast to string) that matches the pattern (using re.match) '''
     for item in pass_through(pipe,copy=copy):
         dropitem = attr in item and re.match(pattern,item[attr])
@@ -208,6 +210,45 @@ def pipe_append_filecontent(pipe,filepath_attr,dest_attr="data",basedir='',encod
                 yield transformed_item(item,dest_attr,datafile.read())
         except Exception as e:
             logger.warn("unable to open file %s. Skipping. %s" % (os.path.join(basedir,filepath),e))
+
+def pipe_append_mean_value(pipe,attr,source_attr=None,dest_attr=None):
+    ''' Group items by source_attr and append a mean value. If source 
+        is None, appends the global mean value '''
+    dest_attr = dest_attr if dest_attr else "%s_mean"%attr # default dest_attr add a _mean suffix to attr
+    def source_val(item,source_attr):
+        if source_attr is None or source_attr not in item:
+            return None
+        return item[source_attr]
+    # we'll need to go through the pipe twice. 
+    # unfortunately, this means we need to cache the pipe
+    pipe = list(pipe)
+
+    votemap = annotation_pipes.votemap_of(pipe,attr,source_attr)
+    # determine majority vote for each source
+    means = {}
+    for src,votes in votemap.items():
+        #print("src",src,"values",[v for v in votes.elements()],"mean",np.mean([float(v) for v in votes.elements()]))
+        means[src] = np.mean([float(v) for v in votes.elements()])
+
+    # now transform original instances
+    for item in pipe:
+        # add a majority vote label attribute (if available)
+        if source_attr is None or (source_attr in item and item[source_attr] in means):
+            item[dest_attr] = means[source_val(item,source_attr)]
+        yield item
+
+def pipe_append_thresholded_value(pipe,attr,dest_attr,levels=[0.3,0.6],names=["low","medium","high"],copy=False):
+    ''' threshold the indicated attribute value (cast to a float) into several buckets.'''
+    levels = levels + [float('inf')]
+    assert len(levels)==len(names), "there must be n-1 levels, where n is the number of names."
+    for item in pass_through(pipe,copy=copy):
+        if attr in item:
+            val = float(item[attr])
+            for level,name in zip(levels,names):
+                if val < level:
+                    item[dest_attr] = name
+                    break
+        yield item
 
 ###########################################################################
 # Attribute Value Transform Pipes  (changes attribute values)

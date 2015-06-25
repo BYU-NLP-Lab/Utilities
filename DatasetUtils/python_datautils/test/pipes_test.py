@@ -60,8 +60,8 @@ class TestPipeTransformPipes(unittest.TestCase):
         items = list(pipes.pipe_select_attr_list(simplepipe(),["worker","annotation"]))
         self.assertEqual(items,[['1', 'yes'], ['1', 'no'], ['1', 'yes'], ['2', 'no'], ['2', 'no']])
 
-    def test_pipe_drop_by_attr_value(self):
-        items = list(pipes.pipe_drop_by_attr_value(simplepipe(),"data",pattern=".* a .*",reverse=True))
+    def test_pipe_drop_by_regex(self):
+        items = list(pipes.pipe_drop_by_regex(simplepipe(),"data",pattern=".* a .*",reverse=True))
         self.assertEqual(len(items),2)
         orig_items = list(simplepipe())
         self.assertTrue(items[0]==orig_items[0] or items[0]==orig_items[1])
@@ -120,6 +120,25 @@ class TestItemTransformPipes(unittest.TestCase):
             content = f.read()
             self.assertTrue(items[0]["data"]==content)
 
+    def test_pipe_append_thresholded_value(self):
+        items = list(pipes.pipe_append_thresholded_value(simplepipe(),"worker",dest_attr="workername",levels=[1.5],names=["bert","ernie"]))
+        for i in range(3):
+            self.assertEqual(items[i]["workername"],"bert")
+        for i in range(3,5):
+            self.assertEqual(items[i]["workername"],"ernie")
+
+    def test_pipe_append_mean_value(self):
+        # compute a global worker mean
+        items = list(pipes.pipe_append_mean_value(simplepipe(),"worker"))
+        for i in range(5):
+            self.assertEqual(items[i]["worker_mean"],1.4)
+        # compute a menas grouped by source
+        items = list(pipes.pipe_append_mean_value(simplepipe(),"worker",dest_attr="mn",source_attr="instance_id"))
+        self.assertEqual(items[0]["mn"],1.5)
+        self.assertEqual(items[1]["mn"],1.5)
+        self.assertEqual(items[2]["mn"],1)
+        self.assertEqual(items[3]["mn"],1.5)
+        self.assertEqual(items[4]["mn"],1.5)
 
 class TestAttributePipes(unittest.TestCase):
 
