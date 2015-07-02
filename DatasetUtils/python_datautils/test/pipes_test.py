@@ -77,6 +77,15 @@ class TestPipeTransformPipes(unittest.TestCase):
 
 class TestItemTransformPipes(unittest.TestCase):
 
+    def test_pipe_drop_attr_by_regex(self):
+        items = list(pipes.pipe_drop_attr_by_regex(simplepipe(),"data",pattern=".* a .*"))
+        orig_items = list(simplepipe())
+        self.assertEqual(len(items),len(orig_items))
+        for i in range(2,5):
+            self.assertEqual(items[i],orig_items[i])
+        self.assertTrue("data" not in items[0])
+        self.assertTrue("data" not in items[1])
+
     def test_pipe_rename_attr(self):
         items = list(pipes.pipe_rename_attr(simplepipe(),"worker",rename_to="annotator"))
         for item in items:

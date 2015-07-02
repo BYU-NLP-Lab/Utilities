@@ -165,6 +165,16 @@ def pipe_list2txt_flatten(pipe,attr,copy=False):
 # Item Transform Pipes  (changes the number of item attributes)
 ###########################################################################
 
+def pipe_drop_attr_by_regex(pipe,attr,pattern,reverse=False,copy=False):
+    ''' drop attributes whose value (cast to string) matches the pattern (using re.match) '''
+    for item in pass_through(pipe,copy=copy):
+        dropattr = attr in item and re.match(pattern,item[attr])
+        if reverse:
+            dropattr = not dropattr
+        if dropattr:
+            del item[attr]
+        yield item
+
 def pipe_rename_attr(pipe,attr,rename_to,copy=False):
     ''' Transform each dict into a list formed by indexing into the dict with each attr in turn. '''
     for item in pass_through(pipe,copy=copy):
