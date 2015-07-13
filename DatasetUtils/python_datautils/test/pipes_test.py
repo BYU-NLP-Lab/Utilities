@@ -37,6 +37,29 @@ class TestUtilityMethods(unittest.TestCase):
 
 class TestPipeTransformPipes(unittest.TestCase):
 
+    def test_pipe_duplicate_matching_items(self):
+        items = list(pipes.pipe_duplicate_matching_items(simplepipe(),"worker",pattern="1"))
+        orig_items = list(simplepipe())
+        self.assertEqual(len(items), 8)
+        self.assertEqual(items[0], orig_items[0])
+        self.assertEqual(items[1], orig_items[0])
+        self.assertEqual(items[2], orig_items[1])
+        self.assertEqual(items[3], orig_items[1])
+        self.assertEqual(items[4], orig_items[2])
+        self.assertEqual(items[5], orig_items[2])
+        self.assertEqual(items[6], orig_items[3])
+        self.assertEqual(items[7], orig_items[4])
+
+    def test_pipe_replicate_items_by_numerical_attr(self):
+        items = list(pipes.pipe_replicate_items_by_numerical_attr(simplepipe(),"worker"))
+        orig_items = list(simplepipe())
+        self.assertEqual(len(items), 7)
+        for i in range(4):
+            self.assertEqual(items[i], orig_items[i])
+        self.assertEqual(items[4], orig_items[3])
+        self.assertEqual(items[5], orig_items[4])
+        self.assertEqual(items[6], orig_items[4])
+
     def test_pipe_groupby_attrs(self):
         items = list(pipes.pipe_groupby_attrs(simplepipe(),["worker"]))
         self.assertEqual(len(items), 2)
@@ -76,6 +99,12 @@ class TestPipeTransformPipes(unittest.TestCase):
 
 
 class TestItemTransformPipes(unittest.TestCase):
+
+    def test_pipe_drop_attrs_with_none_val(self):
+        items = list(pipes.pipe_drop_attrs_with_none_val([{'a':2,"b":None},{'a':2,"c":None}]))
+        self.assertEqual(len(items),2)
+        self.assertEqual(items[0],items[1])
+        self.assertEqual(items[0]['a'],2)
 
     def test_pipe_drop_attr_by_regex(self):
         items = list(pipes.pipe_drop_attr_by_regex(simplepipe(),"data",pattern=".* a .*"))

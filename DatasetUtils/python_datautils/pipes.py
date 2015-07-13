@@ -117,6 +117,30 @@ def pipe_groupby_attrs(pipe,attrs,default_value=None,copy=False):
     for item in groupmap.values():
         yield item
 
+def pipe_duplicate_matching_items(pipe,attr,pattern,transform=lambda x:x,copy=False):
+    ''' duplicate item in the stream whose attr matches the given pattern 
+        (and optionally transform the item using the given function).'''
+    assert hasattr(transform,'__call__'), "transform must be a function: dict->dict %s"%transform
+    for item in pass_through(pipe,copy=copy):
+        # yield all original items
+        yield item 
+        # some additionally get duplicated and transformed (use a copy)
+        if attr in item and re.match(pattern,item[attr]):
+            yield transform(item.copy())
+
+def pipe_replicate_items_by_numerical_attr(pipe,attr,set_attrs={},copy=False):
+    ''' replicates each item n times, where n is the value of the indicated attribute
+        (cast to an int). A set of attributes are optionally set on each item copy. 
+        Items that lack the indicated attribute remain unchanged.'''
+    assert isinstance(set_attrs,dict), "set_attrs must be a dict: %s"%set_attrs
+    for item in pass_through(pipe,copy=copy):
+        if attr not in item:
+            yield item
+        else:
+            item.update(set_attrs)
+            for i in range(int(item[attr])):
+                yield item.copy()
+
 def pipe_split_items(pipe,move_attrs,copy_attrs=[],copy=False):
     ''' For every item, remove the indicated attributes (move_attrs) and add them to a new item.
         If copy_attrs are indicated, then copy these to the new item without removing them 
@@ -164,6 +188,10 @@ def pipe_list2txt_flatten(pipe,attr,copy=False):
 ###########################################################################
 # Item Transform Pipes  (changes the number of item attributes)
 ###########################################################################
+
+def pipe_drop_attrs_with_none_val(pipe,copy=False):
+    for item in pass_through(pipe,copy=copy):
+        yield {k:v for k,v in item.items() if v is not None}
 
 def pipe_drop_attr_by_regex(pipe,attr,pattern,reverse=False,copy=False):
     ''' drop attributes whose value (cast to string) matches the pattern (using re.match) '''
