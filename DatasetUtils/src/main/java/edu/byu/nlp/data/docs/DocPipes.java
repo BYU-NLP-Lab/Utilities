@@ -36,7 +36,7 @@ import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.pipes.Downcase;
 import edu.byu.nlp.data.pipes.FieldIndexer;
 import edu.byu.nlp.data.pipes.FilenameToContents;
-import edu.byu.nlp.data.pipes.IndexFileToLabeledFileList;
+import edu.byu.nlp.data.pipes.IndexFileToFileList;
 import edu.byu.nlp.data.pipes.IndexerCalculator;
 import edu.byu.nlp.data.pipes.JSONFileToAnnotatedDocumentList;
 import edu.byu.nlp.data.pipes.LabeledInstancePipe;
@@ -67,7 +67,7 @@ public class DocPipes {
 
 	public static LabeledInstancePipe<String, String, String, String> indexToDocPipe(FileObject baseDir) {
 		return new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-				.add(Pipes.oneToManyLabeledInstancePipe(new IndexFileToLabeledFileList()))
+				.add(Pipes.oneToManyLabeledInstancePipe(new IndexFileToFileList()))
 				.add(Pipes.labeledInstanceTransformingPipe(new FilenameToContents(baseDir))).build();
 	}
 

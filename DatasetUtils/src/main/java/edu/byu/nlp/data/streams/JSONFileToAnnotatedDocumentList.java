@@ -13,7 +13,6 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -28,10 +27,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.data.FlatAnnotatedInstance;
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
-import edu.byu.nlp.data.pipes.Instances.OneToManyLabeledInstanceFunction;
+import edu.byu.nlp.data.pipes.DataStreams.OneToMany;
 import edu.byu.nlp.util.Strings;
 
 /**
@@ -53,14 +49,16 @@ import edu.byu.nlp.util.Strings;
  * @author pfelt
  * 
  */
-public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstanceFunction<String, String, String> {
+public class JSONFileToAnnotatedDocumentList implements OneToMany {
 
 	private static final Logger logger = LoggerFactory.getLogger(JSONFileToAnnotatedDocumentList.class);
 
 	private String jsonReferencedDataDir;
+  private String fieldname;
 
-	public JSONFileToAnnotatedDocumentList(String jsonReferencedDataDir) {
+	public JSONFileToAnnotatedDocumentList(String jsonReferencedDataDir, String fieldname) {
 		this.jsonReferencedDataDir=jsonReferencedDataDir;
+		this.fieldname=fieldname;
 	}
 
 	// simple deserialization pojo
@@ -87,16 +85,20 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
 			return getClass().getName()+" src="+source;
 		}
 	}
+	
 
 	@Override
-	public Iterator<FlatInstance<String, String>> apply(FlatInstance<String, String> indexFilename) {
-		logger.info("Processing " + indexFilename.getData());
-		Reader jsonReader = readerOf(indexFilename.getData());
+//	public Iterator<FlatInstance<String, String>> apply(FlatInstance<String, String> indexFilename) {
+  public Iterable<Map<String, Object>> apply(Map<String, Object> input) {
+	  // this should be the only thing the input has
+	  String indexFilename = (String) input.get(fieldname);
+	  
+		logger.info("Processing " + indexFilename);
+		Reader jsonReader = readerOf(indexFilename);
 
 		// parse json
 		Gson gson = new Gson();
-		Type collectiontype = new TypeToken<List<JSONAnnotation>>() {
-		}.getType();
+		Type collectiontype = new TypeToken<List<JSONAnnotation>>(){}.getType();
 
 		List<JSONAnnotation> jsonData = gson.fromJson(jsonReader, collectiontype);
 
@@ -170,5 +172,6 @@ public class JSONFileToAnnotatedDocumentList implements OneToManyLabeledInstance
       throw new RuntimeException("Non-existent json file",e);
     }
   }
+
 
 }

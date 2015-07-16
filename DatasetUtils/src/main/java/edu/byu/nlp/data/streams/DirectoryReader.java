@@ -16,32 +16,34 @@ package edu.byu.nlp.data.pipes;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.UnmodifiableIterator;
 
-import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.io.AbstractIterable;
 
 /**
  * @author rah67
+ * @author plf1
  * 
  */
-public class DirectoryReader implements DataSource<String, String> {
+public class DirectoryReader implements DataSource {
 
-	private final class FilesIterator extends UnmodifiableIterator<FlatInstance<String, String>> {
+	private final class FilesIterator extends UnmodifiableIterator<Map<String,Object>> {
 
 		private final FileObject[] files;
 		private int i;
+    private String fieldname;
 
-		private FilesIterator(FileObject[] files) {
+		private FilesIterator(String fieldname, FileObject[] files) {
+		  this.fieldname=fieldname;
 			this.files = files;
 			i = 0;
 		}
@@ -52,20 +54,21 @@ public class DirectoryReader implements DataSource<String, String> {
 		}
 
 		@Override
-		public FlatInstance<String, String> next() {
+		public Map<String,Object> next() {
 			try {
 				String indexFilename = directory.getName().getRelativeName(files[i++].getName());
-				return new FlatLabeledInstance<String,String>(AnnotationInterfaceJavaUtils.<String,String>newLabeledInstance(
-						indexFilename, indexFilename, directory.getName().getPath(), false));
+				Map<String,Object> item = Maps.newHashMap();
+				item.put(fieldname, indexFilename);
+				return item;
 			} catch (FileSystemException e) {
 				throw new RuntimeException(e);
 			}
 		}
 	}
 
-	private final class FilesIterable extends AbstractIterable<FlatInstance<String, String>> {
+	private final class FilesIterable extends AbstractIterable<Map<String,Object>> {
 		@Override
-		public Iterator<FlatInstance<String, String>> iterator() {
+		public Iterator<Map<String,Object>> iterator() {
 			try {
 				// sort children files before returning them so that 
 				// results are more predictable across API changes, 
@@ -77,7 +80,7 @@ public class DirectoryReader implements DataSource<String, String> {
 						return Ordering.natural().compare(o1.toString(), o2.toString());
 					}
 				});
-				return new FilesIterator(children);
+				return new FilesIterator(fieldname,children);
 			} catch (FileSystemException e) {
 				throw new RuntimeException(e);
 			}
@@ -86,22 +89,24 @@ public class DirectoryReader implements DataSource<String, String> {
 
 	private FileObject directory;
 	private String source;
+  private String fieldname;
 
-	public DirectoryReader(FileObject directory) throws FileSystemException {
+	public DirectoryReader(FileObject directory, String fieldname) throws FileSystemException {
 		Preconditions.checkNotNull(directory);
 		Preconditions.checkArgument(directory.getType() == FileType.FOLDER, directory + " is not a directory");
 		this.source=directory.toString();
 		this.directory = directory;
+		this.fieldname=fieldname;
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public Iterable<FlatInstance<String, String>> getLabeledInstances() {
+	public Iterable<Map<String,Object>> getStream(){
 		return new FilesIterable();
 	}
 
 	@Override
-	public String getSource() {
+	public String getStreamSource() {
 		return source;
 	}
 

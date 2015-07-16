@@ -31,11 +31,11 @@ public interface Measurement<X,Y> {
    * their judgment). They are not mutated as a part of 
    * algorithmic computation. 
    */
-  double getValue(X index, Y label);
+  double featureValue(X index, Y label);
   
   /**
    * Who was responsible for generating this measurement? 
    */
-  long getAnnotator();
+  int getAnnotator();
   
 }

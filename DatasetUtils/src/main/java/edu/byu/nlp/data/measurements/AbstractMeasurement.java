@@ -1,4 +1,4 @@
-package edu.byu.nlp.data;
+package edu.byu.nlp.data.measurements;
 
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.Measurement;
@@ -13,15 +13,16 @@ import edu.byu.nlp.data.types.Measurement;
 public abstract class AbstractMeasurement<Y> implements Measurement<Integer, Y>{
 
   private Dataset dataset;
-  private long annotator;
+  private int annotator;
 
-  public AbstractMeasurement(long annotator, Dataset dataset){
+  
+  public AbstractMeasurement(int annotator, Dataset dataset){
     this.annotator=annotator;
     this.dataset=dataset;
   }
   
   @Override
-  public long getAnnotator() {
+  public int getAnnotator() {
     return annotator;
   }
 
@@ -29,5 +30,5 @@ public abstract class AbstractMeasurement<Y> implements Measurement<Integer, Y>{
   public Dataset getDataset() {
     return dataset;
   }
-
+  
 }

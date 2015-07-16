@@ -25,6 +25,7 @@ import java.util.Random;
 
 import org.apache.commons.math3.random.RandomGenerator;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 
@@ -129,11 +130,9 @@ public class Iterables2 {
 	}
 	
 	public static <E> Iterable<E> flatten(final Iterable<? extends Iterable<E>> outerIt){
-		List<E> retval = Lists.newArrayList();
+	  Iterable<E> retval = Lists.newArrayList();
 		for (Iterable<E> innerIt: outerIt){
-			for (E item: innerIt){
-				retval.add(item);
-			}
+		  retval = Iterables.concat(retval,innerIt);
 		}
 		return retval;
 	}

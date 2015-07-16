@@ -37,12 +37,9 @@ import com.google.common.collect.Sets;
 import edu.byu.nlp.annotationinterface.Constants;
 import edu.byu.nlp.annotationinterface.java.Annotation;
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.data.FlatAnnotatedInstance;
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators.ClusteringMethod;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
+import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
@@ -140,12 +137,12 @@ public class Datasets {
 	 */
 	public static Dataset convert(
 			String datasetSource,
-			Iterable<FlatInstance<SparseFeatureVector, Integer>> flatInstances,
+			Iterable<Map<String, Object>> flatInstances,
 			IndexerCalculator<String, String> indexers, 
 			boolean preserveRawAnnotations) {
 		
 		TableCounter<Long, Long, Integer> annotationCounter = TableCounter.create();
-		Multimap<Long, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
+		Multimap<Long, Map<String,Object>> rawAnnotationMap = HashMultimap.create(); 
 		Set<Long> instanceIndices = Sets.newHashSet();
 		Set<Long> indicesWithObservedLabel = Sets.newHashSet();
 		Map<Long,Integer> labelMap = Maps.newHashMap();
@@ -156,7 +153,7 @@ public class Datasets {
 		// in the FlatInstance representation, a whole list of annotations could be 
 		// referring to the same instance. In a Dataset object, all of these are 
 		// aggregated into a single instance.
-		for (FlatInstance<SparseFeatureVector, Integer> inst: flatInstances){
+		for (Map<String, Object> inst: flatInstances){
 			long instanceId = inst.getInstanceId();
 			instanceIndices.add(instanceId);
 
@@ -356,7 +353,7 @@ public class Datasets {
 	}
 	
 //	private static AnnotationSet emptyAnnotationSet(DatasetInfo info) {
-//		return new BasicAnnotationSet(info.getNumAnnotators(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector, Integer>>newArrayList());
+//		return new BasicAnnotationSet(info.getNumAnnotators(), info.getNumClasses(), Lists.<Map<String, Object>>newArrayList());
 //	}
 
 	/**
@@ -408,7 +405,7 @@ public class Datasets {
 	 * 
 	 */
 	public static synchronized void addAnnotationToDataset(
-			Dataset dataset, FlatInstance<SparseFeatureVector, Integer> ann){
+			Dataset dataset, Map<String, Object> ann){
 		Preconditions.checkNotNull(dataset);
 		Preconditions.checkNotNull(ann);
 		// check that values are indexed values
@@ -440,15 +437,15 @@ public class Datasets {
 	}
 	
 	public static synchronized void addAnnotationsToDataset(
-			Dataset dataset, Iterable<FlatInstance<SparseFeatureVector, Integer>> annotations){
-		for (FlatInstance<SparseFeatureVector, Integer> ann: annotations){
+			Dataset dataset, Iterable<Map<String, Object>> annotations){
+		for (Map<String, Object> ann: annotations){
 			addAnnotationToDataset(dataset, ann);
 		}
 	}
 			
 
-	public static List<FlatInstance<SparseFeatureVector, Integer>> instancesIn(Dataset dataset) {
-		List<FlatInstance<SparseFeatureVector, Integer>> instances = Lists.newArrayList();
+	public static List<Map<String, Object>> instancesIn(Dataset dataset) {
+		List<Map<String, Object>> instances = Lists.newArrayList();
 		for (DatasetInstance inst: dataset){
 			instances.add(new FlatLabeledInstance<SparseFeatureVector, Integer>(
 				AnnotationInterfaceJavaUtils.newLabeledInstance(
@@ -460,8 +457,8 @@ public class Datasets {
 		return instances;
 	}
 	
-	public static List<FlatInstance<SparseFeatureVector, Integer>> annotationsIn(Dataset dataset) {
-		List<FlatInstance<SparseFeatureVector, Integer>> annotations = Lists.newArrayList();
+	public static List<Map<String, Object>> annotationsIn(Dataset dataset) {
+		List<Map<String, Object>> annotations = Lists.newArrayList();
 		for (DatasetInstance inst: dataset){
 			annotations.addAll(Lists.newArrayList(inst.getAnnotations().getRawLabelAnnotations()));
 		}
@@ -471,10 +468,10 @@ public class Datasets {
 	/**
 	 * Sorts first by end timestamp, then start timestamp, then annotator, then source
 	 */
-	public static <D,L> void sortAnnotations(List<FlatInstance<D, L>> annotations) {
-		annotations.sort(new Comparator<FlatInstance<D, L>>() {
+	public static <D,L> void sortAnnotations(List<Map<String, Object>> annotations) {
+		annotations.sort(new Comparator<Map<String, Object>>() {
 			@Override
-			public int compare(FlatInstance<D, L> o1, FlatInstance<D, L> o2) {
+			public int compare(Map<String, Object> o1, Map<String, Object> o2) {
 				return ComparisonChain.start()
 					.compare(o1.getEndTimestamp(), o2.getEndTimestamp())
 					.compare(o1.getStartTimestamp(), o2.getStartTimestamp())
@@ -893,7 +890,7 @@ public class Datasets {
 		
 		for (DatasetInstance inst: dataset){
 			// copy all instances but without annotations
-			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector,Integer>>newArrayList());
+			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), Lists.<Map<String,Object>>newArrayList());
 			// instance with the new annotationset
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
 					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
@@ -1054,7 +1051,7 @@ public class Datasets {
 				annotatorParameters, clusterAlgorithm, numAnnotatorClusters, maxIterations, smoothing, rnd);
 		
 		// transform flat instances and then recreate a dataset.
-		List<FlatInstance<SparseFeatureVector, Integer>> transformedFlatInstances = Lists.newArrayList();
+		List<Map<String, Object>> transformedFlatInstances = Lists.newArrayList();
 		for (DatasetInstance inst: data){
 			// add labeled instance (unchanged)
 			boolean isLabelConcealed = inst.hasLabel() && !inst.hasObservedLabel();
@@ -1062,7 +1059,7 @@ public class Datasets {
 					inst.asFeatureVector(), inst.getLabel(), inst.getInfo().getInstanceId(), inst.getInfo().getSource(), isLabelConcealed)));
 			
 			// add transformed annotations
-			for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+			for (Map<String, Object> ann: inst.getAnnotations().getRawLabelAnnotations()){
 				Annotation<SparseFeatureVector, Integer> xann = AnnotationInterfaceJavaUtils.newAnnotatedInstance(
 						clusterAssignments[(int)ann.getAnnotator()], // xformed annotator
 						ann.getLabel(), ann.getStartTimestamp(), ann.getEndTimestamp(), ann.getInstanceId(), ann.getSource(), inst.asFeatureVector());
@@ -1138,9 +1135,9 @@ public class Datasets {
 				)));
 
 		// body
-		List<FlatInstance<SparseFeatureVector, Integer>> annotations = annotationsIn(data);
+		List<Map<String, Object>> annotations = annotationsIn(data);
 		sortAnnotations(annotations);
-		for (FlatInstance<SparseFeatureVector, Integer> ann: annotations){
+		for (Map<String, Object> ann: annotations){
 			Preconditions.checkState(ann.isAnnotation());
 			bld.append(join.join(Lists.newArrayList(
 					"\n"+ann.getSource(),""+ann.getLabel(),""+ann.getAnnotator(),""+ann.getEndTimestamp()

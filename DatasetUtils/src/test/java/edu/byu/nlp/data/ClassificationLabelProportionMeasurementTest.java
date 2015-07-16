@@ -12,12 +12,12 @@ public class ClassificationLabelProportionMeasurementTest {
   public void test() {
     ClassificationLabelProportionMeasurement m = new ClassificationLabelProportionMeasurement(1);
 
-    assertEquals(1, m.getValue(5, 1), THRESHOLD);
-    assertEquals(1, m.getValue(0, 1), THRESHOLD);
-    assertEquals(1, m.getValue(-1, 1), THRESHOLD);
-    assertEquals(0, m.getValue(5, 4), THRESHOLD);
-    assertEquals(0, m.getValue(-7, -2), THRESHOLD);
-    assertEquals(0, m.getValue(2, 3), THRESHOLD);
+    assertEquals(1, m.featureValue(5, 1), THRESHOLD);
+    assertEquals(1, m.featureValue(0, 1), THRESHOLD);
+    assertEquals(1, m.featureValue(-1, 1), THRESHOLD);
+    assertEquals(0, m.featureValue(5, 4), THRESHOLD);
+    assertEquals(0, m.featureValue(-7, -2), THRESHOLD);
+    assertEquals(0, m.featureValue(2, 3), THRESHOLD);
   }
 
 }

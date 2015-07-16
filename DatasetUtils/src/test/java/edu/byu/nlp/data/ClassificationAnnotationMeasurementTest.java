@@ -18,10 +18,10 @@ public class ClassificationAnnotationMeasurementTest {
     for (int i=0; i<20; i++){
       for (int j=0; j<20; j++){
         if (i==index && j==label){
-          assertEquals(annotation, m.getValue(i, j), THRESHOLD);
+          assertEquals(annotation, m.featureValue(i, j), THRESHOLD);
         }
         else{
-          assertEquals(0, m.getValue(i, j), THRESHOLD);
+          assertEquals(0, m.featureValue(i, j), THRESHOLD);
         }
       }
     }
