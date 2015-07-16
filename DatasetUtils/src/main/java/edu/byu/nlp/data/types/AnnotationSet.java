@@ -21,6 +21,12 @@ public interface AnnotationSet {
 	SparseRealMatrix getLabelAnnotations();
 
 	/**
+	 * Get all of the measurements submitted by this annotator. 
+	 * Indexed by [annotator, measurement].
+	 */
+  Iterable<Measurement<Integer,Integer>> getMeasurements();	
+	
+	/**
 	 * Get the set of raw annotations from which this set was 
 	 * generated. 
 	 */

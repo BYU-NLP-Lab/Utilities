@@ -10,8 +10,8 @@ public class ClassificationLabelProportionMeasurement extends AbstractMeasuremen
    * how prevalent a given label will be. 
    * 
    */
-  public ClassificationLabelProportionMeasurement(int label){
-    super(null);
+  public ClassificationLabelProportionMeasurement(long annotator, int label){
+    super(annotator, null);
     this.label=label;
   }
   

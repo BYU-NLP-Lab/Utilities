@@ -33,4 +33,9 @@ public interface Measurement<X,Y> {
    */
   double getValue(X index, Y label);
   
+  /**
+   * Who was responsible for generating this measurement? 
+   */
+  long getAnnotator();
+  
 }

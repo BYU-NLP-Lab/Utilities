@@ -15,8 +15,8 @@ public class ClassificationAnnotationMeasurement extends AbstractMeasurement<Int
    * could be anywhere in the range. 
    * 
    */
-  public ClassificationAnnotationMeasurement(int index, int label, double annotation){
-    super(null);
+  public ClassificationAnnotationMeasurement(int annotator, int index, int label, double annotation){
+    super(annotator, null);
     Preconditions.checkArgument(-1 <= annotation && annotation <= 1, "'binary' annotation values must be between -1 and 1 (not "+annotation+")");
     this.index=index;
     this.label=label;

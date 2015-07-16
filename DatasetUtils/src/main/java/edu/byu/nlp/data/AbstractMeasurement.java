@@ -13,9 +13,16 @@ import edu.byu.nlp.data.types.Measurement;
 public abstract class AbstractMeasurement<Y> implements Measurement<Integer, Y>{
 
   private Dataset dataset;
+  private long annotator;
 
-  public AbstractMeasurement(Dataset dataset){
+  public AbstractMeasurement(long annotator, Dataset dataset){
+    this.annotator=annotator;
     this.dataset=dataset;
+  }
+  
+  @Override
+  public long getAnnotator() {
+    return annotator;
   }
 
   @Override
