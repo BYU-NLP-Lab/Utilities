@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.util.Collections;
 import java.util.Map;
@@ -25,9 +25,9 @@ import java.util.Map;
  * @author plf1
  *
  */
-public class DataSources {
+public class DataStreamSources {
 
-	private DataSources() { }
+	private DataStreamSources() { }
 	
 	
 
@@ -36,8 +36,8 @@ public class DataSources {
    * (probably a filesystem path to a file that indexes a 
    * corpus that is being used to initialize a pipe). 
    */
-	public static <D,L> DataSource singletonSource(final String source, final Map<String, Object> item){
-	  return new DataSource() {
+	public static <D,L> DataStreamSource singletonSource(final String source, final Map<String, Object> item){
+	  return new DataStreamSource() {
       @Override
       public String getStreamSource() {
         return source;

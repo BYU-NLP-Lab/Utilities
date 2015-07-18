@@ -96,8 +96,8 @@ public class VectorDocumentDatasetBuilder {
     .build();
         
     // apply first pipeline (input)
-    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataSources.cache(
-        DataSources.connect(new DirectoryReader(indexDirectory), inputPipe)); // Cache the data to avoid multiple disk reads
+    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataStreamSources.cache(
+        DataStreamSources.connect(new DirectoryReader(indexDirectory), inputPipe)); // Cache the data to avoid multiple disk reads
     
     // indexing pipe converts labels to numbers 
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(sentenceData);
@@ -113,8 +113,8 @@ public class VectorDocumentDatasetBuilder {
         .build();
     
     // apply second pipeline (vectorization)
-    DataSource<SparseFeatureVector, String> vectorDatasetSource = DataSources.from(indexDirectory.toString(), sentenceData);
-    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataSources.cache(DataSources.connect(vectorDatasetSource, indexerPipe));
+    DataStreamSource<SparseFeatureVector, String> vectorDatasetSource = DataStreamSources.from(indexDirectory.toString(), sentenceData);
+    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataStreamSources.cache(DataStreamSources.connect(vectorDatasetSource, indexerPipe));
 
     // convert FlatInstances to a Dataset
     return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);

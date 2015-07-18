@@ -8,6 +8,6 @@ public interface Dataset extends Iterable<DatasetInstance> {
 	
 	DatasetInfo getInfo();
 	
-	DatasetInstance lookupInstance(String source);
+	DatasetInstance lookupInstance(Integer source);
 	
 }

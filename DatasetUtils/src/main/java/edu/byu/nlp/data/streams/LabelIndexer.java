@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
-import edu.byu.nlp.data.FlatInstance;
+import java.util.Map;
+
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.util.Indexer;
 
 /**
@@ -23,13 +25,14 @@ import edu.byu.nlp.util.Indexer;
  * @author plf1
  *
  */
-public class LabelIndexer<D, L> implements DataSink<D, L, Indexer<L>> {
+public class LabelIndexer<D, L> implements DataStreamSink<Indexer<L>> {
 
-	@Override
-	public Indexer<L> processLabeledInstances(Iterable<FlatInstance<D, L>> data) {
+	@SuppressWarnings("unchecked")
+  @Override
+  public Indexer<L> process(Iterable<Map<String, Object>> data) {
 		Indexer<L> indexer = new Indexer<L>();
-		for (FlatInstance<D, L> instance : data) {
-			indexer.add(instance.getLabel());
+		for (Map<String,Object> instance : data) {
+			indexer.add((L)DataStreamInstance.getRaw(instance, DataStreamInstance.LABEL));
 		}
 		return indexer;
 	}

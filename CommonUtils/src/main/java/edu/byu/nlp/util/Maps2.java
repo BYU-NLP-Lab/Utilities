@@ -1,5 +1,6 @@
 package edu.byu.nlp.util;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,10 @@ public class Maps2 {
 
   private Maps2(){}
 
+  public static <K,V> Map<K,V> hashmapOf(K key, V val){
+    return hashmapOf(Collections.singletonList(key), Collections.singletonList(val));
+  }
+  
   public static <K,V> Map<K,V> hashmapOf(List<K> keys, List<V> vals){
     Preconditions.checkNotNull(keys);
     Preconditions.checkNotNull(vals);

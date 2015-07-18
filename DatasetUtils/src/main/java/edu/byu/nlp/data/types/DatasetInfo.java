@@ -1,5 +1,6 @@
 package edu.byu.nlp.data.types;
 
+import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.util.Indexer;
 
 public interface DatasetInfo {
@@ -40,13 +41,15 @@ public interface DatasetInfo {
 	
 	int getNumClasses();
 	
-	Indexer<Long> getAnnotatorIdIndexer();
+	Indexer<String> getAnnotatorIdIndexer();
 	
-	Indexer<Long> getInstanceIdIndexer();
+	Indexer<String> getInstanceIdIndexer();
 	
 	Indexer<String> getLabelIndexer();
 	
 	Indexer<String> getFeatureIndexer();
+	
+	IndexerCalculator<String,String> getIndexers();
 	
 	int getNullLabel();
 	

@@ -30,7 +30,7 @@ import com.google.common.collect.Iterables;
 import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.docs.DocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
-import edu.byu.nlp.data.pipes.EmailHeaderStripper;
+import edu.byu.nlp.data.streams.EmailHeaderStripper;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector.Entry;
@@ -67,7 +67,7 @@ public class DataExporter {
 	Dataset data =
           new DocumentDatasetBuilder(basedir, dataset, split, new EmailHeaderStripper(),
         	  DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform,  
-              new TopNPerDocumentFeatureSelectorFactory<String>(minFeaturesToKeepPerDocument), featureNormalizationConstant )
+              new TopNPerDocumentFeatureSelectorFactory(minFeaturesToKeepPerDocument), featureNormalizationConstant )
       	  .dataset();
   
       // Print for verification

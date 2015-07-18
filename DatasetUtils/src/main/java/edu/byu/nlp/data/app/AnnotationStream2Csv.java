@@ -37,15 +37,14 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
-import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
 import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
-import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Paths;
 import edu.byu.nlp.util.Enumeration;
@@ -84,7 +83,7 @@ public class AnnotationStream2Csv {
     Dataset data = readData(jsonStream);
 
     // optionally aggregate by instance
-    String header = "annotator,start,end,annotation,label,source,instance_id,num_correct_annotations,num_annotations,cum_num_annotations,num_annotators,cum_num_annotators\n";
+    String header = "annotator,start,end,annotation,label,source,num_correct_annotations,num_annotations,cum_num_annotations,num_annotators,cum_num_annotators\n";
     
     // iterate over instances and (optionally) annotations
     final StringBuilder bld = new StringBuilder();
@@ -93,38 +92,37 @@ public class AnnotationStream2Csv {
 		case ANNOTATION:
 
 			// sort all annotations by end time
-			Map<FlatInstance<SparseFeatureVector, Integer>, DatasetInstance> ann2InstMap = Maps.newIdentityHashMap();
-			List<FlatInstance<SparseFeatureVector, Integer>> annotationList = Lists.newArrayList();
+			Map<Map<String, Object>, DatasetInstance> ann2InstMap = Maps.newIdentityHashMap();
+			List<Map<String, Object>> annotationList = Lists.newArrayList();
 		    for (DatasetInstance inst: data){
-		    	for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
+		    	for (Map<String, Object> ann: inst.getAnnotations().getRawAnnotations()){
 		    		ann2InstMap.put(ann, inst); // record instance of each annotations
 		    		annotationList.add(ann);
 		    	}
 		    }
-			Collections.sort(annotationList, new Comparator<FlatInstance<SparseFeatureVector, Integer>>(){
+			Collections.sort(annotationList, new Comparator<Map<String, Object>>(){
 				@Override
-				public int compare(FlatInstance<SparseFeatureVector, Integer> o1, FlatInstance<SparseFeatureVector, Integer> o2) {
+				public int compare(Map<String, Object> o1, Map<String, Object> o2) {
 			        // no null checking since we want to fail if annotation time is not set. 
 			        return Long.compare(
-			            o1.getEndTimestamp(),
-			            o2.getEndTimestamp());
+			            DataStreamInstance.getEndTime(o1),
+			            DataStreamInstance.getEndTime(o2));
 				}
 		    });
 			
-			Set<Long> annotators = Sets.newHashSet();
-			for (Enumeration<FlatInstance<SparseFeatureVector, Integer>> item: Iterables2.enumerate(annotationList)){
-				FlatInstance<SparseFeatureVector, Integer> ann = item.getElement();
+			Set<Integer> annotators = Sets.newHashSet();
+			for (Enumeration<Map<String, Object>> item: Iterables2.enumerate(annotationList)){
+				Map<String, Object> ann = item.getElement();
 				DatasetInstance inst = ann2InstMap.get(ann);
-				annotators.add(ann.getAnnotator());
+				annotators.add(DataStreamInstance.getAnnotator(ann));
 				
-				bld.append(ann.getAnnotator()+",");
-				bld.append(ann.getStartTimestamp()+",");
-				bld.append(ann.getEndTimestamp()+",");
-				bld.append(ann.getLabel()+",");
+				bld.append(DataStreamInstance.getAnnotator(ann)+",");
+				bld.append(DataStreamInstance.getStartTime(ann)+",");
+				bld.append(DataStreamInstance.getEndTime(ann)+",");
+				bld.append(DataStreamInstance.getAnnotation(ann)+",");
 				bld.append(inst.getLabel()+",");
-				bld.append(inst.getInfo().getSource()+",");
-				bld.append(inst.getInfo().getInstanceId()+",");
-				bld.append((!inst.hasLabel()? "NA": ann.getLabel()==inst.getLabel()? 1: 0)+","); // num correct
+				bld.append(data.getInfo().getIndexers().getInstanceIdIndexer().get(inst.getInfo().getSource())+",");
+				bld.append((!inst.hasLabel()? "NA": DataStreamInstance.getAnnotation(ann)==inst.getLabel()? 1: 0)+","); // num correct
 				bld.append(1+","); // num annotations
 				bld.append((item.getIndex()+1)+","); // cumulative num annotations
 				bld.append(1+","); // num annotators
@@ -152,7 +150,6 @@ public class AnnotationStream2Csv {
 				bld.append("NA,");
 				bld.append(inst.getLabel()+",");
 				bld.append(inst.getInfo().getSource()+",");
-				bld.append(inst.getInfo().getInstanceId()+",");
 				bld.append(numCorrectAnnotations+",");
 				bld.append(inst.getInfo().getNumAnnotations()+",");
 				bld.append(cumNumAnnotations+",");
@@ -163,15 +160,15 @@ public class AnnotationStream2Csv {
 		    break;
 		    
 		case ANNOTATOR:
-			Multiset<Long> perAnnotatorAnnotationCounts = HashMultiset.create();
-			Multiset<Long> perAnnotatorCorrectAnnotationCounts = HashMultiset.create();
+			Multiset<Integer> perAnnotatorAnnotationCounts = HashMultiset.create();
+			Multiset<Integer> perAnnotatorCorrectAnnotationCounts = HashMultiset.create();
 		    for (DatasetInstance inst: data){
-		    	for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
-		    		long annotatorId = ann.getAnnotator();
+		    	for (Map<String, Object> ann: inst.getAnnotations().getRawAnnotations()){
+		    		int annotatorId = DataStreamInstance.getAnnotator(ann);
 		    		
 		    		perAnnotatorAnnotationCounts.add(annotatorId);
 		    		
-		    		if (inst.getLabel()==ann.getLabel()){
+		    		if (inst.getLabel()==DataStreamInstance.getAnnotation(ann)){
 		    			perAnnotatorCorrectAnnotationCounts.add(annotatorId);
 		    		}
 
@@ -179,10 +176,9 @@ public class AnnotationStream2Csv {
 		    }
 		    
 		    
-		    for (Long annotatorId: data.getInfo().getAnnotatorIdIndexer()){
+		    for (String annotatorId: data.getInfo().getAnnotatorIdIndexer()){
 
 				bld.append(annotatorId+",");
-				bld.append("NA,");
 				bld.append("NA,");
 				bld.append("NA,");
 				bld.append("NA,");
@@ -233,7 +229,7 @@ public class AnnotationStream2Csv {
             docTransform, DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform,
             FeatureSelectorFactories.conjoin(
                 new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
-                (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),
+                (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory(topNFeaturesPerDocument)),
             featureNormalizer)
             .dataset();
       

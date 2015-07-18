@@ -19,34 +19,33 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Map;
 
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
 
-import org.apache.commons.vfs2.FileObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.Downcase;
-import edu.byu.nlp.data.pipes.FieldIndexer;
-import edu.byu.nlp.data.pipes.FilenameToContents;
-import edu.byu.nlp.data.pipes.IndexFileToFileList;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
-import edu.byu.nlp.data.pipes.JSONFileToAnnotatedDocumentList;
-import edu.byu.nlp.data.pipes.LabeledInstancePipe;
-import edu.byu.nlp.data.pipes.Pipes;
-import edu.byu.nlp.data.pipes.RegexpTokenizer;
-import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
+import edu.byu.nlp.data.streams.DataStreams;
+import edu.byu.nlp.data.streams.DataStreams.Transform;
+import edu.byu.nlp.data.streams.Downcase;
+import edu.byu.nlp.data.streams.FieldIndexer;
+import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
+import edu.byu.nlp.data.streams.RegexpTokenizer;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.io.Files2;
 import edu.byu.nlp.util.DoubleArrays;
+import edu.byu.nlp.util.Functions2;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.IntArrays;
 import edu.byu.nlp.util.Nullable;
@@ -65,34 +64,28 @@ public class DocPipes {
 	private DocPipes() {
 	}
 
-	public static LabeledInstancePipe<String, String, String, String> indexToDocPipe(FileObject baseDir) {
-		return new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-				.add(Pipes.oneToManyLabeledInstancePipe(new IndexFileToFileList()))
-				.add(Pipes.labeledInstanceTransformingPipe(new FilenameToContents(baseDir))).build();
-	}
 
-	public static LabeledInstancePipe<String, String, String, String> jsonToDocPipe(String jsonReferencedDataDir) throws FileNotFoundException {
-	  return Pipes.oneToManyLabeledInstancePipe(new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir));
+	public static Function<Map<String, Object>, Iterable<Map<String, Object>>> jsonToDocPipe(String jsonReferencedDataDir) throws FileNotFoundException {
+	  return DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, 
+	      new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir, DataStreamInstance.DATA));
 	}
 
 	/**
 	 * Do feature selection (on the wordIndex itself)
 	 */
-	public static Indexer<String> selectFeatures(List<FlatInstance<List<List<String>>, String>> data,
-			FeatureSelectorFactory<String> featureSelectorFactory, Indexer<String> wordIndex) {
+	public static Indexer<String> selectFeatures(Iterable<Map<String,Object>> data,
+			FeatureSelectorFactory featureSelectorFactory, Indexer<String> wordIndex) {
 		
 		if (featureSelectorFactory != null) {
 			// Index before feature selection (we'll need to do it again later
 			// after deciding which features to keep)
 			// Create count vectors
-			Iterable<FlatInstance<SparseFeatureVector, String>> countVectors = Pipes
-					.<List<List<String>>, SparseFeatureVector, String> labeledInstanceDataTransformingPipe(
-							new CountVectorizer<String>(wordIndex)).apply(data);
-
+		  Transform vectorizer = DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(wordIndex));
+		  Iterable<Map<String, Object>> countVectors = Iterables.transform(data, vectorizer);
+		  
 			// Feature selection
 			int numFeatures = wordIndex.size();
-			BitSet features = featureSelectorFactory.newFeatureSelector(numFeatures).processLabeledInstances(
-					countVectors);
+			BitSet features = featureSelectorFactory.newFeatureSelector(numFeatures).process(countVectors);
 			logger.info("Number of features before selection = " + numFeatures);
 			wordIndex = wordIndex.retain(features);
 			logger.info("Number of features after selection = " + wordIndex.size());
@@ -214,48 +207,47 @@ public class DocPipes {
    * Pipeline converts from a dataset index directory to labeled documents 
    * composed of tokenized sentences 
    */
-  public static LabeledInstancePipe<String, String, List<List<String>>, String> inputSentencePipe(
-      LabeledInstancePipe<String, String, String, String> indexToDocPipe, 
+  public static Function<Map<String, Object>, Map<String, Object>> inputSentencePipe(
       @Nullable Function<String, String> docTransform, 
       @Nullable Function<String, List<String>> sentenceSplitter, 
       @Nullable Function<String, List<String>> tokenizer,
       @Nullable Function<String, String> tokenTransform) {
-    return
-        // start with a pipeline <indata, inlabel, outdata, outlabel> 
-        new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-        // convert a file system dataset (string) to document contents (String) and labels (String)
-        .add(indexToDocPipe)
-        // transform documents (e.g., remove email headers, transform emoticons)
-        .addDataTransform(docTransform)
-        // split sentences
-        .addDataTransform(sentenceSplitter)
-        // tokenize documents
-        .addDataTransform(DocPipes.tokenSplitter(tokenizer))
-        // transform tokens (e.g., remove stopwords, stemmer, remove short words)
-        .addDataTransform(DocPipes.tokenTransform(tokenTransform))
-        .build();
+
+      return 
+          Functions2.compose(
+              // transform documents (e.g., remove email headers, transform emoticons)
+              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, docTransform),
+              // split sentences
+              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, sentenceSplitter),
+              // tokenize documents
+              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenizer),
+              // transform tokens (e.g., remove stopwords, stemmer, remove short words)
+              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenTransform));
   }
   
   /**
    * Pipeline converts string data to feature vectors and does feature selection
+   * @return 
    */
-  public static LabeledInstancePipe<List<List<String>>, String, SparseFeatureVector, Integer> sentence2FeatureVectorPipe(
-      List<FlatInstance<List<List<String>>, String>> data, IndexerCalculator<String, String> indexers, 
+  public static Function<Map<String, Object>, Map<String, Object>> sentence2FeatureVectorPipe(
+      List<Map<String,Object>> data, IndexerCalculator<String, String> indexers, 
       Integer featureNormalizationConstant){
     
     Indexer<String> wordIndex = indexers.getWordIndexer();
     Indexer<String> labelIndex = indexers.getLabelIndexer();
-    Indexer<Long> instanceIdIndexer = indexers.getInstanceIdIndexer();
-    Indexer<Long> annotatorIdIndexer = indexers.getAnnotatorIdIndexer();
+    Indexer<String> instanceIdIndexer = indexers.getInstanceIdIndexer();
+    Indexer<String> annotatorIdIndexer = indexers.getAnnotatorIdIndexer();
     
-    return     
-        new SerialLabeledInstancePipeBuilder<List<List<String>>, String, List<List<String>>, String>()
-        .addLabelTransform(new FieldIndexer<String>(labelIndex))
-        .addAnnotatorIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(annotatorIdIndexer)))
-        .addInstanceIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(instanceIdIndexer)))
-        .addDataTransform(new CountVectorizer<String>(wordIndex))
-        .addDataTransform(new CountNormalizer(featureNormalizationConstant))
-        .build();
+    return 
+        Functions2.compose(
+            DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(labelIndex)),
+            DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(labelIndex)),
+            DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(instanceIdIndexer)),
+            DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(annotatorIdIndexer)),
+            DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(wordIndex)),
+            DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountNormalizer(featureNormalizationConstant))
+            );
+    
   }
   
 

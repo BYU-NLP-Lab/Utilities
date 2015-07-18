@@ -17,13 +17,12 @@ package edu.byu.nlp.data.docs;
 
 import java.util.BitSet;
 
-import edu.byu.nlp.data.pipes.DataSink;
-import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.streams.DataStreamSink;
 
 /**
  * @author rah67
  *
  */
-public interface FeatureSelectorFactory<L> {
-	DataSink<SparseFeatureVector, L, BitSet> newFeatureSelector(int numFeatures);
+public interface FeatureSelectorFactory {
+	DataStreamSink<BitSet> newFeatureSelector(int numFeatures);
 }

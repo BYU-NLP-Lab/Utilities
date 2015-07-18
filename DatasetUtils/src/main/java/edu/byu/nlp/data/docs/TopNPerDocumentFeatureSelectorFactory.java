@@ -17,13 +17,14 @@ package edu.byu.nlp.data.docs;
 
 import java.util.BitSet;
 import java.util.Comparator;
+import java.util.Map;
 
 import com.google.common.collect.Iterables;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSink;
-import edu.byu.nlp.data.pipes.Pipes;
-import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.streams.DataStreamSink;
+import edu.byu.nlp.data.streams.DataStreams;
+import edu.byu.nlp.data.streams.DataStreams.Transform;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector.Entry;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.util.Heaps;
@@ -32,7 +33,7 @@ import edu.byu.nlp.util.Heaps;
  * @author rah67
  *
  */
-public class TopNPerDocumentFeatureSelectorFactory<L> implements FeatureSelectorFactory<L> {
+public class TopNPerDocumentFeatureSelectorFactory implements FeatureSelectorFactory {
 	
 	private final int minFeaturesToKeepPerDocument;
 
@@ -41,11 +42,11 @@ public class TopNPerDocumentFeatureSelectorFactory<L> implements FeatureSelector
 	}
 
 	@Override
-	public DataSink<SparseFeatureVector, L, BitSet> newFeatureSelector(int numFeatures) {
-		return new TopNPerDocumentFeatureSelector<L>(minFeaturesToKeepPerDocument, numFeatures);
+	public DataStreamSink<BitSet> newFeatureSelector(int numFeatures) {
+		return new TopNPerDocumentFeatureSelector(minFeaturesToKeepPerDocument, numFeatures);
 	}
 	
-	public static class TopNPerDocumentFeatureSelector<L> implements DataSink<SparseFeatureVector, L, BitSet> {
+	public static class TopNPerDocumentFeatureSelector implements DataStreamSink<BitSet> {
 	
 		private final int minFeaturesToKeepPerDocument;
 		private final int numFeatures;
@@ -57,25 +58,22 @@ public class TopNPerDocumentFeatureSelectorFactory<L> implements FeatureSelector
 		
 		/** {@inheritDoc} */
 		@Override
-		public BitSet processLabeledInstances(Iterable<FlatInstance<SparseFeatureVector, L>> docs) {
-			double[] logDf = new LogDocumentFrequency<L>(numFeatures).processLabeledInstances(docs);
+    public BitSet process(Iterable<Map<String, Object>> docs) {
+			double[] logDf = new LogDocumentFrequency(numFeatures).process(docs);
 			int numDocuments = Iterables.size(docs); // is there somewhere more efficient to do this naturally? 
 			
-			Iterable<FlatInstance<SparseFeatureVector, L>> tfidfVectors = Pipes.<SparseFeatureVector, SparseFeatureVector, L>labeledInstanceDataTransformingPipe(
-					new CountsToTFIDF<String>(logDf, numDocuments)).apply(docs);
-//			Iterable<FlatInstance<BasicSparseFeatureVector, L>> tfidfVectors =
-//					Instances.<L, SparseFeatureVector, SparseFeatureVector>transformedLabeledInstance(docs,
-//							new CountsToTFIDF<String>(logDf));
+			Transform dataTransformer = DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountsToTFIDF<String>(logDf, numDocuments));
+			Iterable<Map<String,Object>> tfidfVectors = Iterables.transform(docs, dataTransformer);
 			
 			return buildBitSet(tfidfVectors);
 		}
 	
-		private BitSet buildBitSet(Iterable<FlatInstance<SparseFeatureVector, L>> tfidfVectors) {
+		private BitSet buildBitSet(Iterable<Map<String,Object>> tfidfVectors) {
 			BitSet b = new BitSet(numFeatures);
 			Comparator<Entry> c = BasicSparseFeatureVector.valueComparator();
-			for (FlatInstance<SparseFeatureVector, L> doc : tfidfVectors) {
-				if (doc.getData()!=null){
-					for (Entry e : Heaps.largestN(doc.getData().sparseEntries(), minFeaturesToKeepPerDocument, false, c)) {
+			for (Map<String,Object> doc : tfidfVectors) {
+				if (DataStreamInstance.getData(doc)!=null){
+					for (Entry e : Heaps.largestN(DataStreamInstance.getData(doc).sparseEntries(), minFeaturesToKeepPerDocument, false, c)) {
 						b.set(e.getIndex());
 					}
 				}

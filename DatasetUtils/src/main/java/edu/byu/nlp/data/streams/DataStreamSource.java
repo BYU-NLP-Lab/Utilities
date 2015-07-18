@@ -1,8 +1,8 @@
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.util.Map;
 
-public interface DataSource {
+public interface DataStreamSource {
 
   Iterable<Map<String,Object>> getStream();
   String getStreamSource();

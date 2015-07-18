@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,15 +19,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Iterators;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.data.pipes.DataStreams.OneToMany;
+import edu.byu.nlp.data.streams.DataStreams.OneToMany;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.util.Strings;
 
 /**
@@ -63,7 +63,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 
 	// simple deserialization pojo
 	private static class JSONAnnotation {
-		private String annotator, label, data, source, annotation, datapath;
+		private String annotator, label, data, source, annotation, datapath, measurement;
 		private long starttime = -1, endtime = -1;
 		private boolean labelobserved;
 
@@ -88,7 +88,6 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	
 
 	@Override
-//	public Iterator<FlatInstance<String, String>> apply(FlatInstance<String, String> indexFilename) {
   public Iterable<Map<String, Object>> apply(Map<String, Object> input) {
 	  // this should be the only thing the input has
 	  String indexFilename = (String) input.get(fieldname);
@@ -105,18 +104,15 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 		// translate annotations into flatInstances 
 		// and gather instance data 
 		Map<String,InstancePojo> instanceData = Maps.newHashMap();
-		List<FlatInstance<String, String>> transformedAnnotations = Lists.newArrayList();
+		List<Map<String,Object>> transformedAnnotations = Lists.newArrayList();
 		for (JSONAnnotation ann : jsonData) {
 			
 			// annotation
 			if (ann.annotation != null) {
-				String annotationData = null; // data will be passed on only via the labeledinstance to avoid redundant processing 
-				transformedAnnotations.add(new FlatAnnotatedInstance<String,String>(
-						AnnotationInterfaceJavaUtils.newAnnotatedInstance(
-								ann.annotator, ann.annotation, ann.starttime * 1000 * 1000, ann.endtime * 1000 * 1000, 
-								ann.source, annotationData)));
+				// data will be passed on only via the labeledinstance to avoid redundant processing 
+				transformedAnnotations.add(DataStreamInstance.fromAnnotationRaw(ann.source, ann.annotator, ann.annotation, 
+				    ann.starttime * 1000 * 1000, ann.endtime * 1000 * 1000, ann.measurement));
 			}
-			
 			
 			// ensure 1 instance per unique source
 			if (!instanceData.containsKey(ann.source)){
@@ -139,7 +135,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 		}
 
 		// create exactly 1 labeled instance for each unique source (even if the label is null)
-		List<FlatInstance<String, String>> transformedInstances = Lists.newArrayList();
+		List<Map<String,Object>> transformedInstances = Lists.newArrayList();
 		for (InstancePojo pojo: instanceData.values()){
 			
 			// read data from disk (if necessary)
@@ -155,11 +151,10 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 				instData = Strings.join(lines, "\n");
 			}
 
-			transformedInstances.add(new FlatLabeledInstance<String,String>(
-					AnnotationInterfaceJavaUtils.newLabeledInstance(instData, pojo.label, pojo.source, !pojo.labelobserved)));
+			transformedInstances.add(DataStreamInstance.fromLabelRaw(pojo.source, instData, pojo.label, pojo.labelobserved));
 		}
 		
-		return Iterators.concat(transformedAnnotations.iterator(), transformedInstances.iterator());
+		return Iterables.concat(transformedAnnotations, transformedInstances);
 		
 	}
 

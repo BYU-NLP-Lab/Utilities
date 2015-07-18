@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.util.List;
+import java.util.Map;
 
-import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.util.Counter;
 import edu.byu.nlp.util.HashCounter;
 
@@ -26,13 +27,14 @@ import edu.byu.nlp.util.HashCounter;
  * @author plf1
  *
  */
-public class WordCounter<W, L> implements DataSink<List<W>, L, Counter<W>> {
+public class WordCounter<W, L> implements DataStreamSink<Counter<W>> {
 
-	@Override
-	public Counter<W> processLabeledInstances(Iterable<FlatInstance<List<W>, L>> data) {
+	@SuppressWarnings("unchecked")
+  @Override
+  public Counter<W> process(Iterable<Map<String, Object>> data) {
 		Counter<W> counter = new HashCounter<W>();
-		for (FlatInstance<List<W>, L> label : data) {
-			for (W word : label.getData()) {
+		for (Map<String,Object> label : data) {
+			for (W word : (List<W>)DataStreamInstance.getData(label)) {
 				counter.incrementCount(word, 1);
 			}
 		}

@@ -14,10 +14,10 @@
 package edu.byu.nlp.data.docs;
 
 import java.util.BitSet;
+import java.util.Map;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSink;
-import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.streams.DataStreamSink;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector.Entry;
 
 /**
@@ -27,7 +27,7 @@ import edu.byu.nlp.data.types.SparseFeatureVector.Entry;
  * @author rah67
  * 
  */
-public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFactory<L> {
+public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFactory {
 
   private final int cutoff;
 
@@ -36,13 +36,11 @@ public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFact
   }
 
   @Override
-  public DataSink<SparseFeatureVector, L, BitSet> newFeatureSelector(int numFeatures) {
+  public DataStreamSink<BitSet> newFeatureSelector(int numFeatures) {
     return new CountCutoffFeatureSelector<L>(cutoff, numFeatures);
   }
 
-  public static class CountCutoffFeatureSelector<L>
-      implements
-        DataSink<SparseFeatureVector, L, BitSet> {
+  public static class CountCutoffFeatureSelector<L> implements DataStreamSink<BitSet> {
 
     private final int cutoff;
     private final int numFeatures;
@@ -54,15 +52,15 @@ public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFact
 
     /** {@inheritDoc} */
     @Override
-	public BitSet processLabeledInstances(Iterable<FlatInstance<SparseFeatureVector, L>> docs) {
+	public BitSet process(Iterable<Map<String, Object>> docs) {
       return buildBitSet(countFeatures(docs));
     }
 
-    private double[] countFeatures(Iterable<FlatInstance<SparseFeatureVector, L>> docs) {
+    private double[] countFeatures(Iterable<Map<String, Object>> docs) {
       double[] counts = new double[numFeatures];
-      for (FlatInstance<SparseFeatureVector, L> doc : docs) {
-    	  if (!doc.isAnnotation()){ // ignore annotations; no data
-	        for (Entry e : doc.getData().sparseEntries()) {
+      for (Map<String, Object> doc : docs) {
+    	  if (!DataStreamInstance.isAnnotation(doc)){ // ignore annotations; no data
+	        for (Entry e : DataStreamInstance.getData(doc).sparseEntries()) {
 	          counts[e.getIndex()] += e.getValue();
 	        }
     	  }

@@ -20,16 +20,17 @@ import java.util.List;
 import org.apache.commons.vfs2.FileSystemException;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSource;
-import edu.byu.nlp.data.pipes.DataSources;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
-import edu.byu.nlp.data.pipes.LabeledInstancePipe;
+import edu.byu.nlp.data.streams.DataStream;
+import edu.byu.nlp.data.streams.DataStreams;
+import edu.byu.nlp.data.streams.FieldIndexer;
+import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
-import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.util.Indexers;
+import edu.byu.nlp.util.Maps2;
 import edu.byu.nlp.util.Nullable;
 
 /**
@@ -70,7 +71,7 @@ public class JSONDocumentDatasetBuilder {
   private Function<String, List<String>> sentenceSplitter;
   private Function<String, List<String>> tokenizer;
   private Function<String, String> tokenTransform;
-  private final FeatureSelectorFactory<String> featureSelectorFactory;
+  private final FeatureSelectorFactory featureSelectorFactory;
   private Integer featureNormalizationConstant;
   private String jsonAnnotationStream;
   private String jsonReferencedDataDir;
@@ -87,7 +88,7 @@ public class JSONDocumentDatasetBuilder {
       @Nullable Function<String, List<String>> sentenceSplitter,
       @Nullable Function<String, List<String>> tokenizer,
       @Nullable Function<String, String> tokenTransform,
-      FeatureSelectorFactory<String> featureSelectorFactory,
+      FeatureSelectorFactory featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) {
 	  this.jsonAnnotationStream=filename;
 	  this.jsonReferencedDataDir=new File(basedir).getAbsolutePath();
@@ -101,29 +102,39 @@ public class JSONDocumentDatasetBuilder {
 
   public Dataset dataset() throws IOException {
 
-    // pipe to import input files into strings and do greedy feature transformation/selection (e.g., filter short words)
-    LabeledInstancePipe<String, String, List<List<String>>, String> inputPipe = DocPipes.inputSentencePipe(
-        DocPipes.jsonToDocPipe(jsonReferencedDataDir), docTransform, sentenceSplitter, tokenizer, tokenTransform);
-
-    // apply first pipeline (input)
-    List<FlatInstance<List<List<String>>, String>> sentenceData = DataSources.cache(
-        DataSources.connect(DataSources.fromPath(jsonAnnotationStream), inputPipe)); 
+    // index directory to index filenames
+    @SuppressWarnings("unchecked")
+    DataStream stream = 
+      DataStream.withSource(jsonAnnotationStream.toString(), Lists.newArrayList(Maps2.<String,Object>hashmapOf(DataStreamInstance.DATA, jsonAnnotationStream)))
+      // index filenames to data filenames
+      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, DocPipes.jsonToDocPipe(jsonReferencedDataDir)))
+      // transform documents (e.g., remove email headers, transform emoticons)
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, docTransform))
+      // split sentences
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, sentenceSplitter))
+      // tokenize documents
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenizer))
+      // transform tokens (e.g., remove stopwords, stemmer, remove short words)
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenTransform))
+    ;
 
     // feature selection
-    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(sentenceData);
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(stream);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
-    indexers.setWordIndexer(DocPipes.selectFeatures(sentenceData, featureSelectorFactory, indexers.getWordIndexer()));
-
-    // second pipe to convert data to vectors and labels to numbers 
-    LabeledInstancePipe<List<List<String>>, String, SparseFeatureVector, Integer> vectorizingPipe = 
-        DocPipes.sentence2FeatureVectorPipe(sentenceData, indexers, featureNormalizationConstant);
-    
-    // apply second pipe (vectorization)
-    DataSource<List<List<String>>, String> vectorDatasetSource = DataSources.from(jsonAnnotationStream, sentenceData);
-    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataSources.cache(DataSources.connect(vectorDatasetSource, vectorizingPipe));
+    indexers.setWordIndexer(DocPipes.selectFeatures(stream, featureSelectorFactory, indexers.getWordIndexer()));
+      
+    // convert data to vectors and labels to numbers
+    stream = stream.
+      transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(indexers.getWordIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountNormalizer(featureNormalizationConstant)))
+      ;
 
     // convert FlatInstances to a Dataset
-    return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);
+    return Datasets.convert(stream.getName(), stream, indexers, true);
     
   }
   

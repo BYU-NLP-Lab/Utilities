@@ -21,7 +21,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
-import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
@@ -33,16 +33,16 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
  */
 public class EmpiricalAnnotations<D,L> {
   
-  private Map<String, Multimap<Long, FlatInstance<D, L>>> annotations;
+  private Map<String, Multimap<Long, Map<String, Object>>> annotations;
   private DatasetInfo info;
   
-  public EmpiricalAnnotations(Map<String, Multimap<Long, FlatInstance<D, L>>> annotations,
+  public EmpiricalAnnotations(Map<String, Multimap<Long, Map<String, Object>>> annotations,
        DatasetInfo info){
     this.annotations=annotations;
     this.info=info;
   }
   
-  public Multimap<Long, FlatInstance<D, L>> getAnnotationsFor(String source, D data){
+  public Multimap<Long, Map<String, Object>> getAnnotationsFor(String source, D data){
     if (annotations.containsKey(source)){
       return annotations.get(source);
     }
@@ -60,19 +60,20 @@ public class EmpiricalAnnotations<D,L> {
    * indexed by <instanceIndex,annotatorIndex>  
    */
   public static EmpiricalAnnotations<SparseFeatureVector, Integer> fromDataset(Dataset dataset){
-	Map<String, Multimap<Long, FlatInstance<SparseFeatureVector, Integer>>> annotations = Maps.newHashMap();
+	Map<String, Multimap<Long, Map<String, Object>>> annotations = Maps.newHashMap();
     
     for (DatasetInstance inst: dataset){
     
       // make sure an annotation multimap exists, if this instance has any annotations
     	String source = inst.getInfo().getSource();
       if (inst.getInfo().getNumAnnotations()>0 && !annotations.containsKey(source)){
-        annotations.put(source, HashMultimap.<Long, FlatInstance<SparseFeatureVector, Integer>>create());
+        annotations.put(source, HashMultimap.<Long, Map<String, Object>>create());
       }
     	
       // add all annotations to the table, indexed by annotator
-      for (FlatInstance<SparseFeatureVector, Integer> ann: inst.getAnnotations().getRawLabelAnnotations()){
-        annotations.get(source).put(ann.getAnnotator(), ann);
+      for (Map<String, Object> ann: inst.getAnnotations().getRawAnnotations()){
+        Integer annotator = DataStreamInstance.getAnnotator(ann, dataset.getInfo().getIndexers());
+        annotations.get(source).put((long)annotator, ann);
       }
     	
     }

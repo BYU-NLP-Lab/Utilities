@@ -1,4 +1,4 @@
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,35 +31,6 @@ import edu.byu.nlp.util.Iterables2;
  * For example, Iterables.transform(stream1,function) 
  */
 public class DataStreams {
-
-  /**
-   * Transform a data stream by apply a function to an entire item/object 
-   * at a time.
-   */
-  public static Iterable<Map<String,Object>> transform(Iterable<Map<String,Object>> stream, Transform ... transforms){
-    for (Transform transform: transforms){
-      stream = Iterables.transform(stream, transform);
-    }
-    return stream;
-  }
-
-  /**
-   * Eliminate all but the matching entries
-   */
-  public static Iterable<Map<String,Object>> filter(Iterable<Map<String,Object>> stream, Filter ... filters){
-    for (Filter filter: filters){
-      stream = Iterables.filter(stream, filter);
-    }
-    return stream;
-  }
-
-  public static Iterable<Map<String,Object>> oneToManyTransform(Iterable<Map<String,Object>> stream, OneToMany ... oneToManys){
-    for (OneToMany oneToMany: oneToManys){
-      stream = Iterables2.flatten(Iterables.transform(stream, oneToMany));
-    }
-    return stream;
-  }
-  
 
   /* ******************************************************************************************** */
   /* **************************** One-to-many *************************************************** */

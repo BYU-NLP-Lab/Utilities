@@ -19,13 +19,10 @@ import java.util.List;
 
 import org.apache.commons.vfs2.FileSystemException;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSource;
-import edu.byu.nlp.data.pipes.DataSources;
-import edu.byu.nlp.data.pipes.FieldIndexer;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
-import edu.byu.nlp.data.pipes.LabeledInstancePipe;
-import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
+import edu.byu.nlp.data.streams.DataStreamSource;
+import edu.byu.nlp.data.streams.DataStreamSources;
+import edu.byu.nlp.data.streams.FieldIndexer;
+import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
@@ -66,8 +63,8 @@ public class JSONVectorDocumentDatasetBuilder {
     .build();
     
     // apply first pipeline (input)
-    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataSources.cache(
-        DataSources.connect(DataSources.fromPath(jsonAnnotationStream), inputPipe)); 
+    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataStreamSources.cache(
+        DataStreamSources.connect(DataStreamSources.fromPath(jsonAnnotationStream), inputPipe)); 
     
     // indexing pipe converts labels to numbers 
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(sentenceData);
@@ -84,8 +81,8 @@ public class JSONVectorDocumentDatasetBuilder {
         .build();
     
     // apply second pipeline (vectorization)
-    DataSource<SparseFeatureVector, String> vectorDatasetSource = DataSources.from(jsonAnnotationStream, sentenceData);
-    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataSources.cache(DataSources.connect(vectorDatasetSource, indexerPipe));
+    DataStreamSource<SparseFeatureVector, String> vectorDatasetSource = DataStreamSources.from(jsonAnnotationStream, sentenceData);
+    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataStreamSources.cache(DataStreamSources.connect(vectorDatasetSource, indexerPipe));
 
     // convert FlatInstances to a Dataset
     return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);

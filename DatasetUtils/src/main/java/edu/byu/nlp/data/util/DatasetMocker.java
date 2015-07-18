@@ -5,7 +5,7 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.data.pipes.IndexerCalculator;
+import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
@@ -63,9 +63,9 @@ public class DatasetMocker {
 	public Dataset build(){
 
 		// Populate Identity Indexers
-		Indexer<Long> instanceIdIndexer = new Indexer<Long>();
+		Indexer<String> instanceIdIndexer = new Indexer<String>();
 		for (long i = 0; i < instances.size(); i++) {
-			instanceIdIndexer.add(i);
+			instanceIdIndexer.add(""+i);
 		}
 		Indexer<String> featureIndexer = new Indexer<String>();
 		for (long f = 0; f < maxFeatureTracker.max(); f++) {

@@ -1,9 +1,9 @@
 package edu.byu.nlp.data.types;
 
+import java.util.Map;
+
 import org.apache.commons.math3.linear.SparseRealMatrix;
 import org.apache.commons.math3.linear.SparseRealVector;
-
-import edu.byu.nlp.data.FlatInstance;
 
 /**
  * Summarized annotations for a given data item.
@@ -30,7 +30,7 @@ public interface AnnotationSet {
 	 * Get the set of raw annotations from which this set was 
 	 * generated. 
 	 */
-	Iterable<FlatInstance<SparseFeatureVector, Integer>> getRawLabelAnnotations();
+	Iterable<Map<String,Object>> getRawAnnotations();
 	
 	/**
 	 * Gets the mean annotation value for each annotator's
@@ -43,11 +43,5 @@ public interface AnnotationSet {
 	 * annotated regressand. Indexed by [annotator].
 	 */
 	SparseRealVector getRegressandAnnotationVariances();
-
-	/**
-	 * Get the set of raw annotations from which this set was 
-	 * generated. 
-	 */
-	Iterable<FlatInstance<SparseFeatureVector,Double>> getRawRegressandAnnotations();
 
 }

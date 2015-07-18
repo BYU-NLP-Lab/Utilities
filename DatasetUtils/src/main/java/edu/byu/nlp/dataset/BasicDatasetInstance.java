@@ -31,16 +31,16 @@ public class BasicDatasetInstance implements DatasetInstance {
 	/**
 	 * Create a simple instance with an observed label and no annotations or regressand
 	 */
-	public BasicDatasetInstance(SparseFeatureVector vector, Integer label, long instanceId, String source, Indexer<String> labelIndexer){
-		this(vector, label, false, null, false, Datasets.emptyAnnotationSet(), instanceId, source, labelIndexer);
+	public BasicDatasetInstance(SparseFeatureVector vector, Integer label, int source, Indexer<String> labelIndexer){
+		this(vector, label, false, null, false, Datasets.emptyAnnotationSet(), source, labelIndexer);
 	}
 	
 	public BasicDatasetInstance(SparseFeatureVector vector,  
 			Integer label, boolean isLabelConcealed, Double regressand, boolean isRegressandConcealed, 
-			AnnotationSet annotations, long instanceId, String source, Indexer<String> labelIndexer){
+			AnnotationSet annotations, int source, Indexer<String> labelIndexer){
 		this(vector,label,isLabelConcealed,regressand,isRegressandConcealed,annotations,
 				new InstanceInfo(
-						instanceId, source, annotations, 
+						source, annotations, 
 						labelIndexer));
 	}
 	
@@ -131,20 +131,18 @@ public class BasicDatasetInstance implements DatasetInstance {
 	
 	
 	public static class InstanceInfo implements DatasetInstanceInfo{
-		private String source;
+		private int source;
 		private int numAnnotations = -1;
-		private long instanceId;
 		private Indexer<String> labelIndexer;
 		private AnnotationSet annotations;
 
-		public InstanceInfo(long instanceId, String source, AnnotationSet annotations, Indexer<String> labelIndexer){
+		public InstanceInfo(int source, AnnotationSet annotations, Indexer<String> labelIndexer){
 			this.annotations=annotations;
 			this.source=source;
-			this.instanceId=instanceId;
 			this.labelIndexer=labelIndexer;
 		}
 		@Override
-		public String getSource() {
+		public int getSource() {
 			return source;
 		}
 		@Override
@@ -160,11 +158,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public String toString() {
-			return "id="+getInstanceId()+" src="+source+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
-		}
-		@Override
-		public long getInstanceId() {
-			return instanceId;
+			return "src="+source+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
 		}
 		@Override
 		public Indexer<String> getLabelIndexer() {

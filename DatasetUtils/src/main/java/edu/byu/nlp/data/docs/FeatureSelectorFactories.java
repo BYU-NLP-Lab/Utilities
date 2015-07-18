@@ -17,12 +17,11 @@ package edu.byu.nlp.data.docs;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Map;
 
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSink;
-import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.streams.DataStreamSink;
 
 /**
  * Utility class for {@code FeatureSelectorFactory}.
@@ -33,48 +32,49 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
 public class FeatureSelectorFactories {
   private FeatureSelectorFactories() {}
   
-  private static class ConjoinedFeatureSelectorFactory<L> implements FeatureSelectorFactory<L> {
-    private final FeatureSelectorFactory<L> factory1;
-    private final FeatureSelectorFactory<L> factory2;
+  private static class ConjoinedFeatureSelectorFactory implements FeatureSelectorFactory {
+    private final FeatureSelectorFactory factory1;
+    private final FeatureSelectorFactory factory2;
 
-    ConjoinedFeatureSelectorFactory(FeatureSelectorFactory<L> factory1,
-                                    FeatureSelectorFactory<L> factory2) {
+    ConjoinedFeatureSelectorFactory(FeatureSelectorFactory factory1,
+                                    FeatureSelectorFactory factory2) {
       this.factory1 = factory1;
       this.factory2 = factory2;
     }
 
-    private static class ConjoinedFeatureSelector<L> implements DataSink<SparseFeatureVector, L, BitSet> {
-      private final DataSink<SparseFeatureVector, L, BitSet> selector1;
-      private final DataSink<SparseFeatureVector, L, BitSet> selector2;
+    private static class ConjoinedFeatureSelector implements DataStreamSink<BitSet> {
+      private final DataStreamSink<BitSet> selector1;
+      private final DataStreamSink<BitSet> selector2;
       
-      ConjoinedFeatureSelector(DataSink<SparseFeatureVector, L, BitSet> selector1,
-                               DataSink<SparseFeatureVector, L, BitSet> selector2) {
+      ConjoinedFeatureSelector(DataStreamSink<BitSet> selector1,
+                               DataStreamSink<BitSet> selector2) {
         this.selector1 = selector1;
         this.selector2 = selector2;
       }
 
       /** {@inheritDoc} */
       @Override
-      public BitSet processLabeledInstances(Iterable<FlatInstance<SparseFeatureVector, L>> data) {
+      public BitSet process(Iterable<Map<String, Object>> data) {
         BitSet bitSet = new BitSet();
-        bitSet.or(selector1.processLabeledInstances(data));
-        bitSet.and(selector2.processLabeledInstances(data));
+        bitSet.or(selector1.process(data));
+        bitSet.and(selector2.process(data));
         return bitSet;
       }
+
     }
 
     /** {@inheritDoc} */
     @Override
-    public DataSink<SparseFeatureVector, L, BitSet> newFeatureSelector(int numFeatures) {
-      return new ConjoinedFeatureSelector<L>(factory1.newFeatureSelector(numFeatures),
+    public DataStreamSink<BitSet> newFeatureSelector(int numFeatures) {
+      return new ConjoinedFeatureSelector(factory1.newFeatureSelector(numFeatures),
           factory2.newFeatureSelector(numFeatures));
     }
   }
 
   @SafeVarargs
-public static <L> FeatureSelectorFactory<L> conjoin(FeatureSelectorFactory<L>... factories) {
-    ArrayList<FeatureSelectorFactory<L>> nonNullFactories = Lists.newArrayList();
-    for (FeatureSelectorFactory<L> factory: factories){
+public static <L> FeatureSelectorFactory conjoin(FeatureSelectorFactory... factories) {
+    ArrayList<FeatureSelectorFactory> nonNullFactories = Lists.newArrayList();
+    for (FeatureSelectorFactory factory: factories){
       if (factory!=null){
         nonNullFactories.add(factory);
       }
@@ -85,9 +85,9 @@ public static <L> FeatureSelectorFactory<L> conjoin(FeatureSelectorFactory<L>...
     }
     // chained factories
     else{
-      FeatureSelectorFactory<L> factory = nonNullFactories.get(0);
+      FeatureSelectorFactory factory = nonNullFactories.get(0);
       for (int i=1; i<nonNullFactories.size(); i++){
-        factory = new ConjoinedFeatureSelectorFactory<L>(factory,nonNullFactories.get(i));
+        factory = new ConjoinedFeatureSelectorFactory(factory,nonNullFactories.get(i));
       }
       return factory; 
     }

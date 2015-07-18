@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -34,7 +34,7 @@ import edu.byu.nlp.io.AbstractIterable;
  * @author plf1
  * 
  */
-public class DirectoryReader implements DataSource {
+public class DirectoryReader implements DataStreamSource {
 
 	private final class FilesIterator extends UnmodifiableIterator<Map<String,Object>> {
 

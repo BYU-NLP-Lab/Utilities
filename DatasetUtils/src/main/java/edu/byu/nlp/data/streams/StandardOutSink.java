@@ -1,20 +1,21 @@
 /**
  * 
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
-import edu.byu.nlp.data.FlatInstance;
+import java.util.Map;
+
 
 /**
  * @author robbie
  * @author plf1
  *
  */
-public class StandardOutSink<D, L> implements DataSink<D, L, Void> {
+public class StandardOutSink<D, L> implements DataStreamSink<Void> {
 
 	@Override
-	public Void processLabeledInstances(Iterable<FlatInstance<D, L>> data) {
-		for (FlatInstance<D, L> label : data) {
+  public Void process(Iterable<Map<String, Object>> data) {
+    for (Map<String,Object> label : data) {
 			System.out.println(label);
 		}
 		return null;

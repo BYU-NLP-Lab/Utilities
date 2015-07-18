@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.io.Serializable;
 import java.util.Locale;

@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import edu.byu.nlp.data.pipes.IndexerCalculator;
+import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
@@ -181,8 +181,18 @@ public class BasicDataset implements Dataset {
 		}
 
 		@Override
-		public Indexer<Long> getAnnotatorIdIndexer() {
+		public Indexer<String> getAnnotatorIdIndexer() {
 			return indexers.getAnnotatorIdIndexer();
+		}
+		
+    @Override
+    public Indexer<String> getInstanceIdIndexer() {
+      return indexers.getInstanceIdIndexer();
+    }
+
+    @Override
+		public IndexerCalculator<String,String> getIndexers(){
+		  return indexers;
 		}
 
 		@Override
@@ -223,10 +233,6 @@ public class BasicDataset implements Dataset {
 			return numTokens - numTokensWithObservedLabels;
 		}
 
-		@Override
-		public Indexer<Long> getInstanceIdIndexer() {
-			return indexers.getInstanceIdIndexer();
-		}
 		@Override
 		public String toString() {
 			return "numdocs="+numDocuments+" numtok="+numTokens+" numfeat="+numFeatures+" numclass="+numClasses+" src="+source;
@@ -270,9 +276,9 @@ public class BasicDataset implements Dataset {
 	 * allowing us to avoid lots of messy bookkeeping. We never need to 
 	 * update our cache since datasets are immutable (at least wrt instances).
 	 */
-	private Map<String,DatasetInstance> instanceMap = null; // cache indices
+	private Map<Integer,DatasetInstance> instanceMap = null; // cache indices
 	@Override
-	public synchronized DatasetInstance lookupInstance(String source) {
+	public synchronized DatasetInstance lookupInstance(Integer source) {
 		if (this.instanceMap==null){
 			logger.info("regenerating instance lookup cache for dataset "+getInfo().getSource());
 			this.instanceMap = Maps.newHashMap();

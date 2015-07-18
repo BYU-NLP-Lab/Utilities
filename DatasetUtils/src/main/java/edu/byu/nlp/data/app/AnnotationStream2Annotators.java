@@ -321,7 +321,7 @@ public class AnnotationStream2Annotators {
           docTransform, DocPipes.opennlpSentenceSplitter(), DocPipes.McCallumAndNigamTokenizer(), tokenTransform, 
           FeatureSelectorFactories.conjoin(
               new CountCutoffFeatureSelectorFactory<String>(featureCountCutoff), 
-              (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory<String>(topNFeaturesPerDocument)),
+              (topNFeaturesPerDocument<0)? null: new TopNPerDocumentFeatureSelectorFactory(topNFeaturesPerDocument)),
           featureNormalizer)
           .dataset();
       

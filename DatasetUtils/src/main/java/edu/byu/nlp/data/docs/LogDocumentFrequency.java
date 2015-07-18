@@ -15,15 +15,17 @@
  */
 package edu.byu.nlp.data.docs;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSink;
+import java.util.Map;
+
+import edu.byu.nlp.data.streams.DataStreamSink;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 
 /**
  * @author rah67
  *
  */
-public class LogDocumentFrequency<L> implements DataSink<SparseFeatureVector, L, double[]> {
+public class LogDocumentFrequency implements DataStreamSink<double[]> {
 	
 	public final int numFeatures;
 	
@@ -47,11 +49,13 @@ public class LogDocumentFrequency<L> implements DataSink<SparseFeatureVector, L,
 	
 	/** {@inheritDoc} */
 	@Override
-	public double[] processLabeledInstances(Iterable<FlatInstance<SparseFeatureVector, L>> documents) {
+  public double[] process(Iterable<Map<String, Object>> documents) {
 		DFIncrementor inc = new DFIncrementor(numFeatures);
-		for (FlatInstance<SparseFeatureVector, L> document : documents) {
-			if (document.getData()!=null){ // annotation instances may have null documents and should be skipped. data is in the corresponding label
-				document.getData().visitIndices(inc);
+		for (Map<String,Object> document : documents) {
+		// annotation instances may have null documents and should be skipped. data is in the corresponding label
+		  SparseFeatureVector docData = DataStreamInstance.getData(document);
+			if (docData!=null){ 
+			  docData.visitIndices(inc);
 			}
 		}
 		// Take the log

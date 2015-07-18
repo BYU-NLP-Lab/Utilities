@@ -1,23 +1,23 @@
-package edu.byu.nlp.data.pipes;
+package edu.byu.nlp.data.streams;
 
 import java.util.List;
+import java.util.Map;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.types.SparseFeatureVector;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.util.Indexer;
 
 public class IndexerCalculator<D, L>  {
 
 	private Indexer<D> wordIndexer;
 	private Indexer<L> labelIndexer;
-	private Indexer<Long> annotatorIdIndexer;
-	private Indexer<Long> instanceIdIndexer;
+	private Indexer<String> annotatorIdIndexer;
+	private Indexer<String> instanceIdIndexer;
 
   public IndexerCalculator(){
-    this(new Indexer<D>(),new Indexer<L>(),new Indexer<Long>(),new Indexer<Long>());
+    this(new Indexer<D>(),new Indexer<L>(),new Indexer<String>(),new Indexer<String>());
   }
 	public IndexerCalculator(Indexer<D> wordIndexer, Indexer<L> labelIndexer, 
-			Indexer<Long> instanceIndexer, Indexer<Long> annotatorIndexer){
+			Indexer<String> instanceIndexer, Indexer<String> annotatorIndexer){
 		this.setWordIndexer(wordIndexer);
 		this.setLabelIndexer(labelIndexer);
 		this.setInstanceIdIndexer(instanceIndexer);
@@ -32,52 +32,53 @@ public class IndexerCalculator<D, L>  {
 		return labelIndexer;
 	}
 	
-	public Indexer<Long> getInstanceIdIndexer(){
+	public Indexer<String> getInstanceIdIndexer(){
 		return instanceIdIndexer;
 	}
 	
-	public Indexer<Long> getAnnotatorIdIndexer(){
+	public Indexer<String> getAnnotatorIdIndexer(){
 		return annotatorIdIndexer;
 	}
 	
-	@SuppressWarnings("unchecked")
-  public static <D,L> IndexerCalculator<D,L> calculate(Iterable<FlatInstance<List<List<D>>, L>> data) {
-	  IndexerCalculator<D, L> indexers = new IndexerCalculator<>();
-	  populateNonFeatureIndexes((Iterable<FlatInstance<?, L>>)(Object)data, indexers);
+  public static <D,L> IndexerCalculator<D,L> calculate(Iterable<Map<String, Object>> data) {
+	  IndexerCalculator<D,L> indexers = new IndexerCalculator<>();
+	  populateNonFeatureIndexes(data, indexers);
 	  populateWordIndex(data, indexers);
 	  return indexers;
 	}
 
-  @SuppressWarnings("unchecked")
-  public static <D,L> IndexerCalculator<D,L> calculateNonFeatureIndexes(Iterable<FlatInstance<SparseFeatureVector, L>> data) {
-    IndexerCalculator<D, L> indexers = new IndexerCalculator<>();
-    populateNonFeatureIndexes((Iterable<FlatInstance<?, L>>)(Object)data, indexers);
+  public static <D,L> IndexerCalculator<D,L> calculateNonFeatureIndexes(Iterable<Map<String, Object>> data) {
+    IndexerCalculator<D,L> indexers = new IndexerCalculator<>();
+    populateNonFeatureIndexes(data, indexers);
     return indexers;
   }
 
-  public static <L> void populateNonFeatureIndexes(Iterable<FlatInstance<?, L>> data, IndexerCalculator<?,L> indexers) {
+  @SuppressWarnings("unchecked")
+  public static <D,L> void populateNonFeatureIndexes(Iterable<Map<String, Object>> data, IndexerCalculator<D,L> indexers) {
     Indexer<L> labelIndexer = indexers.getLabelIndexer();
-    Indexer<Long> annotatorIndexer = indexers.getAnnotatorIdIndexer();
-    Indexer<Long> instanceIndexer = indexers.getInstanceIdIndexer();
+    Indexer<String> annotatorIndexer = indexers.getAnnotatorIdIndexer();
+    Indexer<String> instanceIndexer = indexers.getInstanceIdIndexer();
     
-    for (FlatInstance<?, L> inst: data){
-      if (inst.isAnnotation()){
+    for (Map<String, Object> inst: data){
+      if (DataStreamInstance.isAnnotation(inst)){
         // only record annotation id of annotations
         // (this avoids adding automatic annotator to the indexer)
-        annotatorIndexer.add(inst.getAnnotator());
+        annotatorIndexer.add((String)inst.get(DataStreamInstance.ANNOTATOR));
       }
-      labelIndexer.add(inst.getLabel());
-      instanceIndexer.add(inst.getInstanceId());
+      labelIndexer.add((L)DataStreamInstance.getRaw(inst, DataStreamInstance.LABEL));
+      instanceIndexer.add((String)DataStreamInstance.getRaw(inst, DataStreamInstance.SOURCE));
     }
   }
   
-  private static <D,L> void populateWordIndex(Iterable<FlatInstance<List<List<D>>, L>> data, IndexerCalculator<D,L> indexers) {
+  private static <D,L> void populateWordIndex(Iterable<Map<String, Object>> data, IndexerCalculator<D,L> indexers) {
     Indexer<D> wordIndexer = indexers.getWordIndexer();
     
-    for (FlatInstance<List<List<D>>, L> inst: data){
-      if (!inst.isAnnotation()){
+    for (Map<String, Object> inst: data){
+      if (!DataStreamInstance.isAnnotation(inst)){
         // only record data if it's a label
-        for (List<D> sentence: inst.getData()){
+        @SuppressWarnings("unchecked")
+        List<List<D>> sentences = (List<List<D>>) DataStreamInstance.getRaw(inst, DataStreamInstance.DATA);
+        for (List<D> sentence: sentences){
           for (D word: sentence){
             wordIndexer.add(word);
           }
@@ -100,13 +101,13 @@ public class IndexerCalculator<D, L>  {
   /**
    * @param annotatorIdIndexer the annotatorIdIndexer to set
    */
-  public void setAnnotatorIdIndexer(Indexer<Long> annotatorIdIndexer) {
+  public void setAnnotatorIdIndexer(Indexer<String> annotatorIdIndexer) {
     this.annotatorIdIndexer = annotatorIdIndexer;
   }
   /**
    * @param instanceIdIndexer the instanceIdIndexer to set
    */
-  public void setInstanceIdIndexer(Indexer<Long> instanceIdIndexer) {
+  public void setInstanceIdIndexer(Indexer<String> instanceIdIndexer) {
     this.instanceIdIndexer = instanceIdIndexer;
   }
   
