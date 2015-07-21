@@ -15,7 +15,6 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.vfs2.FileSystemException;
 
@@ -26,6 +25,7 @@ import edu.byu.nlp.data.streams.DataStream;
 import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.FieldIndexer;
 import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
 import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.dataset.Datasets;
@@ -68,8 +68,8 @@ import edu.byu.nlp.util.Nullable;
 public class JSONDocumentDatasetBuilder {
 
   private final Function<String, String> docTransform;
-  private Function<String, List<String>> sentenceSplitter;
-  private Function<String, List<String>> tokenizer;
+  private Function<String, Iterable<String>> sentenceSplitter;
+  private Function<String, Iterable<String>> tokenizer;
   private Function<String, String> tokenTransform;
   private final FeatureSelectorFactory featureSelectorFactory;
   private Integer featureNormalizationConstant;
@@ -85,8 +85,8 @@ public class JSONDocumentDatasetBuilder {
    */
   public JSONDocumentDatasetBuilder(String basedir, String filename,
       @Nullable Function<String, String> docTransform,
-      @Nullable Function<String, List<String>> sentenceSplitter,
-      @Nullable Function<String, List<String>> tokenizer,
+      @Nullable Function<String, Iterable<String>> sentenceSplitter,
+      @Nullable Function<String, Iterable<String>> tokenizer,
       @Nullable Function<String, String> tokenTransform,
       FeatureSelectorFactory featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) {
@@ -107,15 +107,15 @@ public class JSONDocumentDatasetBuilder {
     DataStream stream = 
       DataStream.withSource(jsonAnnotationStream.toString(), Lists.newArrayList(Maps2.<String,Object>hashmapOf(DataStreamInstance.DATA, jsonAnnotationStream)))
       // index filenames to data filenames
-      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, DocPipes.jsonToDocPipe(jsonReferencedDataDir)))
+      .oneToMany(new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir, DataStreamInstance.DATA))
       // transform documents (e.g., remove email headers, transform emoticons)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, docTransform))
-      // split sentences
+      // split sentences (data=List<String>)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, sentenceSplitter))
-      // tokenize documents
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenizer))
+      // tokenize documents (data=List<List<String>>)
+      .transform(DataStreams.Transforms.transformIterableFieldValues(DataStreamInstance.DATA, tokenizer))
       // transform tokens (e.g., remove stopwords, stemmer, remove short words)
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenTransform))
+      .transform(DataStreams.Transforms.transformIterableIterableFieldValues(DataStreamInstance.DATA, tokenTransform))
     ;
 
     // feature selection

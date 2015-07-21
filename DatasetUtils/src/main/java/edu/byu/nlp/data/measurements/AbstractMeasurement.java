@@ -10,7 +10,7 @@ import edu.byu.nlp.data.types.Measurement;
  * A reference to a dataset is formed and instances are assumed to 
  * be defined by an <Integer> index reference.  
  */
-public abstract class AbstractMeasurement<Y> implements Measurement<Integer, Y>{
+public abstract class AbstractMeasurement<Y> implements Measurement<Y>{
 
   private Dataset dataset;
   private int annotator;

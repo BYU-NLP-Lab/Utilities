@@ -1,16 +1,17 @@
 package edu.byu.nlp.data.pipes;
 
 import java.util.Iterator;
-import java.util.List;
 
 import org.fest.assertions.Assertions;
 import org.junit.Test;
+
+import edu.byu.nlp.data.streams.RegexpTokenizer;
 
 public class RegexpTokenizerTest {
 
 	@Test
 	public void testTokenizer(){
-		List<String> tokens = new RegexpTokenizer("[A-Za-z]+").apply("hi hello, you :)");
+		Iterable<String> tokens = new RegexpTokenizer("[A-Za-z]+").apply("hi hello, you :)");
 		System.out.println(tokens);
 		Iterator<String> itr = tokens.iterator();
 		Assertions.assertThat(itr.next()).isEqualTo("hi");

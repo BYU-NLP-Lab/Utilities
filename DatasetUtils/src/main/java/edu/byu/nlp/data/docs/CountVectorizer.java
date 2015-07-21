@@ -18,7 +18,6 @@ package edu.byu.nlp.data.docs;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
-import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.common.base.Function;
@@ -33,7 +32,7 @@ import edu.byu.nlp.util.Iterables2;
  * @author rah67
  *
  */
-public class CountVectorizer<E> implements Function<List<List<E>>, SparseFeatureVector> {
+public class CountVectorizer<E> implements Function<Iterable<Iterable<E>>, SparseFeatureVector> {
 	
 	private final Indexer<E> indexer;
 	
@@ -43,7 +42,7 @@ public class CountVectorizer<E> implements Function<List<List<E>>, SparseFeature
 	
 	/** {@inheritDoc} */
 	@Override
-	public SparseFeatureVector apply(List<List<E>> sentences) {
+	public SparseFeatureVector apply(Iterable<Iterable<E>> sentences) {
 		IntArrayList features = new IntArrayList();
 		DoubleArrayList counts = new DoubleArrayList();
 		

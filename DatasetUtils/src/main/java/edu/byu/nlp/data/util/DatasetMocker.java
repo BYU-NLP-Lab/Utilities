@@ -55,8 +55,8 @@ public class DatasetMocker {
 			}
 		});
 		// create instance
-		long instanceId = instances.size();
-		instances.add(new BasicDatasetInstance(fv, label, instanceId, source, labelIndexer));
+		int instanceId = instances.size();
+		instances.add(new BasicDatasetInstance(fv, label, instanceId, labelIndexer));
 		return this;
 	}
 
@@ -75,9 +75,9 @@ public class DatasetMocker {
 		for (long l = 0; l < maxLabelTracker.max(); l++) {
 			labelIndexer.add("" + l);
 		}
-		Indexer<Long> annotatorIdIndexer = new Indexer<Long>();
+		Indexer<String> annotatorIdIndexer = new Indexer<String>();
 		for (long a=0; a<numAnnotators; a++){
-			annotatorIdIndexer.add(a);
+			annotatorIdIndexer.add(""+a);
 		}
 
 		// Create Dataset

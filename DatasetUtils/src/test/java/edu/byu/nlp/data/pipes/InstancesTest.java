@@ -9,8 +9,7 @@ import com.google.common.base.Functions;
 import edu.byu.nlp.annotationinterface.Constants;
 import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
-import edu.byu.nlp.data.pipes.Instances;
+import edu.byu.nlp.data.types.DataStreamInstance;
 
 public class InstancesTest {
 
@@ -19,8 +18,7 @@ public class InstancesTest {
 		String data = "dummy data";
 		String label = "sports";
 		String source = "dummy source";
-		FlatInstance<String, String> inst = new FlatLabeledInstance<String,String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data, label, source, false));
+		FlatInstance<String, String> inst = DataStreamInstance.fromLabelRaw(source, data, label, false); 
 		
 		Assertions.assertThat(inst.getAnnotator()).isEqualTo(Constants.OBSERVED_GOLD_AUTOMATIC_ANNOTATOR);
 //		Assertions.assertThat(inst.getInstanceId()).isEqualTo(AnnotationInterfaceJavaUtils.NULL_IDENTIFIER);

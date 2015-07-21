@@ -4,7 +4,6 @@
 package edu.byu.nlp.data.streams;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +17,7 @@ import com.google.common.collect.ImmutableList;
  */
 // TODO(rhaertel) : define Tokenizer as Function<CharSequence, Iterator<String>> 
 // and a separate Function<Iterator<T>, List<T>> or perhaps Collection<T>
-public class RegexpTokenizer implements Function<String, List<String>>, Serializable {
+public class RegexpTokenizer implements Function<String, Iterable<String>>, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -57,7 +56,7 @@ public class RegexpTokenizer implements Function<String, List<String>>, Serializ
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<String> apply(String text) {
+	public Iterable<String> apply(String text) {
 		return ImmutableList.copyOf(new TokenIterator(text));
 	}
 

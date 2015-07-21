@@ -15,7 +15,6 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -71,8 +70,8 @@ public class DocumentDatasetBuilder {
   private final FileObject indexDirectory;
 
   private final Function<String, String> docTransform;
-  private Function<String, List<String>> sentenceSplitter;
-  private Function<String, List<String>> tokenizer;
+  private Function<String, Iterable<String>> sentenceSplitter;
+  private Function<String, Iterable<String>> tokenizer;
   private final FeatureSelectorFactory featureSelectorFactory;
   private Integer featureNormalizationConstant;
   private Function<String, String> tokenTransform;
@@ -87,8 +86,8 @@ public class DocumentDatasetBuilder {
    */
   public DocumentDatasetBuilder(String basedir, String dataset, String split,
       @Nullable Function<String, String> docTransform,
-      @Nullable Function<String, List<String>> sentenceSplitter,
-      @Nullable Function<String, List<String>> tokenizer,
+      @Nullable Function<String, Iterable<String>> sentenceSplitter,
+      @Nullable Function<String, Iterable<String>> tokenizer,
       @Nullable Function<String, String> tokenTransform,
       FeatureSelectorFactory featureSelectorFactory,
       @Nullable Integer featureNormalizationConstant) throws FileSystemException {
@@ -117,13 +116,12 @@ public class DocumentDatasetBuilder {
 
   
   public Dataset dataset() throws IOException {
-    String dataField = DataStreamInstance.DATA;
     
     // first pipe - to import input files into strings and do greedy feature transformation/selection (e.g., filter short words)
 
     // index directory to index filenames
     DataStream stream = 
-      DataStream.withSource(indexDirectory.toString(), new DirectoryReader(indexDirectory, dataField).getStream())
+      DataStream.withSource(indexDirectory.toString(), new DirectoryReader(indexDirectory, DataStreamInstance.DATA).getStream())
       // index filenames to data filenames
       .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, new IndexFileToFileList()))
       // data filenames to data

@@ -25,6 +25,7 @@ import edu.byu.nlp.data.streams.DataStreamSink;
 import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.DataStreams.Transform;
 import edu.byu.nlp.data.types.DataStreamInstance;
+import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.Entry;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.util.Heaps;
@@ -73,7 +74,8 @@ public class TopNPerDocumentFeatureSelectorFactory implements FeatureSelectorFac
 			Comparator<Entry> c = BasicSparseFeatureVector.valueComparator();
 			for (Map<String,Object> doc : tfidfVectors) {
 				if (DataStreamInstance.getData(doc)!=null){
-					for (Entry e : Heaps.largestN(DataStreamInstance.getData(doc).sparseEntries(), minFeaturesToKeepPerDocument, false, c)) {
+				  SparseFeatureVector data = (SparseFeatureVector) DataStreamInstance.getData(doc);
+					for (Entry e : Heaps.largestN(data.sparseEntries(), minFeaturesToKeepPerDocument, false, c)) {
 						b.set(e.getIndex());
 					}
 				}

@@ -15,18 +15,23 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.vfs2.FileSystemException;
 
-import edu.byu.nlp.data.streams.DataStreamSource;
-import edu.byu.nlp.data.streams.DataStreamSources;
+import com.google.common.collect.Lists;
+
+import edu.byu.nlp.data.streams.DataStream;
+import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.FieldIndexer;
 import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.util.Indexers;
+import edu.byu.nlp.util.Maps2;
 
 /**
  * The same as JSONDocumentDatasetBuilder except it expects data 
@@ -54,44 +59,40 @@ public class JSONVectorDocumentDatasetBuilder {
 
   public Dataset dataset() throws IOException {
 
-    // input pipe parses feature vectors out of files 
-    LabeledInstancePipe<String, String, SparseFeatureVector, String> inputPipe = new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-    // convert a file system dataset (string) to document contents (String) and labels (String)
-    .add(DocPipes.jsonToDocPipe(jsonReferencedDataDir))
-    .addDataTransform(DocPipes.documentVectorToArray())
-    .addDataTransform(DocPipes.arrayToSparseFeatureVector())
-    .build();
-    
-    // apply first pipeline (input)
-    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataStreamSources.cache(
-        DataStreamSources.connect(DataStreamSources.fromPath(jsonAnnotationStream), inputPipe)); 
-    
-    // indexing pipe converts labels to numbers 
-    IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(sentenceData);
+    // index directory to index filenames
+    @SuppressWarnings("unchecked")
+    DataStream stream = 
+      DataStream.withSource(jsonAnnotationStream.toString(), Lists.newArrayList(Maps2.<String,Object>hashmapOf(DataStreamInstance.DATA, jsonAnnotationStream)))
+      // index filenames to data filenames
+      .oneToMany(new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir, DataStreamInstance.DATA))
+      // parse data to sparsefeaturevectors in two stages
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.documentVectorToArray()))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.arrayToSparseFeatureVector()))
+    ;
+
+    // create indexers 
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(stream);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
-    int numFeatures = getNumFeatures(sentenceData);
+    int numFeatures = getNumFeatures(stream);
     indexers.setWordIndexer(Indexers.indexerOfStrings(numFeatures)); // identity feature-mapping
-    
-    // index columns
-    LabeledInstancePipe<SparseFeatureVector, String, SparseFeatureVector, Integer> indexerPipe = 
-        new SerialLabeledInstancePipeBuilder<SparseFeatureVector, String, SparseFeatureVector, String>()
-        .addLabelTransform(new FieldIndexer<String>(indexers.getLabelIndexer()))
-        .addAnnotatorIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getAnnotatorIdIndexer())))
-        .addInstanceIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getInstanceIdIndexer())))
-        .build();
-    
-    // apply second pipeline (vectorization)
-    DataStreamSource<SparseFeatureVector, String> vectorDatasetSource = DataStreamSources.from(jsonAnnotationStream, sentenceData);
-    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataStreamSources.cache(DataStreamSources.connect(vectorDatasetSource, indexerPipe));
+      
+    // convert labels, annotators, and instances to numbers
+    stream = stream.
+      transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
+      ;
 
     // convert FlatInstances to a Dataset
-    return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);
+    return Datasets.convert(stream.getName(), stream, indexers, true);
   }
 
-  private int getNumFeatures(List<FlatInstance<SparseFeatureVector, String>> sentenceData) {
-    for (FlatInstance<SparseFeatureVector, String> sent: sentenceData){
-      if (sent.getData()!=null){
-        return sent.getData().length();
+  private int getNumFeatures(Iterable<Map<String,Object>> sentenceData) {
+    for (Map<String,Object> sent: sentenceData){
+      SparseFeatureVector dat = (SparseFeatureVector) DataStreamInstance.getData(sent); 
+      if (dat!=null){
+        return dat.length();
       }
     }
     throw new IllegalStateException("None of the reference json items have any data vectors. This is illegal.");

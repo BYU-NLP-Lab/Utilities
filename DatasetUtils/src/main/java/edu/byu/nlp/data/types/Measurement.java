@@ -6,7 +6,7 @@ package edu.byu.nlp.data.types;
  * - "Learning from Measurements in Exponential Families." 
  * - http://www.cs.berkeley.edu/~jordan/papers/liang-jordan-klein-icml09.pdf
  */
-public interface Measurement<X,Y> {
+public interface Measurement<Y> {
 
   /**
    * Measurements are defined with respect to a given dataset.
@@ -31,7 +31,7 @@ public interface Measurement<X,Y> {
    * their judgment). They are not mutated as a part of 
    * algorithmic computation. 
    */
-  double featureValue(X index, Y label);
+  double featureValue(int docIndex, Y label);
   
   /**
    * Who was responsible for generating this measurement? 

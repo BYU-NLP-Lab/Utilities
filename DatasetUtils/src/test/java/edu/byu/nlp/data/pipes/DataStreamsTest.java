@@ -11,6 +11,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
+import edu.byu.nlp.data.streams.DataStream;
+import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.util.Maps2;
 
 public class DataStreamsTest {
@@ -28,7 +30,8 @@ public class DataStreamsTest {
   @Test
   public void testLazyEval() {
     Iterable<Map<String, Object>> stream = simpleStream();
-    Iterable<Map<String, Object>> xstream = DataStreams.transform(stream, DataStreams.Transforms.transformFieldValue("source", new Function<String, String>() {
+    Iterable<Map<String, Object>> xstream = DataStream.withSource("teststream", stream) 
+        .transform(DataStreams.Transforms.transformFieldValue("source", new Function<String, String>() {
       @Override
       public String apply(String input) {
         return input.replace("item", "instance");
@@ -48,7 +51,8 @@ public class DataStreamsTest {
 
   @Test
   public void testFieldRename() {
-    Iterable<Map<String, Object>> stream = DataStreams.transform(simpleStream(), DataStreams.Transforms.renameField("source", "wherefrom"));
+    Iterable<Map<String, Object>> stream = DataStream.withSource("testdat", simpleStream())
+        .transform(DataStreams.Transforms.renameField("source", "wherefrom"));
     // now run the pipe and check for changes
     for (Map<String, Object> item: stream){
       Assertions.assertThat(item.containsKey("source")).isFalse();
@@ -58,7 +62,8 @@ public class DataStreamsTest {
 
   @Test
   public void testFilter() {
-    Iterable<Map<String, Object>> stream = DataStreams.filter(simpleStream(), DataStreams.Filters.filterByFieldValue("annotation", new Predicate<Integer>() {
+    Iterable<Map<String, Object>> stream = DataStream.withSource("testdata", simpleStream())
+        .filter(DataStreams.Filters.filterByFieldValue("annotation", new Predicate<Integer>() {
       @Override
       public boolean apply(Integer input) {
         return input>1;
@@ -75,7 +80,8 @@ public class DataStreamsTest {
 
   @Test
   public void testOneToMany() {
-    Iterable<Map<String, Object>> stream = DataStreams.oneToManyTransform(simpleStream(), DataStreams.OneToManys.duplicate(5));
+    Iterable<Map<String, Object>> stream = DataStream.withSource("testdata", simpleStream())
+        .oneToMany(DataStreams.OneToManys.duplicate(5));
     // now run the pipe and check for changes
     ArrayList<Map<String, Object>> items = Lists.newArrayList(stream);
     Assertions.assertThat(items.size()).isEqualTo(4*5);

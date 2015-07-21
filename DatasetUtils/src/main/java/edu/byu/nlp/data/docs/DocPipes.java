@@ -14,11 +14,8 @@
 package edu.byu.nlp.data.docs;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
 import java.util.Map;
 
 import opennlp.tools.sentdetect.SentenceDetectorME;
@@ -36,19 +33,14 @@ import com.google.common.collect.Lists;
 import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.DataStreams.Transform;
 import edu.byu.nlp.data.streams.Downcase;
-import edu.byu.nlp.data.streams.FieldIndexer;
-import edu.byu.nlp.data.streams.IndexerCalculator;
-import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
 import edu.byu.nlp.data.streams.RegexpTokenizer;
 import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 import edu.byu.nlp.io.Files2;
 import edu.byu.nlp.util.DoubleArrays;
-import edu.byu.nlp.util.Functions2;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.IntArrays;
-import edu.byu.nlp.util.Nullable;
 
 /**
  * Creates a dataset from a data source of documents. This includes creating
@@ -64,11 +56,6 @@ public class DocPipes {
 	private DocPipes() {
 	}
 
-
-	public static Function<Map<String, Object>, Iterable<Map<String, Object>>> jsonToDocPipe(String jsonReferencedDataDir) throws FileNotFoundException {
-	  return DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, 
-	      new JSONFileToAnnotatedDocumentList(jsonReferencedDataDir, DataStreamInstance.DATA));
-	}
 
 	/**
 	 * Do feature selection (on the wordIndex itself)
@@ -93,79 +80,78 @@ public class DocPipes {
 		return wordIndex;
 	}
 
-	public static Function<List<String>, List<String>> sentenceTransform(final Function<String, String> sentenceTransform) {
-    if (sentenceTransform==null){
-      return null;
-    }
-		return new Function<List<String>, List<String>>() {
-			@Override
-			public List<String> apply(List<String> doc) {
-				List<String> xdoc = Lists.newArrayList();
-				for (String sent : doc) {
-				  String xsent = sentenceTransform.apply(sent);
-				  if (xsent!=null){
-				    xdoc.add(xsent);
-				  }
-				}
-				return xdoc;
-			}
-		};
-	}
+//	public static Function<Iterable<String>, Iterable<String>> sentenceTransform(final Function<String, String> sentenceTransform) {
+//    if (sentenceTransform==null){
+//      return null;
+//    }
+//		return new Function<Iterable<String>, Iterable<String>>() {
+//			@Override
+//			public List<String> apply(Iterable<String> doc) {
+//				List<String> xdoc = Lists.newArrayList();
+//				for (String sent : doc) {
+//				  String xsent = sentenceTransform.apply(sent);
+//				  if (xsent!=null){
+//				    xdoc.add(xsent);
+//				  }
+//				}
+//				return xdoc;
+//			}
+//		};
+//	}
+//	
+//	public static Function<Iterable<Iterable<String>>, Iterable<Iterable<String>>> tokenTransform(final Function<String, String> tokenTransform) {
+//	  if (tokenTransform==null){
+//	    return null;
+//	  }
+//		return new Function<Iterable<Iterable<String>>, Iterable<Iterable<String>>>() {
+//			@Override
+//			public Iterable<Iterable<String>> apply(Iterable<Iterable<String>> doc) {
+//				List<Iterable<String>> xdoc = Lists.newArrayList();
+//				for (Iterable<String> sent : doc) {
+//					List<String> xsent = Lists.newArrayList();
+//					for (String word : sent) {
+//						String xword = tokenTransform.apply(word);
+//						if (xword!=null){
+//						  xsent.add(xword);
+//						}
+//					}
+//					xdoc.add(xsent);
+//				}
+//				return xdoc;
+//			}
+//		};
+//	}
+//
+//	public static Function<Iterable<String>,Iterable<Iterable<String>>> tokenSplitter(final Function<String,Iterable<String>> sentenceSplitter){
+//	  if (sentenceSplitter==null){
+//	    return null;
+//	  }
+//		return new Function<Iterable<String>, Iterable<Iterable<String>>>() {
+//			@Override
+//			public List<Iterable<String>> apply(Iterable<String> doc) {
+//				List<Iterable<String>> xdoc = Lists.newArrayList();
+//				for (String sent: doc){
+//					xdoc.add(sentenceSplitter.apply(sent));
+//				}
+//				return xdoc;
+//			}
+//		};
+//	}
 	
-	public static Function<List<List<String>>, List<List<String>>> tokenTransform(final Function<String, String> tokenTransform) {
-	  if (tokenTransform==null){
-	    return null;
-	  }
-		return new Function<List<List<String>>, List<List<String>>>() {
-			@Override
-			public List<List<String>> apply(List<List<String>> doc) {
-				List<List<String>> xdoc = Lists.newArrayList();
-				for (List<String> sent : doc) {
-					List<String> xsent = Lists.newArrayList();
-					for (String word : sent) {
-						String xword = tokenTransform.apply(word);
-						if (xword!=null){
-						  xsent.add(xword);
-						}
-					}
-					xdoc.add(xsent);
-				}
-				return xdoc;
-			}
-		};
-	}
-
-	public static Function<List<String>,List<List<String>>> tokenSplitter(final Function<String,List<String>> sentenceSplitter){
-	  if (sentenceSplitter==null){
-	    return null;
-	  }
-		return new Function<List<String>, List<List<String>>>() {
-			@Override
-			public List<List<String>> apply(List<String> doc) {
-				List<List<String>> xdoc = Lists.newArrayList();
-				for (String sent: doc){
-					xdoc.add(sentenceSplitter.apply(sent));
-				}
-				return xdoc;
-			}
-		};
-	}
-	
-	public static Function<String, List<String>> McCallumAndNigamTokenizer() {
+	public static Function<String, Iterable<String>> McCallumAndNigamTokenizer() {
 		return Functions.compose(new RegexpTokenizer("[a-zA-Z]+"), new Downcase());
 	}
 
 	
 	public static final String ENGLISH_SENTENCE_DETECTOR = "en-sent.bin";
-	public static Function<String, List<String>> opennlpSentenceSplitter() throws IOException {
+	public static Function<String, Iterable<String>> opennlpSentenceSplitter() throws IOException {
 	  File modelFile = Files2.temporaryFileFromResource(DocPipes.class, ENGLISH_SENTENCE_DETECTOR);
 		final SentenceDetectorME detector = new SentenceDetectorME(new SentenceModel(modelFile));
 		
-		return new Function<String, List<String>>() {
+		return new Function<String, Iterable<String>>() {
 			@Override
-			public List<String> apply(String doc) {
-				ArrayList<String> retval = Lists.newArrayList(detector.sentDetect(doc));
-				return retval;
+			public Iterable<String> apply(String doc) {
+				return Lists.newArrayList(detector.sentDetect(doc));
 			}
 		};
 		
@@ -203,52 +189,52 @@ public class DocPipes {
     };
   }
 
-  /**
-   * Pipeline converts from a dataset index directory to labeled documents 
-   * composed of tokenized sentences 
-   */
-  public static Function<Map<String, Object>, Map<String, Object>> inputSentencePipe(
-      @Nullable Function<String, String> docTransform, 
-      @Nullable Function<String, List<String>> sentenceSplitter, 
-      @Nullable Function<String, List<String>> tokenizer,
-      @Nullable Function<String, String> tokenTransform) {
-
-      return 
-          Functions2.compose(
-              // transform documents (e.g., remove email headers, transform emoticons)
-              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, docTransform),
-              // split sentences
-              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, sentenceSplitter),
-              // tokenize documents
-              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenizer),
-              // transform tokens (e.g., remove stopwords, stemmer, remove short words)
-              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, tokenTransform));
-  }
-  
-  /**
-   * Pipeline converts string data to feature vectors and does feature selection
-   * @return 
-   */
-  public static Function<Map<String, Object>, Map<String, Object>> sentence2FeatureVectorPipe(
-      List<Map<String,Object>> data, IndexerCalculator<String, String> indexers, 
-      Integer featureNormalizationConstant){
-    
-    Indexer<String> wordIndex = indexers.getWordIndexer();
-    Indexer<String> labelIndex = indexers.getLabelIndexer();
-    Indexer<String> instanceIdIndexer = indexers.getInstanceIdIndexer();
-    Indexer<String> annotatorIdIndexer = indexers.getAnnotatorIdIndexer();
-    
-    return 
-        Functions2.compose(
-            DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(labelIndex)),
-            DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(labelIndex)),
-            DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(instanceIdIndexer)),
-            DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(annotatorIdIndexer)),
-            DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(wordIndex)),
-            DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountNormalizer(featureNormalizationConstant))
-            );
-    
-  }
+//  /**
+//   * Pipeline converts from a dataset index directory to labeled documents 
+//   * composed of tokenized sentences 
+//   */
+//  public static Function<Map<String, Object>, Map<String, Object>> inputSentencePipe(
+//      @Nullable Function<String, String> docTransform, 
+//      @Nullable Function<String, List<String>> sentenceSplitter, 
+//      @Nullable Function<String, List<String>> tokenizer,
+//      @Nullable Function<String, String> tokenTransform) {
+//
+//      return 
+//          Functions2.compose(
+//              // transform documents (e.g., remove email headers, transform emoticons)
+//              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, String.class, String.class, docTransform),
+//              // split sentences
+//              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, String.class, List.class, sentenceSplitter),
+//              // tokenize documents
+//              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, List.class, List.class, tokenizer),
+//              // transform tokens (e.g., remove stopwords, stemmer, remove short words)
+//              DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, List tokenTransform));
+//  }
+//  
+//  /**
+//   * Pipeline converts string data to feature vectors and does feature selection
+//   * @return 
+//   */
+//  public static Function<Map<String, Object>, Map<String, Object>> sentence2FeatureVectorPipe(
+//      List<Map<String,Object>> data, IndexerCalculator<String, String> indexers, 
+//      Integer featureNormalizationConstant){
+//    
+//    Indexer<String> wordIndex = indexers.getWordIndexer();
+//    Indexer<String> labelIndex = indexers.getLabelIndexer();
+//    Indexer<String> instanceIdIndexer = indexers.getInstanceIdIndexer();
+//    Indexer<String> annotatorIdIndexer = indexers.getAnnotatorIdIndexer();
+//    
+//    return 
+//        Functions2.compose(
+//            DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(labelIndex)),
+//            DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(labelIndex)),
+//            DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(instanceIdIndexer)),
+//            DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(annotatorIdIndexer)),
+//            DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(wordIndex)),
+//            DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountNormalizer(featureNormalizationConstant))
+//            );
+//    
+//  }
   
 
 	

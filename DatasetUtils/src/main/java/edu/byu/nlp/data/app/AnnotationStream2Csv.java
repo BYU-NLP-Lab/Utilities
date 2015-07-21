@@ -37,14 +37,15 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
+import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
 import edu.byu.nlp.data.docs.DocPipes;
 import edu.byu.nlp.data.docs.FeatureSelectorFactories;
 import edu.byu.nlp.data.docs.JSONDocumentDatasetBuilder;
 import edu.byu.nlp.data.docs.TopNPerDocumentFeatureSelectorFactory;
-import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.io.Paths;
 import edu.byu.nlp.util.Enumeration;
@@ -92,37 +93,37 @@ public class AnnotationStream2Csv {
 		case ANNOTATION:
 
 			// sort all annotations by end time
-			Map<Map<String, Object>, DatasetInstance> ann2InstMap = Maps.newIdentityHashMap();
-			List<Map<String, Object>> annotationList = Lists.newArrayList();
+			Map<FlatInstance<SparseFeatureVector,Integer>, DatasetInstance> ann2InstMap = Maps.newIdentityHashMap();
+			List<FlatInstance<SparseFeatureVector,Integer>> annotationList = Lists.newArrayList();
 		    for (DatasetInstance inst: data){
-		    	for (Map<String, Object> ann: inst.getAnnotations().getRawAnnotations()){
+		    	for (FlatInstance<SparseFeatureVector,Integer> ann: inst.getAnnotations().getRawAnnotations()){
 		    		ann2InstMap.put(ann, inst); // record instance of each annotations
 		    		annotationList.add(ann);
 		    	}
 		    }
-			Collections.sort(annotationList, new Comparator<Map<String, Object>>(){
+			Collections.sort(annotationList, new Comparator<FlatInstance<SparseFeatureVector,Integer>>(){
 				@Override
-				public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+				public int compare(FlatInstance<SparseFeatureVector,Integer> o1, FlatInstance<SparseFeatureVector,Integer> o2) {
 			        // no null checking since we want to fail if annotation time is not set. 
 			        return Long.compare(
-			            DataStreamInstance.getEndTime(o1),
-			            DataStreamInstance.getEndTime(o2));
+			            o1.getEndTimestamp(),
+			            o2.getEndTimestamp());
 				}
 		    });
 			
 			Set<Integer> annotators = Sets.newHashSet();
-			for (Enumeration<Map<String, Object>> item: Iterables2.enumerate(annotationList)){
-				Map<String, Object> ann = item.getElement();
+			for (Enumeration<FlatInstance<SparseFeatureVector,Integer>> item: Iterables2.enumerate(annotationList)){
+			  FlatInstance<SparseFeatureVector,Integer> ann = item.getElement();
 				DatasetInstance inst = ann2InstMap.get(ann);
-				annotators.add(DataStreamInstance.getAnnotator(ann));
+				annotators.add(ann.getAnnotator());
 				
-				bld.append(DataStreamInstance.getAnnotator(ann)+",");
-				bld.append(DataStreamInstance.getStartTime(ann)+",");
-				bld.append(DataStreamInstance.getEndTime(ann)+",");
-				bld.append(DataStreamInstance.getAnnotation(ann)+",");
+				bld.append(ann.getAnnotator()+",");
+				bld.append(ann.getStartTimestamp()+",");
+				bld.append(ann.getEndTimestamp()+",");
+				bld.append(ann.getAnnotation()+",");
 				bld.append(inst.getLabel()+",");
 				bld.append(data.getInfo().getIndexers().getInstanceIdIndexer().get(inst.getInfo().getSource())+",");
-				bld.append((!inst.hasLabel()? "NA": DataStreamInstance.getAnnotation(ann)==inst.getLabel()? 1: 0)+","); // num correct
+				bld.append((!inst.hasLabel()? "NA": ann.getAnnotation()==inst.getLabel()? 1: 0)+","); // num correct
 				bld.append(1+","); // num annotations
 				bld.append((item.getIndex()+1)+","); // cumulative num annotations
 				bld.append(1+","); // num annotators
@@ -163,12 +164,12 @@ public class AnnotationStream2Csv {
 			Multiset<Integer> perAnnotatorAnnotationCounts = HashMultiset.create();
 			Multiset<Integer> perAnnotatorCorrectAnnotationCounts = HashMultiset.create();
 		    for (DatasetInstance inst: data){
-		    	for (Map<String, Object> ann: inst.getAnnotations().getRawAnnotations()){
-		    		int annotatorId = DataStreamInstance.getAnnotator(ann);
+		    	for (FlatInstance<SparseFeatureVector,Integer> ann: inst.getAnnotations().getRawAnnotations()){
+		    		int annotatorId = ann.getAnnotator();
 		    		
 		    		perAnnotatorAnnotationCounts.add(annotatorId);
 		    		
-		    		if (inst.getLabel()==DataStreamInstance.getAnnotation(ann)){
+		    		if (inst.getLabel()==ann.getAnnotation()){
 		    			perAnnotatorCorrectAnnotationCounts.add(annotatorId);
 		    		}
 

@@ -1,6 +1,5 @@
 package edu.byu.nlp.data.streams;
 
-import java.util.List;
 import java.util.Map;
 
 import edu.byu.nlp.data.types.DataStreamInstance;
@@ -77,8 +76,8 @@ public class IndexerCalculator<D, L>  {
       if (!DataStreamInstance.isAnnotation(inst)){
         // only record data if it's a label
         @SuppressWarnings("unchecked")
-        List<List<D>> sentences = (List<List<D>>) DataStreamInstance.getRaw(inst, DataStreamInstance.DATA);
-        for (List<D> sentence: sentences){
+        Iterable<Iterable<D>> sentences = (Iterable<Iterable<D>>) DataStreamInstance.getRaw(inst, DataStreamInstance.DATA);
+        for (Iterable<D> sentence: sentences){
           for (D word: sentence){
             wordIndexer.add(word);
           }

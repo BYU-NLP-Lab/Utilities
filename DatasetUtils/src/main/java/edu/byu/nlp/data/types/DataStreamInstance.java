@@ -29,50 +29,58 @@ public class DataStreamInstance {
     DATAPATH = "datapath",
     MEASUREMENT = "measurement";
 
-  public static Integer getSource(Map<String,Object> instance){
-    return (Integer) getRaw(instance, SOURCE);
+  public static Object getSource(Map<String,Object> instance){
+    return getRaw(instance, SOURCE);
   }
 
-  public static SparseFeatureVector getData(Map<String,Object> instance){
-    return (SparseFeatureVector) getRaw(instance, DATA);
+  public static Object getData(Map<String,Object> instance){
+    return getRaw(instance, DATA);
   }
 
-  public static String getDataPath(Map<String,Object> instance){
-    return (String) getRaw(instance, DATAPATH);
+  public static Object getDataPath(Map<String,Object> instance){
+    return getRaw(instance, DATAPATH);
   }
   
-  public static Long getEndTime(Map<String,Object> instance){
-    return (Long) getRaw(instance, ENDTIME);
+  public static Object getEndTime(Map<String,Object> instance){
+    return getRaw(instance, ENDTIME);
   }
 
-  public static Long getStartTime(Map<String,Object> instance){
-    return (Long) getRaw(instance, STARTTIME);
+  public static Object getStartTime(Map<String,Object> instance){
+    return getRaw(instance, STARTTIME);
   }
 
-  public static Integer getLabel(Map<String,Object> instance){
-    return (Integer) getRaw(instance, LABEL);
+  public static Object getLabel(Map<String,Object> instance){
+    return getRaw(instance, LABEL);
   }
 
-  public static Integer getAnnotator(Map<String,Object> instance){
-    return (Integer) getRaw(instance, ANNOTATOR);
+  public static Object getAnnotator(Map<String,Object> instance){
+    return getRaw(instance, ANNOTATOR);
   }
 
-  @SuppressWarnings("unchecked")
-  public static Measurement<Integer, Integer> getMeasurement(Map<String,Object> instance){
-    return (Measurement<Integer, Integer>) getRaw(instance, MEASUREMENT);
+  public static Object getMeasurement(Map<String,Object> instance){
+    return getRaw(instance, MEASUREMENT);
   }
 
-  public static Integer getAnnotation(Map<String,Object> instance){
-    return (Integer) getRaw(instance, ANNOTATION);
+  public static Object getAnnotation(Map<String,Object> instance){
+    return getRaw(instance, ANNOTATION);
   }
 
-  public static Boolean getLabelObserved(Map<String,Object> instance){
-    return (Boolean) getRaw(instance, LABELOBSERVED);
+  public static Object getLabelObserved(Map<String,Object> instance){
+    return getRaw(instance, LABELOBSERVED);
   }
 
   public static boolean isAnnotation(Map<String,Object> instance){
     return instance.containsKey(ANNOTATION);
   }
+  
+  public static boolean isLabel(Map<String, Object> instance) {
+    return instance.containsKey(LABEL);
+  }
+
+  public static boolean isMeasurement(Map<String, Object> instance) {
+    return instance.containsKey(MEASUREMENT);
+  }
+  
 
   public static Map<String, Object> fromFullRaw(Object source, Object data, Object label, Object labelObserved, 
       Object datapath, Object annotator, Object annotation,  Object starttime, Object endtime, Object measurement){
@@ -86,12 +94,12 @@ public class DataStreamInstance {
     addIfNotNull(m,STARTTIME,starttime);
     addIfNotNull(m,ENDTIME,endtime);
     addIfNotNull(m,MEASUREMENT,measurement);
-    addIfNotNull(m, LABELOBSERVED, labelObserved);
+    addIfNotNull(m,LABELOBSERVED,labelObserved);
     return m;
   }
   
   public static Map<String, Object> fromFull(int source, SparseFeatureVector data, Integer label, Boolean labelObserved, 
-      String datapath, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer, Integer> measurement){
+      String datapath, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
     return fromFullRaw(source, data, label, labelObserved, datapath, annotator, annotation, starttime, endtime, measurement);
   }
 
@@ -99,12 +107,12 @@ public class DataStreamInstance {
     return fromFullRaw(source, null, null, null, null, annotator, annotation, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromAnnotation(int source, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer, Integer> measurement){
+  public static Map<String, Object> fromAnnotation(int source, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
     return fromAnnotationRaw(source, annotator, annotation, starttime, endtime, measurement);
   }
 
   public static Map<String, Object> fromLabelRaw(Object source, Object data, Object label, Object labelObserved){
-    return fromFullRaw(source, data, labelObserved, labelObserved, null, null, null, null, null, null);
+    return fromFullRaw(source, data, label, labelObserved, null, null, null, null, null, null);
   }
   
   public static Map<String, Object> fromLabel(int source, SparseFeatureVector data, Integer label, Boolean labelObserved){
@@ -127,5 +135,5 @@ public class DataStreamInstance {
       m.put(key, value);
     }
   }
-  
+
 }

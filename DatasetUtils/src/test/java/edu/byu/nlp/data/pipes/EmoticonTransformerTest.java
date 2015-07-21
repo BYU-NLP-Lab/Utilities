@@ -3,6 +3,8 @@ package edu.byu.nlp.data.pipes;
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 
+import edu.byu.nlp.data.streams.EmoticonTransformer;
+
 public class EmoticonTransformerTest {
 
 	static public String[] smileys = new String[]{

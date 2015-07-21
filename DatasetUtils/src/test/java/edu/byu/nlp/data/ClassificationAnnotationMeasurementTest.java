@@ -1,8 +1,10 @@
 package edu.byu.nlp.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+
+import edu.byu.nlp.data.measurements.ClassificationAnnotationMeasurement;
 
 public class ClassificationAnnotationMeasurementTest {
 
@@ -10,10 +12,12 @@ public class ClassificationAnnotationMeasurementTest {
   
   @Test
   public void test() {
+    int annotator = 0;
     int index = 9;
     int label = 1;
     double annotation = 0.9;
-    ClassificationAnnotationMeasurement m = new ClassificationAnnotationMeasurement(index, label, annotation );
+    double confidence = 0.8;
+    ClassificationAnnotationMeasurement m = new ClassificationAnnotationMeasurement(annotator, index, label, annotation, confidence);
 
     for (int i=0; i<20; i++){
       for (int j=0; j<20; j++){

@@ -15,7 +15,7 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.pipes.DataSource;
-import edu.byu.nlp.data.pipes.DataSources;
-import edu.byu.nlp.data.pipes.DirectoryReader;
-import edu.byu.nlp.data.pipes.FieldIndexer;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
-import edu.byu.nlp.data.pipes.LabeledInstancePipe;
-import edu.byu.nlp.data.pipes.SerialLabeledInstancePipeBuilder;
+import edu.byu.nlp.data.streams.DataStream;
+import edu.byu.nlp.data.streams.DataStreams;
+import edu.byu.nlp.data.streams.DirectoryReader;
+import edu.byu.nlp.data.streams.FieldIndexer;
+import edu.byu.nlp.data.streams.FilenameToContents;
+import edu.byu.nlp.data.streams.IndexFileToFileList;
+import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.Datasets;
@@ -86,41 +86,80 @@ public class VectorDocumentDatasetBuilder {
 
   
   public Dataset dataset() throws IOException {
+//    
+//    // input pipe parses feature vectors out of files 
+//    LabeledInstancePipe<String, String, SparseFeatureVector, String> inputPipe = new SerialLabeledInstancePipeBuilder<String, String, String, String>()
+//    // convert a file system dataset (string) to document contents (String) and labels (String)
+//    .add(DocPipes.indexToDocPipe(basedir))
+//    .addDataTransform(DocPipes.documentVectorToArray())
+//    .addDataTransform(DocPipes.arrayToSparseFeatureVector())
+//    .build();
+//        
+//    // apply first pipeline (input)
+//    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataStreamSources.cache(
+//        DataStreamSources.connect(new DirectoryReader(indexDirectory), inputPipe)); // Cache the data to avoid multiple disk reads
+//    
+//    // indexing pipe converts labels to numbers 
+//    IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(sentenceData);
+//    indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
+//    indexers.setWordIndexer(Indexers.indexerOfStrings(sentenceData.get(0).getData().length())); // identity feature-mapping
+//    
+//    // index columns
+//    LabeledInstancePipe<SparseFeatureVector, String, SparseFeatureVector, Integer> indexerPipe = 
+//        new SerialLabeledInstancePipeBuilder<SparseFeatureVector, String, SparseFeatureVector, String>()
+//        .addLabelTransform(new FieldIndexer<String>(indexers.getLabelIndexer()))
+//        .addAnnotatorIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getAnnotatorIdIndexer())))
+//        .addInstanceIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getInstanceIdIndexer())))
+//        .build();
+//    
+//    // apply second pipeline (vectorization)
+//    DataStreamSource<SparseFeatureVector, String> vectorDatasetSource = DataStreamSources.from(indexDirectory.toString(), sentenceData);
+//    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataStreamSources.cache(DataStreamSources.connect(vectorDatasetSource, indexerPipe));
+//
+//    // convert FlatInstances to a Dataset
+//    return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);
+//    
     
-    // input pipe parses feature vectors out of files 
-    LabeledInstancePipe<String, String, SparseFeatureVector, String> inputPipe = new SerialLabeledInstancePipeBuilder<String, String, String, String>()
-    // convert a file system dataset (string) to document contents (String) and labels (String)
-    .add(DocPipes.indexToDocPipe(basedir))
-    .addDataTransform(DocPipes.documentVectorToArray())
-    .addDataTransform(DocPipes.arrayToSparseFeatureVector())
-    .build();
-        
-    // apply first pipeline (input)
-    List<FlatInstance<SparseFeatureVector, String>> sentenceData = DataStreamSources.cache(
-        DataStreamSources.connect(new DirectoryReader(indexDirectory), inputPipe)); // Cache the data to avoid multiple disk reads
-    
-    // indexing pipe converts labels to numbers 
-    IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(sentenceData);
+
+    // index directory to index filenames
+    DataStream stream = 
+      DataStream.withSource(indexDirectory.toString(), new DirectoryReader(indexDirectory, DataStreamInstance.DATA).getStream())
+      // index filenames to data filenames
+      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, new IndexFileToFileList()))
+      // data filenames to data
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new FilenameToContents(basedir)))
+      // transform documents (e.g., remove email headers, transform emoticons)
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.documentVectorToArray()))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.arrayToSparseFeatureVector()))
+    ;
+
+    // feature selection
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(stream);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
-    indexers.setWordIndexer(Indexers.indexerOfStrings(sentenceData.get(0).getData().length())); // identity feature-mapping
-    
-    // index columns
-    LabeledInstancePipe<SparseFeatureVector, String, SparseFeatureVector, Integer> indexerPipe = 
-        new SerialLabeledInstancePipeBuilder<SparseFeatureVector, String, SparseFeatureVector, String>()
-        .addLabelTransform(new FieldIndexer<String>(indexers.getLabelIndexer()))
-        .addAnnotatorIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getAnnotatorIdIndexer())))
-        .addInstanceIdTransform(FieldIndexer.cast2Long(new FieldIndexer<Long>(indexers.getInstanceIdIndexer())))
-        .build();
-    
-    // apply second pipeline (vectorization)
-    DataStreamSource<SparseFeatureVector, String> vectorDatasetSource = DataStreamSources.from(indexDirectory.toString(), sentenceData);
-    List<FlatInstance<SparseFeatureVector, Integer>> vectorData = DataStreamSources.cache(DataStreamSources.connect(vectorDatasetSource, indexerPipe));
+    indexers.setWordIndexer(Indexers.indexerOfStrings(getNumFeatures(stream))); // identity feature-mapping
+      
+    // convert data to vectors and labels to numbers
+    stream = stream.
+      transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
+      ;
 
     // convert FlatInstances to a Dataset
-    return Datasets.convert(vectorDatasetSource.getSource(), vectorData, indexers, true);
-    
+    return Datasets.convert(stream.getName(), stream, indexers, true);
   }
 
+  private int getNumFeatures(Iterable<Map<String,Object>> sentenceData) {
+    for (Map<String,Object> sent: sentenceData){
+      SparseFeatureVector dat = (SparseFeatureVector) DataStreamInstance.getData(sent); 
+      if (dat!=null){
+        return dat.length();
+      }
+    }
+    throw new IllegalStateException("None of the reference json items have any data vectors. This is illegal.");
+  }
+  
 
 }
 

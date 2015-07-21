@@ -21,7 +21,7 @@ public class ClassificationLabelProportionMeasurement extends AbstractMeasuremen
   }
   
   @Override
-  public double featureValue(Integer index, Integer label) {
+  public double featureValue(int docIndex, Integer label) {
     return (label==this.getLabel())? 1: 0;
   }
 

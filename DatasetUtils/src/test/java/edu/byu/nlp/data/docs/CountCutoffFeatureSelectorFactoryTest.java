@@ -16,17 +16,15 @@
 package edu.byu.nlp.data.docs;
 
 import java.util.BitSet;
+import java.util.Map;
 
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
-import edu.byu.nlp.data.docs.CountCutoffFeatureSelectorFactory;
-import edu.byu.nlp.data.pipes.DataSink;
+import edu.byu.nlp.data.streams.DataStreamSink;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.dataset.BasicSparseFeatureVector;
 
@@ -36,14 +34,25 @@ import edu.byu.nlp.dataset.BasicSparseFeatureVector;
  */
 public class CountCutoffFeatureSelectorFactoryTest {
 
-  private Iterable<FlatInstance<SparseFeatureVector, String>> exampleData() {
-    ImmutableList.Builder<FlatInstance<SparseFeatureVector, String>> builder = ImmutableList.builder();
-    builder.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-    		AnnotationInterfaceJavaUtils.newLabeledInstance(
-    				(SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 1, 2}, new double[] {1.0, 0.0, 2.0}), "a", "dummy source", false)));
-    builder.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-    		AnnotationInterfaceJavaUtils.newLabeledInstance(
-    				(SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 3, 4}, new double[] {1.0, 1.0, 1.0}), "a", "dummy source", false)));
+  private Iterable<Map<String,Object>> exampleData() {
+    ImmutableList.Builder<Map<String,Object>> builder = ImmutableList.builder();
+    int source = 0;
+    Integer label = 1;
+    Boolean labelObserved = false;
+    builder.add(
+        DataStreamInstance.fromLabel(source, 
+            (SparseFeatureVector) new BasicSparseFeatureVector(new int[] { 0, 1, 2 }, new double[] { 1.0, 0.0, 2.0 }), 
+            label, labelObserved)
+        );
+    
+    source = 0;
+    label = 1;
+    labelObserved = false;
+    builder.add(
+          DataStreamInstance.fromLabel(source, 
+              (SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 3, 4}, new double[] {1.0, 1.0, 1.0}), 
+              label, labelObserved)
+        );
     return builder.build();
   }
   
@@ -53,8 +62,8 @@ public class CountCutoffFeatureSelectorFactoryTest {
   @Test
   public void testNewFeatureSelector() {
     CountCutoffFeatureSelectorFactory<String> factory = new CountCutoffFeatureSelectorFactory<String>(1);
-    DataSink<SparseFeatureVector, String, BitSet> selector = factory.newFeatureSelector(10);
-    BitSet bitSet = selector.processLabeledInstances(exampleData());
+    DataStreamSink<BitSet> selector = factory.newFeatureSelector(10);
+    BitSet bitSet = selector.process(exampleData());
     Assertions.assertThat(bitSet.get(0)).isTrue();
     Assertions.assertThat(bitSet.get(1)).isFalse();
     Assertions.assertThat(bitSet.get(2)).isTrue();

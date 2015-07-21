@@ -13,7 +13,7 @@ public class ClassificationMeasurementParser<X,Y> {
   public static final String TYPE = "type";
   
   
-  public static Measurement<Integer,Integer> parse(String rawValue, int annotator, IndexerCalculator<String,String> indexes){
+  public static Measurement<Integer> parse(String rawValue, int annotator, IndexerCalculator<String,String> indexes){
     Gson gson = new Gson();
     String type = gson.fromJson(rawValue, MeasurementPojo.class).type;
     

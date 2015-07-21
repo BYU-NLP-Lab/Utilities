@@ -24,7 +24,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.math3.random.RandomGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -34,6 +38,7 @@ import com.google.common.collect.Lists;
  *
  */
 public class Iterables2 {
+  private static final Logger logger = LoggerFactory.getLogger(Iterables2.class);
 	
 	public static <E> Iterator<E> simpleIterator(final Iterable<? extends E> it){
 		return Lists.newArrayList(it).iterator();
@@ -137,4 +142,42 @@ public class Iterables2 {
 		return retval;
 	}
 	
+	/**
+	 * Similar to guava's Iterables.transform(), but instead of transforming the elements of an 
+	 * iterable, this transforms the elements of an Iterable<Iterable> 
+	 */
+	public static <E,F> Iterable<Iterable<F>> transformIterables(Iterable<Iterable<E>> fromIterable, final Function<? super E,? extends F> function){
+	  if (fromIterable==null || function==null){
+	    logger.warn("A null value was passed to transformIterables(). Return null.");
+	    return null;
+	  }
+	  return Iterables.transform(fromIterable, new Function<Iterable<E>, Iterable<F>>() {
+      @Override
+      public Iterable<F> apply(Iterable<E> input) {
+        return Iterables.transform(input, function);
+      }
+    });
+	}
+
+  public static <E> Iterable<Iterable<E>> filterNullValuesFromIterables(Iterable<Iterable<E>> fromIterable){
+    if (fromIterable==null){
+      logger.warn("A null value was passed to transformIterables(). Return null.");
+      return null;
+    }
+    return Iterables.transform(fromIterable, new Function<Iterable<E>, Iterable<E>>() {
+      @Override
+      public Iterable<E> apply(Iterable<E> input) {
+        return Iterables2.filterNullValues(input);
+      }
+    });
+  }
+	
+	public static <E> Iterable<E> filterNullValues(Iterable<E> iterable){
+	  return Iterables.filter(iterable, new Predicate<E>() {
+      @Override
+      public boolean apply(E input) {
+        return input!=null;
+      }
+    });
+	}
 }

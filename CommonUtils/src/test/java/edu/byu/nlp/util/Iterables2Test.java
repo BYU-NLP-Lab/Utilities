@@ -21,6 +21,8 @@ import java.util.List;
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /**
@@ -38,6 +40,26 @@ public class Iterables2Test {
     
     List<Integer> flat = Lists.newArrayList(Iterables2.flatten(list));
     Assertions.assertThat(flat).isEqualTo(Lists.newArrayList(1,2,3,4,5,6,7,8,9));
+  }
+  
+  public void testTransform(){
+    Iterable<Iterable<Integer>> list = Lists.newArrayList();
+    ((ArrayList<Iterable<Integer>>) list).add(Lists.newArrayList(1,2,3));
+    ((ArrayList<Iterable<Integer>>) list).add(Lists.newArrayList(4,5,6));
+    ((ArrayList<Iterable<Integer>>) list).add(Lists.newArrayList(7,8,9));
+    
+    List<Iterable<String>> xformed = Lists.newArrayList(Iterables2.transformIterables(list, new Function<Integer, String>() {
+      @Override
+      public String apply(Integer input) {
+        return ""+input;
+      }
+    }));
+
+    Iterables.elementsEqual(xformed.get(0), Lists.newArrayList("1","2","3"));
+    Iterables.elementsEqual(xformed.get(1), Lists.newArrayList("1","2","3"));
+    Iterables.elementsEqual(xformed.get(2), Lists.newArrayList("1","2","3"));
+    
+    
   }
 	
 } 

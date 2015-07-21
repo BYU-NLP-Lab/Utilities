@@ -16,8 +16,8 @@ package edu.byu.nlp.data.docs;
 import java.util.BitSet;
 import java.util.Map;
 
+import edu.byu.nlp.data.FlatClassificationInstance;
 import edu.byu.nlp.data.streams.DataStreamSink;
-import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.SparseFeatureVector.Entry;
 
 /**
@@ -58,9 +58,10 @@ public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFact
 
     private double[] countFeatures(Iterable<Map<String, Object>> docs) {
       double[] counts = new double[numFeatures];
-      for (Map<String, Object> doc : docs) {
-    	  if (!DataStreamInstance.isAnnotation(doc)){ // ignore annotations; no data
-	        for (Entry e : DataStreamInstance.getData(doc).sparseEntries()) {
+      for (Map<String, Object> rawdoc : docs) {
+        FlatClassificationInstance doc = FlatClassificationInstance.fromStream(rawdoc);
+    	  if (!doc.isAnnotation()){ // ignore annotations; no data
+	        for (Entry e : doc.getData().sparseEntries()) {
 	          counts[e.getIndex()] += e.getValue();
 	        }
     	  }

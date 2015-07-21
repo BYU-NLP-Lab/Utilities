@@ -131,9 +131,9 @@ public class JsonDatasetMocker {
 
 		// build dataset
 		Function<String, String> docTransform = null;
-		Function<String, List<String>> tokenizerPipe = DocPipes.McCallumAndNigamTokenizer();
-		Function<String, List<String>> sentenceSplitter = DocPipes.opennlpSentenceSplitter();
-		FeatureSelectorFactory<String> featureSelectorFactory = new CountCutoffFeatureSelectorFactory<String>(-1);
+		Function<String, Iterable<String>> tokenizerPipe = DocPipes.McCallumAndNigamTokenizer();
+		Function<String, Iterable<String>> sentenceSplitter = DocPipes.opennlpSentenceSplitter();
+		FeatureSelectorFactory featureSelectorFactory = new CountCutoffFeatureSelectorFactory<String>(-1);
 		Integer featureNormalizationConstant = 1;
 		Function<String, String> tokenTransform = null;
 		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder(basedir.getAbsolutePath(), jsonFile.getName(),

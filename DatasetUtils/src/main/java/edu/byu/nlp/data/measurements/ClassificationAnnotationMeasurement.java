@@ -26,8 +26,8 @@ public class ClassificationAnnotationMeasurement extends AbstractMeasurement<Int
   }
   
   @Override
-  public double featureValue(Integer index, Integer label) {
-    return (index==this.getIndex() && label==this.getLabel())? getAnnotation(): 0;
+  public double featureValue(int docIndex, Integer label) {
+    return (docIndex==this.getIndex() && label==this.getLabel())? getAnnotation(): 0;
   }
 
   public int getIndex() {
@@ -61,5 +61,6 @@ public class ClassificationAnnotationMeasurement extends AbstractMeasurement<Int
   public void setConfidence(Double confidence) {
     this.confidence = confidence;
   }
+
 
 }

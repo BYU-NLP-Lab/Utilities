@@ -51,9 +51,9 @@ public class LogDocumentFrequency implements DataStreamSink<double[]> {
 	@Override
   public double[] process(Iterable<Map<String, Object>> documents) {
 		DFIncrementor inc = new DFIncrementor(numFeatures);
-		for (Map<String,Object> document : documents) {
-		// annotation instances may have null documents and should be skipped. data is in the corresponding label
-		  SparseFeatureVector docData = DataStreamInstance.getData(document);
+		for (Map<String,Object> doc : documents) {
+		  // annotation instances may have null documents and should be skipped. data is in the corresponding label
+		  SparseFeatureVector docData = (SparseFeatureVector) DataStreamInstance.getData(doc);
 			if (docData!=null){ 
 			  docData.visitIndices(inc);
 			}

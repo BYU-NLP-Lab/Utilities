@@ -90,7 +90,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	@Override
   public Iterable<Map<String, Object>> apply(Map<String, Object> input) {
 	  // this should be the only thing the input has
-	  String indexFilename = (String) input.get(fieldname);
+	  String indexFilename = (String)input.get(fieldname);
 	  
 		logger.info("Processing " + indexFilename);
 		Reader jsonReader = readerOf(indexFilename);

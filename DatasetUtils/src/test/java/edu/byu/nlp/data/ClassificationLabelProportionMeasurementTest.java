@@ -1,8 +1,10 @@
 package edu.byu.nlp.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+
+import edu.byu.nlp.data.measurements.ClassificationLabelProportionMeasurement;
 
 public class ClassificationLabelProportionMeasurementTest {
 
@@ -10,7 +12,11 @@ public class ClassificationLabelProportionMeasurementTest {
   
   @Test
   public void test() {
-    ClassificationLabelProportionMeasurement m = new ClassificationLabelProportionMeasurement(1);
+    int annotator = 0;
+    int label = 1;
+    double proportion = 0.7;
+    double confidence = 0.2;
+    ClassificationLabelProportionMeasurement m = new ClassificationLabelProportionMeasurement(annotator, label, proportion, confidence);
 
     assertEquals(1, m.featureValue(5, 1), THRESHOLD);
     assertEquals(1, m.featureValue(0, 1), THRESHOLD);
