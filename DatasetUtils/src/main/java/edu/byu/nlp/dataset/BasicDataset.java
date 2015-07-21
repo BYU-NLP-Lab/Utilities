@@ -276,14 +276,14 @@ public class BasicDataset implements Dataset {
 	 * allowing us to avoid lots of messy bookkeeping. We never need to 
 	 * update our cache since datasets are immutable (at least wrt instances).
 	 */
-	private Map<Integer,DatasetInstance> instanceMap = null; // cache indices
+	private Map<String,DatasetInstance> instanceMap = null; // cache indices
 	@Override
-	public synchronized DatasetInstance lookupInstance(Integer source) {
+	public synchronized DatasetInstance lookupInstance(String source) {
 		if (this.instanceMap==null){
 			logger.info("regenerating instance lookup cache for dataset "+getInfo().getSource());
 			this.instanceMap = Maps.newHashMap();
 			for (DatasetInstance inst: this){
-				instanceMap.put(inst.getInfo().getSource(), inst);
+				instanceMap.put(inst.getInfo().getRawSource(), inst);
 			}
 		}
 		return this.instanceMap.get(source);

@@ -81,7 +81,8 @@ public class JSONVectorDocumentDatasetBuilder {
       transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
+      .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       ;
 
     // convert FlatInstances to a Dataset

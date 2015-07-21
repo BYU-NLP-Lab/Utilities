@@ -136,7 +136,7 @@ public class JsonDatasetMocker {
 		FeatureSelectorFactory featureSelectorFactory = new CountCutoffFeatureSelectorFactory<String>(-1);
 		Integer featureNormalizationConstant = 1;
 		Function<String, String> tokenTransform = null;
-		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder(basedir.getAbsolutePath(), jsonFile.getName(),
+		JSONDocumentDatasetBuilder builder = new JSONDocumentDatasetBuilder(basedir.getAbsolutePath(), jsonFile.getAbsolutePath(),
 				docTransform, sentenceSplitter, tokenizerPipe, tokenTransform, featureSelectorFactory, featureNormalizationConstant);
 		return builder.dataset();
 	}

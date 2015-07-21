@@ -65,6 +65,7 @@ public class IndexerCalculator<D, L>  {
         annotatorIndexer.add((String)inst.get(DataStreamInstance.ANNOTATOR));
       }
       labelIndexer.add((L)DataStreamInstance.getRaw(inst, DataStreamInstance.LABEL));
+      labelIndexer.add((L)DataStreamInstance.getRaw(inst, DataStreamInstance.ANNOTATION));
       instanceIndexer.add((String)DataStreamInstance.getRaw(inst, DataStreamInstance.SOURCE));
     }
   }

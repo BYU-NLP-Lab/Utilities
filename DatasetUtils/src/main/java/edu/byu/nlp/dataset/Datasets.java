@@ -146,7 +146,8 @@ public class Datasets {
 		Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
 		Set<Integer> instanceIndices = Sets.newHashSet();
 		Set<Integer> indicesWithObservedLabel = Sets.newHashSet();
-		Map<Integer,Integer> labelMap = Maps.newHashMap();
+    Map<Integer,Integer> labelMap = Maps.newHashMap();
+    Map<Integer,String> rawSourceMap = Maps.newHashMap();
 		Map<Integer,SparseFeatureVector> featureMap = Maps.newHashMap();
 		
 		// calculate maps in order to aggregate FlatInstances into a Dataset
@@ -157,9 +158,10 @@ public class Datasets {
 		  FlatClassificationInstance inst = FlatClassificationInstance.fromStream(rawInst);
 		  
 		  int source = inst.getInstanceId();
-			
+		  
 			// record instance
 			instanceIndices.add(source);
+			rawSourceMap.put(source, inst.getSource());
 
 			// annotations
 			if (inst.isAnnotation()){
@@ -213,6 +215,7 @@ public class Datasets {
 					!indicesWithObservedLabel.contains(instanceIndex), // is regressand concealed
 					annotationSet, 
 					instanceIndex, 
+					rawSourceMap.get(instanceIndex),
 					indexers.getLabelIndexer());
 			
 			instances.add(inst);
@@ -374,7 +377,8 @@ public class Datasets {
 		return new BasicDatasetInstance(inst.asFeatureVector(), 
 				inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
 				inst.getRegressand(), DatasetInstances.isRegressandConcealed(inst), 
-				inst.getAnnotations(), inst.getInfo().getSource(), inst.getInfo().getLabelIndexer());
+				inst.getAnnotations(), inst.getInfo().getSource(), 
+				inst.getInfo().getRawSource(), inst.getInfo().getLabelIndexer());
 	}
 	
 	
@@ -405,12 +409,12 @@ public class Datasets {
 			Dataset dataset, FlatInstance<SparseFeatureVector,Integer> ann){
     Integer annotation = ann.getAnnotation();
     Integer annotator = ann.getAnnotator();
-    Integer source = ann.getInstanceId();
+    String source = ann.getSource();
 	  
 		Preconditions.checkNotNull(dataset);
 		Preconditions.checkNotNull(ann);
 		// check that values are indexed values
-		Preconditions.checkArgument(source < dataset.getInfo().getInstanceIdIndexer().size(),
+		Preconditions.checkArgument(ann.getInstanceId() < dataset.getInfo().getInstanceIdIndexer().size(),
 				"cannot add annotation with invalid instance id "+source+"."
 						+ " Must be between 0 and "+dataset.getInfo().getInstanceIdIndexer().size());
 		Preconditions.checkArgument(annotator < dataset.getInfo().getAnnotatorIdIndexer().size(),
@@ -423,7 +427,7 @@ public class Datasets {
 		DatasetInstance inst = dataset.lookupInstance(source);
 		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
 				+ "that is unknown to the dataset recorder (not in the dataset).");
-		Preconditions.checkState(Objects.equal(inst.getInfo().getSource(),source), 
+		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
 				"The source of the instance that was looked up ("+inst.getInfo().getSource()+
 				") doesn't match the src of the annotation ("+source+").");
 		
@@ -627,7 +631,7 @@ public class Datasets {
 			instances.add(new BasicDatasetInstance(
 					data, labelIndex.indexOf(label), false,  
 					regressand, false, 
-					annotations, source, labelIndex));
+					annotations, source, ""+source, labelIndex));
 		}
 		br.close();
 
@@ -890,7 +894,7 @@ public class Datasets {
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
 					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
 					inst.getRegressand(), DatasetInstances.isRegressandConcealed(inst), 
-					annotationSet, inst.getInfo().getSource(), dataset.getInfo().getLabelIndexer()));
+					annotationSet, inst.getInfo().getSource(), inst.getInfo().getRawSource(), dataset.getInfo().getLabelIndexer()));
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
@@ -1169,7 +1173,7 @@ public class Datasets {
       instances.add(new BasicDatasetInstance(scaledFeatures, 
           inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
           inst.getRegressand(), DatasetInstances.isRegressandConcealed(inst), 
-          inst.getAnnotations(), inst.getInfo().getSource(), dataset.getInfo().getLabelIndexer()));
+          inst.getAnnotations(), inst.getInfo().getSource(), inst.getInfo().getRawSource(), dataset.getInfo().getLabelIndexer()));
     }
     
     // dataset with the new instances and the new annotatorIdIndexer

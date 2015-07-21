@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
 import edu.byu.nlp.data.types.AnnotationSet;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
@@ -44,8 +43,8 @@ public class BasicDatasetTest {
 		Dataset dataset = DatasetsTestUtil.mockDataset();
 		DatasetInfo info = dataset.getInfo();
 		
-		int pennyIndex = info.getAnnotatorIdIndexer().indexOf(AnnotationInterfaceJavaUtils.annotatorIdFromUsername("penny"));
-		int johnIndex = info.getAnnotatorIdIndexer().indexOf(AnnotationInterfaceJavaUtils.annotatorIdFromUsername("john"));
+		int pennyIndex = info.getAnnotatorIdIndexer().indexOf("penny");
+		int johnIndex = info.getAnnotatorIdIndexer().indexOf("john");
 		int labelAIndex = info.getLabelIndexer().indexOf("ClassA");
 		int labelBIndex = info.getLabelIndexer().indexOf("ClassB");
 		

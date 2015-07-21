@@ -1,5 +1,7 @@
 package edu.byu.nlp.data;
 
+import com.google.common.base.Objects;
+
 
 public abstract class AbstractFlatInstance<D,L> implements FlatInstance<D, L> {
   
@@ -11,14 +13,20 @@ public abstract class AbstractFlatInstance<D,L> implements FlatInstance<D, L> {
   }
   
   /**
-   * Equality is determined entirely by instanceid
+   * Equality is determined entirely by source (so it work inter-dataset)
    */
   @Override
   public boolean equals(Object obj) {
-          if (obj==null || !(obj instanceof FlatInstance<?,?>)){
-                  return false;
-          }
-          return ((FlatInstance<?,?>)obj).getInstanceId() == getInstanceId();
+    // for annotations, use object equality (all are unique)
+    if (isAnnotation() || isMeasurement()){
+      return super.equals(obj);
+    }
+    // for instances, use raw source equality
+    if (obj==null || !(obj instanceof FlatInstance<?,?>)){
+            return false;
+    }
+    FlatInstance<?, ?> other = ((FlatInstance<?,?>)obj);
+    return Objects.equal(other.getSource(), getSource());
   }
   
   /**

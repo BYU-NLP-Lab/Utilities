@@ -19,6 +19,7 @@ import edu.byu.nlp.data.util.JsonDatasetMocker;
 import edu.byu.nlp.util.Counter;
 import edu.byu.nlp.util.Counters;
 import edu.byu.nlp.util.DoubleArrays;
+import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.IntArrays;
 import edu.byu.nlp.util.Pair;
 
@@ -46,16 +47,17 @@ public class DatasetsTest {
 	    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
 	    Dataset labeledData = partitions.getFirst();
 	    Dataset unlabeledData = partitions.getSecond();
+	    Indexer<String> instanceIndexer = labeledData.getInfo().getInstanceIdIndexer();
 	    
 	    // check labeled data
 	    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
 	    for (DatasetInstance inst: labeledData){
-	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getRawSource());
 	      Assertions.assertThat(
-	          (inst.getInfo().getSource().equals("1") && inst.getInfo().getNumAnnotations()==2) ||
-	          (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==2) ||
-	          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
-	          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==2) 
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("1") && inst.getInfo().getNumAnnotations()==2) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("2") && inst.getInfo().getNumAnnotations()==2) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("4") && inst.getInfo().getNumAnnotations()==2) 
 	          ).isTrue();
 	      Assertions.assertThat(dataset.getInfo().getNullLabel() == dataset.getInfo().getLabelIndexer().indexOf(null));
 	      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
@@ -66,12 +68,12 @@ public class DatasetsTest {
 	    // check unlabeled data
 	    Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
 	    for (DatasetInstance inst: unlabeledData){
-	      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getRawSource());
 	      Assertions.assertThat(
-	          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
-	          (inst.getInfo().getSource().equals("six") && inst.getInfo().getNumAnnotations()==0) ||
-	          (inst.getInfo().getSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
-	          (inst.getInfo().getSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("five") && inst.getInfo().getNumAnnotations()==1) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("six") && inst.getInfo().getNumAnnotations()==0) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("7") && inst.getInfo().getNumAnnotations()==1) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("8") && inst.getInfo().getNumAnnotations()==1)   
 	          ).isTrue();
 	      
 	      Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);
@@ -137,30 +139,31 @@ public class DatasetsTest {
 	  @Test
 	  public void testToFeatureArray() throws IOException{
 	    Dataset data = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
+	    Indexer<String> instanceIndexer = data.getInfo().getInstanceIdIndexer();
 	    for (DatasetInstance inst: data){
 	      Assertions.assertThat(
-	            (inst.getInfo().getSource().equals("1") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("1") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{1,0,0,0,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("2") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("2") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,1,0,0,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("3") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("3") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,1,0,0,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("4") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("4") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,1,0,0,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("five") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("five") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,0,1,0,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("six") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("six") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,0,1,0,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("7") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("7") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,0,0,1,0}, 1e-6)) ||
-	            (inst.getInfo().getSource().equals("8") && DoubleArrays.equals(
+	            (instanceIndexer.get(inst.getInfo().getSource()).equals("8") && DoubleArrays.equals(
 	                Datasets.toFeatureArray(inst, 5), 
 	                new double[]{0,0,0,0,1}, 1e-6)) 
 	          );
@@ -171,10 +174,11 @@ public class DatasetsTest {
 	  
 	  @Test
 	  public void testAddAnnotation() throws IOException{
-		// base dataset
+	    // base dataset
 	    Dataset dataset = JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances2(System.currentTimeMillis()));
 	    // annotations
 	    List<FlatInstance<SparseFeatureVector, Integer>> annotations = Datasets.annotationsIn(JsonDatasetMocker.buildTestDatasetFromJson(JsonDatasetMocker.jsonInstances3(System.currentTimeMillis())));
+	    Assertions.assertThat(annotations.size()).isEqualTo(6);
 	    // add them
 	    Datasets.addAnnotationsToDataset(dataset, annotations);
 	    
@@ -186,16 +190,17 @@ public class DatasetsTest {
 	    Pair<? extends Dataset, ? extends Dataset> partitions = Datasets.divideInstancesWithObservedLabels(dataset);
 	    Dataset labeledData = partitions.getFirst();
 	    Dataset unlabeledData = partitions.getSecond();
+	    Indexer<String> instanceIndexer = labeledData.getInfo().getInstanceIdIndexer();
 	    
 	    // check labeled data
 	    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
 	    for (DatasetInstance inst: labeledData){
-	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(instanceIndexer.get(inst.getInfo().getSource()));
 	      Assertions.assertThat(
-	          (inst.getInfo().getSource().equals("1") && inst.getInfo().getNumAnnotations()==3) ||
-	          (inst.getInfo().getSource().equals("2") && inst.getInfo().getNumAnnotations()==3) ||
-	          (inst.getInfo().getSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
-	          (inst.getInfo().getSource().equals("4") && inst.getInfo().getNumAnnotations()==3) 
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("1") && inst.getInfo().getNumAnnotations()==3) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("2") && inst.getInfo().getNumAnnotations()==3) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("4") && inst.getInfo().getNumAnnotations()==3) 
 	          ).isTrue();
 	      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
 	      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
@@ -205,12 +210,12 @@ public class DatasetsTest {
 	    // check unlabeled data
 	    Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(4);
 	    for (DatasetInstance inst: unlabeledData){
-	      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(inst.getInfo().getSource());
+	      Assertions.assertThat(Sets.newHashSet("five","six","7","8")).contains(instanceIndexer.get(inst.getInfo().getSource()));
 	      Assertions.assertThat(
-	          (inst.getInfo().getSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
-	          (inst.getInfo().getSource().equals("six") && inst.getInfo().getNumAnnotations()==3) ||
-	          (inst.getInfo().getSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
-	          (inst.getInfo().getSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("five") && inst.getInfo().getNumAnnotations()==1) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("six") && inst.getInfo().getNumAnnotations()==3) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("7") && inst.getInfo().getNumAnnotations()==1) ||
+	          (instanceIndexer.get(inst.getInfo().getSource()).equals("8") && inst.getInfo().getNumAnnotations()==1)   
 	          ).isTrue();;
 	      
 	      Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);

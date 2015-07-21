@@ -25,12 +25,17 @@ public class DataStreamInstance {
     LABEL = "label", 
     LABELOBSERVED = "labelobserved",
     SOURCE = "source", 
+    RAW_SOURCE = "rawsource",
     DATA = "data",
     DATAPATH = "datapath",
     MEASUREMENT = "measurement";
 
   public static Object getSource(Map<String,Object> instance){
     return getRaw(instance, SOURCE);
+  }
+
+  public static Object getRawSouce(Map<String,Object> instance){
+    return getRaw(instance, RAW_SOURCE);
   }
 
   public static Object getData(Map<String,Object> instance){

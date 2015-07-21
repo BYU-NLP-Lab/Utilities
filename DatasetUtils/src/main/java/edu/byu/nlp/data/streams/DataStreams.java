@@ -121,10 +121,14 @@ public class DataStreams {
     
     /**
      * Transform a particular field value. 
-     * Casts transforms without checking type compatility, so 
+     * Casts transforms without checking type compatibility, so 
      * errors won't show up until run time.
      */
     public static <I,O> Transform transformFieldValue(final String field, final Function<I,O> fieldTransform){
+      return transformFieldValue(field, field, fieldTransform);
+    }
+    
+    public static <I,O> Transform transformFieldValue(final String field, final String targetField, final Function<I,O> fieldTransform){
       if (field==null || fieldTransform==null){
         logger.warn("A null value was passed to transformFieldValue(). Returning null.");
         return null;
@@ -142,7 +146,7 @@ public class DataStreams {
               
               I inval = (I) input.get(field);
               O outval = fieldTransform.apply(inval); 
-              input.put(field, outval);
+              input.put(targetField, outval);
             }
             catch (ClassCastException e){
               throw new IllegalArgumentException("Detected a pipeline with invalid types. The transform "

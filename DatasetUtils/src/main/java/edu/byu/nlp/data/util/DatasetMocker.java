@@ -56,7 +56,7 @@ public class DatasetMocker {
 		});
 		// create instance
 		int instanceId = instances.size();
-		instances.add(new BasicDatasetInstance(fv, label, instanceId, labelIndexer));
+		instances.add(new BasicDatasetInstance(fv, label, instanceId, ""+instanceId, labelIndexer));
 		return this;
 	}
 

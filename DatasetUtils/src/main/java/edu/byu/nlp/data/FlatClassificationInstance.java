@@ -95,7 +95,7 @@ public class FlatClassificationInstance extends AbstractFlatInstance<SparseFeatu
 
   @Override
   public String getSource() {
-    return ""+getInstanceId();
+    return (String) DataStreamInstance.getRawSouce(instance);
   }
 
 

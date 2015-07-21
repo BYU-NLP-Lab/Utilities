@@ -1,23 +1,21 @@
 package edu.byu.nlp.dataset;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.collect.Lists;
 
-import edu.byu.nlp.annotationinterface.java.AnnotationInterfaceJavaUtils;
-import edu.byu.nlp.data.FlatAnnotatedInstance;
-import edu.byu.nlp.data.FlatInstance;
-import edu.byu.nlp.data.FlatLabeledInstance;
-import edu.byu.nlp.data.pipes.FieldIndexer;
-import edu.byu.nlp.data.pipes.IndexerCalculator;
-import edu.byu.nlp.data.pipes.LabeledInstancePipe;
-import edu.byu.nlp.data.pipes.Pipes;
+import edu.byu.nlp.data.streams.DataStream;
+import edu.byu.nlp.data.streams.DataStreams;
+import edu.byu.nlp.data.streams.FieldIndexer;
+import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
 import edu.byu.nlp.util.Indexer;
+import edu.byu.nlp.util.Indexers;
 
 public class DatasetsTestUtil {
 
@@ -49,61 +47,36 @@ public class DatasetsTestUtil {
 	
 	public static Dataset mockDataset(){
 
-		List<FlatInstance<SparseFeatureVector, String>> labels = Lists.newArrayList();
+		List<Map<String,Object>> rawData = Lists.newArrayList();
+		SparseFeatureVector data1 = new BasicSparseFeatureVector(new int[]{0,1,2,4}, new double[]{8,4,2,1});
+		SparseFeatureVector data2 = new BasicSparseFeatureVector(new int[]{0,2,3,4}, new double[]{18,14,12,1});
+		SparseFeatureVector data3 = new BasicSparseFeatureVector(new int[]{0,1,2,3,4}, new double[]{0,1,28,24,22});
 
-		// add data 
-		SparseFeatureVector data1 = new BasicSparseFeatureVector(
-				new int[]{0,1,2,4}, new double[]{8,4,2,1});
-		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data1, "ClassA", "dummy source 1", false)));
-
-		// add data 
-		SparseFeatureVector data2 = new BasicSparseFeatureVector(
-				new int[]{0,2,3,4}, new double[]{18,14,12,1});
-		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data2, "ClassB", "dummy source 2", false)));
-
-		// add data 
-		SparseFeatureVector data3 = new BasicSparseFeatureVector(
-				new int[]{0,1,2,3,4}, new double[]{0,1,28,24,22});
-		labels.add(new FlatLabeledInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.newLabeledInstance(data3, "ClassA", "dummy source 3", false)));
-
+		// add labels 
+		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 1", data1, "ClassA", false));
+		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 2", data2, "ClassB", false));
+		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 3", data3, "ClassA", false));
 		
-		// add annotation
-		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("john", "ClassA", "dummy source 1", null)));
-
-		// add annotation
-		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("john", "ClassB", "dummy source 1", null)));
-
-		// add annotation
-		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("john", "ClassB", "dummy source 2", null)));
-		
-		// add annotation
-		labels.add(new FlatAnnotatedInstance<SparseFeatureVector, String>(
-				AnnotationInterfaceJavaUtils.<SparseFeatureVector, String>
-				newAnnotatedInstance("penny", "ClassA", "dummy source 3", null)));
+		// add annotations
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1", "john", "ClassA", 0, 1, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1", "john", "ClassB", 1, 2, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 2", "john", "ClassB", 2, 3, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 3", "penny", "ClassA", 4, 5, null));
 		
 		// populate indices
 		String datasetSource = "dummy source";
 		final Indexer<String> featureIndex = new Indexer<String>();
 		Indexer<String> labelIndex = new Indexer<String>();
-		Indexer<Long> instanceIdIndex = new Indexer<Long>();
-		Indexer<Long> annotatorIdIndex = new Indexer<Long>();
-		for (FlatInstance<SparseFeatureVector, String> label: labels){
-			instanceIdIndex.add(label.getInstanceId());
-			labelIndex.add(label.getLabel());
-			if (label.isAnnotation()){
-				annotatorIdIndex.add(label.getAnnotator());
+		Indexer<String> instanceIdIndex = new Indexer<String>();
+		Indexer<String> annotatorIdIndex = new Indexer<String>();
+		for (Map<String,Object> instance: rawData){
+			instanceIdIndex.add((String)DataStreamInstance.getSource(instance));
+			labelIndex.add((String)DataStreamInstance.getLabel(instance));
+			if (DataStreamInstance.isAnnotation(instance)){
+				annotatorIdIndex.add((String)DataStreamInstance.getAnnotator(instance));
 			}
-			if (label.getData()!=null){
-				label.getData().visitSparseEntries(new EntryVisitor() {
+			if (DataStreamInstance.getData(instance)!=null){
+			  ((SparseFeatureVector)DataStreamInstance.getData(instance)).visitSparseEntries(new EntryVisitor() {
 					@Override
 					public void visitEntry(int index, double value) {
 						featureIndex.add(""+index);
@@ -115,14 +88,14 @@ public class DatasetsTestUtil {
 		// translate FlatInstance with indexers
 		// (except for the featureIndex--we constructed the data above so that it would 
 		// already be "indexed" (index values are integers, start with 0, and are not 
-		for (FlatInstance<SparseFeatureVector, String> label: labels){
-			instanceIdIndex.add(label.getInstanceId());
-			labelIndex.add(label.getLabel());
-			if (label.isAnnotation()){
-				annotatorIdIndex.add(label.getAnnotator());
+    for (Map<String,Object> instance: rawData){
+			instanceIdIndex.add((String)DataStreamInstance.getSource(instance));
+			labelIndex.add((String)DataStreamInstance.getLabel(instance));
+			if (DataStreamInstance.isAnnotation(instance)){
+				annotatorIdIndex.add((String)DataStreamInstance.getAnnotator(instance));
 			}
-			if (label.getData()!=null){
-				label.getData().visitSparseEntries(new EntryVisitor() {
+			if (DataStreamInstance.getData(instance)!=null){
+			  ((SparseFeatureVector)DataStreamInstance.getData(instance)).visitSparseEntries(new EntryVisitor() {
 					@Override
 					public void visitEntry(int index, double value) {
 						featureIndex.add(""+index);
@@ -132,18 +105,20 @@ public class DatasetsTestUtil {
 		}
 	
 		// sparse (all index values between 0 and max are used at least once)
+    labelIndex = Indexers.removeNullLabel(labelIndex);
 		FieldIndexer<String> labelFieldIndexer = new FieldIndexer<String>(labelIndex);
-		Function<Long,Long> annotatorIdFieldIndexer = FieldIndexer.cast2Long(new FieldIndexer<Long>(annotatorIdIndex));
-		Function<Long,Long> instanceFieldIndexer = FieldIndexer.cast2Long(new FieldIndexer<Long>(instanceIdIndex));
-		LabeledInstancePipe<SparseFeatureVector, String, SparseFeatureVector, Integer> indexingPipe = Pipes.<SparseFeatureVector,String,SparseFeatureVector,Integer>labeledInstanceTransformingPipe( 
-				Functions.<SparseFeatureVector>identity(), 
-				labelFieldIndexer, 
-				Functions.<String>identity(), 
-				instanceFieldIndexer, 
-				annotatorIdFieldIndexer);
-		Iterable<FlatInstance<SparseFeatureVector, Integer>> indexTransformedInstances = indexingPipe.apply(labels);
+		Function<String,Integer> annotatorIdFieldIndexer = new FieldIndexer<String>(annotatorIdIndex);
+		Function<String,Integer> instanceFieldIndexer = new FieldIndexer<String>(instanceIdIndex);
 		
-		return Datasets.convert(datasetSource, indexTransformedInstances, new IndexerCalculator<>(featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex), true);
+		DataStream stream = DataStream.withSource("data source", rawData)
+    .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, labelFieldIndexer))
+    .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, labelFieldIndexer))
+    .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, annotatorIdFieldIndexer))
+    .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
+    .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, instanceFieldIndexer))
+    ;
+		
+		return Datasets.convert("data source", stream, new IndexerCalculator<>(featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex), true);
 	}
 	
 	

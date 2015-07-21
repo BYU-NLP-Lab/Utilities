@@ -31,16 +31,16 @@ public class BasicDatasetInstance implements DatasetInstance {
 	/**
 	 * Create a simple instance with an observed label and no annotations or regressand
 	 */
-	public BasicDatasetInstance(SparseFeatureVector vector, Integer label, int source, Indexer<String> labelIndexer){
-		this(vector, label, false, null, false, Datasets.emptyAnnotationSet(), source, labelIndexer);
+	public BasicDatasetInstance(SparseFeatureVector vector, Integer label, int source, String rawSource, Indexer<String> labelIndexer){
+		this(vector, label, false, null, false, Datasets.emptyAnnotationSet(), source, rawSource, labelIndexer);
 	}
 	
 	public BasicDatasetInstance(SparseFeatureVector vector,  
 			Integer label, boolean isLabelConcealed, Double regressand, boolean isRegressandConcealed, 
-			AnnotationSet annotations, int source, Indexer<String> labelIndexer){
+			AnnotationSet annotations, int source, String rawSource, Indexer<String> labelIndexer){
 		this(vector,label,isLabelConcealed,regressand,isRegressandConcealed,annotations,
 				new InstanceInfo(
-						source, annotations, 
+						source, rawSource, annotations, 
 						labelIndexer));
 	}
 	
@@ -126,7 +126,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 	
 	@Override
 	public String toString() {
-		return info.toString()+" label="+label+" regressand="+regressand+" annotations="+annotations;
+		return "("+info.toString()+" label="+label+" regressand="+regressand+" annotations="+annotations+")";
 	}
 	
 	
@@ -135,10 +135,12 @@ public class BasicDatasetInstance implements DatasetInstance {
 		private int numAnnotations = -1;
 		private Indexer<String> labelIndexer;
 		private AnnotationSet annotations;
+    private String rawSource;
 
-		public InstanceInfo(int source, AnnotationSet annotations, Indexer<String> labelIndexer){
+		public InstanceInfo(int source, String rawSource, AnnotationSet annotations, Indexer<String> labelIndexer){
 			this.annotations=annotations;
 			this.source=source;
+			this.rawSource=rawSource;
 			this.labelIndexer=labelIndexer;
 		}
 		@Override
@@ -158,7 +160,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public String toString() {
-			return "src="+source+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
+			return "src="+rawSource+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
 		}
 		@Override
 		public Indexer<String> getLabelIndexer() {
@@ -168,6 +170,10 @@ public class BasicDatasetInstance implements DatasetInstance {
 		public void annotationsChanged() {
 			this.numAnnotations = -1;
 		}
+    @Override
+    public String getRawSource() {
+      return rawSource;
+    }
 		
 	}
 
