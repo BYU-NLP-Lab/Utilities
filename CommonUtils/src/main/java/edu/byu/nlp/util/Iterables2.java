@@ -40,7 +40,7 @@ import com.google.common.collect.Lists;
 public class Iterables2 {
   private static final Logger logger = LoggerFactory.getLogger(Iterables2.class);
 	
-	public static <E> Iterator<E> simpleIterator(final Iterable<? extends E> it){
+	public static <E> Iterator<? extends E> simpleIterator(final Iterable<? extends E> it){
 		return Lists.newArrayList(it).iterator();
 	}
 	
