@@ -127,9 +127,9 @@ public class VectorDocumentDatasetBuilder {
     DataStream stream = 
       DataStream.withSource(indexDirectory.toString(), new DirectoryReader(indexDirectory, DataStreamInstance.LABEL).getStream())
       // index filenames to data filenames
-      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.LABEL, DataStreamInstance.SOURCE, new IndexFileToFileList(indexDirectory)))
+      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.LABEL, DataStreamInstance.INSTANCE_ID, new IndexFileToFileList(indexDirectory)))
       // data filenames to data
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.DATA, new FilenameToContents(basedir)))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.INSTANCE_ID, DataStreamInstance.DATA, new FilenameToContents(basedir)))
       // transform documents (e.g., remove email headers, transform emoticons)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.documentVectorToArray()))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.arrayToSparseFeatureVector()))
@@ -145,8 +145,8 @@ public class VectorDocumentDatasetBuilder {
     stream = DataStream.withSource(indexDirectory.toString(), instances)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
-      .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
+      .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.INSTANCE_ID, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
       ;
     instances = Lists.newArrayList(stream); // cache results

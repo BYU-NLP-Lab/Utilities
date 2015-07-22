@@ -69,7 +69,7 @@ public class DatasetsTestUtil {
 		Indexer<String> instanceIdIndex = new Indexer<String>();
 		Indexer<String> annotatorIdIndex = new Indexer<String>();
 		for (Map<String,Object> instance: rawData){
-			instanceIdIndex.add((String)DataStreamInstance.getSource(instance));
+			instanceIdIndex.add((String)DataStreamInstance.getInstanceId(instance));
 			labelIndex.add((String)DataStreamInstance.getLabel(instance));
 			if (DataStreamInstance.isAnnotation(instance)){
 				annotatorIdIndex.add((String)DataStreamInstance.getAnnotator(instance));
@@ -88,7 +88,7 @@ public class DatasetsTestUtil {
 		// (except for the featureIndex--we constructed the data above so that it would 
 		// already be "indexed" (index values are integers, start with 0, and are not 
     for (Map<String,Object> instance: rawData){
-			instanceIdIndex.add((String)DataStreamInstance.getSource(instance));
+			instanceIdIndex.add((String)DataStreamInstance.getInstanceId(instance));
 			labelIndex.add((String)DataStreamInstance.getLabel(instance));
 			if (DataStreamInstance.isAnnotation(instance)){
 				annotatorIdIndex.add((String)DataStreamInstance.getAnnotator(instance));
@@ -113,8 +113,8 @@ public class DatasetsTestUtil {
     .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, labelFieldIndexer))
     .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, labelFieldIndexer))
     .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, annotatorIdFieldIndexer))
-    .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
-    .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, instanceFieldIndexer))
+    .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
+    .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.INSTANCE_ID, instanceFieldIndexer))
     ;
 		
 		return Datasets.convert("data source", stream, new IndexerCalculator<>(featureIndex, labelIndex, instanceIdIndex, annotatorIdIndex), true);

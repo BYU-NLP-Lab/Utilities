@@ -24,18 +24,18 @@ public class DataStreamInstance {
     ENDTIME = "endtime", 
     LABEL = "label", 
     LABELOBSERVED = "labelobserved",
-    SOURCE = "source", 
-    RAW_SOURCE = "rawsource",
+    INSTANCE_ID = "source", 
+    SOURCE = "rawsource",
     DATA = "data",
     DATAPATH = "datapath",
     MEASUREMENT = "measurement";
 
-  public static Object getSource(Map<String,Object> instance){
-    return getRaw(instance, SOURCE);
+  public static Object getInstanceId(Map<String,Object> instance){
+    return getRaw(instance, INSTANCE_ID);
   }
 
-  public static Object getRawSource(Map<String,Object> instance){
-    return getRaw(instance, RAW_SOURCE);
+  public static Object getSource(Map<String,Object> instance){
+    return getRaw(instance, SOURCE);
   }
 
   public static Object getData(Map<String,Object> instance){
@@ -87,11 +87,11 @@ public class DataStreamInstance {
   }
   
 
-  public static Map<String, Object> fromFullRaw(Object source, Object rawSource, Object data, Object label, Object labelObserved, 
+  public static Map<String, Object> fromFullRaw(Object instanceId, Object rawSource, Object data, Object label, Object labelObserved, 
       Object datapath, Object annotator, Object annotation,  Object starttime, Object endtime, Object measurement){
     Map<String, Object> m = Maps.newHashMap();
-    m.put(SOURCE, source);
-    m.put(RAW_SOURCE, rawSource);
+    m.put(INSTANCE_ID, instanceId);
+    m.put(SOURCE, rawSource);
     addIfNotNull(m,ANNOTATOR,annotator);
     addIfNotNull(m,DATA,data);
     addIfNotNull(m,DATAPATH,datapath);
