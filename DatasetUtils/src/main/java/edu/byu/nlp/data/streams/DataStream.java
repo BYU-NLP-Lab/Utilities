@@ -1,5 +1,6 @@
 package edu.byu.nlp.data.streams;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 import edu.byu.nlp.io.AbstractIterable;
 import edu.byu.nlp.util.Iterables2;
@@ -75,6 +77,26 @@ public class DataStream extends AbstractIterable<Map<String,Object>>{
   
   public String getName(){
     return name;
+  }
+  
+  public static void main(String[] args){
+    Iterable<String> lst = new AbstractIterable<String>() {
+      @Override
+      public Iterator<String> iterator() {
+        return Lists.newArrayList("a","b","c").iterator();
+      }
+    };
+    Iterable<String> xlst = Iterables.transform(lst, new Function<String,String>(){
+      @Override
+      public String apply(String input) {
+        return input+".txt";
+      }
+    });
+    System.out.println(xlst);
+    System.out.println(xlst);
+    System.out.println(xlst);
+    System.out.println(xlst);
+    
   }
 
 }

@@ -7,7 +7,6 @@ import java.nio.charset.Charset;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.VFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,20 +26,23 @@ public class IndexFileToFileList implements Function<String,Iterable<String>> {
 
 	private final Charset charset;
 
-	public IndexFileToFileList() {
-		this(Charset.defaultCharset());
+  private FileObject indexdir;
+
+	public IndexFileToFileList(FileObject indexdir) {
+		this(Charset.defaultCharset(),indexdir);
 	}
 
-	public IndexFileToFileList(Charset charset) {
+	public IndexFileToFileList(Charset charset, FileObject indexdir) {
 	  Preconditions.checkNotNull(charset);
 		this.charset = charset;
+		this.indexdir=indexdir;
 	}
 
   @Override
   public Iterable<String> apply(String indexFilePath) {
     try {
 
-      FileObject indexFileObject = VFS.getManager().resolveFile(indexFilePath);
+      FileObject indexFileObject = indexdir.resolveFile(indexFilePath);
       logger.info("Processing " + indexFilePath);
       
       return Files2.open(indexFileObject, charset);

@@ -160,7 +160,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 		}
 		@Override
 		public String toString() {
-			return "src="+rawSource+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
+			return "src="+rawSource+" id="+source+" numannotators="+getNumAnnotators()+" numannotations="+getNumAnnotations();
 		}
 		@Override
 		public Indexer<String> getLabelIndexer() {

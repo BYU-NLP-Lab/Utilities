@@ -34,7 +34,7 @@ public class DataStreamInstance {
     return getRaw(instance, SOURCE);
   }
 
-  public static Object getRawSouce(Map<String,Object> instance){
+  public static Object getRawSource(Map<String,Object> instance){
     return getRaw(instance, RAW_SOURCE);
   }
 
@@ -87,10 +87,11 @@ public class DataStreamInstance {
   }
   
 
-  public static Map<String, Object> fromFullRaw(Object source, Object data, Object label, Object labelObserved, 
+  public static Map<String, Object> fromFullRaw(Object source, Object rawSource, Object data, Object label, Object labelObserved, 
       Object datapath, Object annotator, Object annotation,  Object starttime, Object endtime, Object measurement){
     Map<String, Object> m = Maps.newHashMap();
     m.put(SOURCE, source);
+    m.put(RAW_SOURCE, rawSource);
     addIfNotNull(m,ANNOTATOR,annotator);
     addIfNotNull(m,DATA,data);
     addIfNotNull(m,DATAPATH,datapath);
@@ -103,29 +104,29 @@ public class DataStreamInstance {
     return m;
   }
   
-  public static Map<String, Object> fromFull(int source, SparseFeatureVector data, Integer label, Boolean labelObserved, 
+  public static Map<String, Object> fromFull(int source, String rawSource, SparseFeatureVector data, Integer label, Boolean labelObserved, 
       String datapath, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
-    return fromFullRaw(source, data, label, labelObserved, datapath, annotator, annotation, starttime, endtime, measurement);
+    return fromFullRaw(source, rawSource, data, label, labelObserved, datapath, annotator, annotation, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromAnnotationRaw(Object source, Object annotator, Object annotation, Object starttime, Object endtime, Object measurement){
-    return fromFullRaw(source, null, null, null, null, annotator, annotation, starttime, endtime, measurement);
+  public static Map<String, Object> fromAnnotationRaw(Object source, Object rawSource, Object annotator, Object annotation, Object starttime, Object endtime, Object measurement){
+    return fromFullRaw(source, rawSource, null, null, null, null, annotator, annotation, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromAnnotation(int source, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
-    return fromAnnotationRaw(source, annotator, annotation, starttime, endtime, measurement);
+  public static Map<String, Object> fromAnnotation(int source, String rawSource, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
+    return fromAnnotationRaw(source, rawSource, annotator, annotation, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromLabelRaw(Object source, Object data, Object label, Object labelObserved){
-    return fromFullRaw(source, data, label, labelObserved, null, null, null, null, null, null);
+  public static Map<String, Object> fromLabelRaw(Object source, Object rawSource, Object data, Object label, Object labelObserved){
+    return fromFullRaw(source, rawSource, data, label, labelObserved, null, null, null, null, null, null);
   }
   
-  public static Map<String, Object> fromLabel(int source, SparseFeatureVector data, Integer label, Boolean labelObserved){
-    return fromLabelRaw(source, data, label, labelObserved);
+  public static Map<String, Object> fromLabel(int source, String rawSource, SparseFeatureVector data, Integer label, Boolean labelObserved){
+    return fromLabelRaw(source, rawSource, data, label, labelObserved);
   }
 
   public static Map<String, Object> fromLabel(DatasetInstance inst){
-    return fromLabel(inst.getInfo().getSource(), inst.asFeatureVector(), inst.getLabel(), !DatasetInstances.isLabelConcealed(inst));
+    return fromLabel(inst.getInfo().getSource(), inst.getInfo().getRawSource(), inst.asFeatureVector(), inst.getLabel(), !DatasetInstances.isLabelConcealed(inst));
   }
 
   public static Object getRaw(Map<String, Object> m, String key){

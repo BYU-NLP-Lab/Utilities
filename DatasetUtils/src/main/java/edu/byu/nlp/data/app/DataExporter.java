@@ -86,7 +86,7 @@ public class DataExporter {
 		@Override
 		public String apply(DatasetInstance instance) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(instance.getInfo().getSource());
+			sb.append(instance.getInfo().getRawSource());
 			sb.append(' ');
 			sb.append(instance.getObservedLabel());
 			for (Entry entry : instance.asFeatureVector().sparseEntries()) {

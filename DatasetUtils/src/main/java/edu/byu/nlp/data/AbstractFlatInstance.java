@@ -9,7 +9,7 @@ public abstract class AbstractFlatInstance<D,L> implements FlatInstance<D, L> {
   public String toString() {
           return getClass().getName()+" "+(isAnnotation()?"Annotation":"Label")+
                           "[src="+getSource()+", id="+getInstanceId()+", lab="+getLabel()+
-                          ", ann="+getAnnotator()+", start="+getStartTimestamp()+", stop="+getEndTimestamp()+"]";
+                          ", ann="+getAnnotation()+", annid="+getAnnotator()+", start="+getStartTimestamp()+", stop="+getEndTimestamp()+"]";
   }
   
   /**

@@ -15,6 +15,7 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.apache.commons.vfs2.FileObject;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import edu.byu.nlp.data.streams.DataStream;
 import edu.byu.nlp.data.streams.DataStreams;
@@ -123,32 +125,34 @@ public class VectorDocumentDatasetBuilder {
 
     // index directory to index filenames
     DataStream stream = 
-      DataStream.withSource(indexDirectory.toString(), new DirectoryReader(indexDirectory, DataStreamInstance.DATA).getStream())
+      DataStream.withSource(indexDirectory.toString(), new DirectoryReader(indexDirectory, DataStreamInstance.LABEL).getStream())
       // index filenames to data filenames
-      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.DATA, new IndexFileToFileList()))
+      .oneToMany(DataStreams.OneToManys.oneToManyByFieldValue(DataStreamInstance.LABEL, DataStreamInstance.SOURCE, new IndexFileToFileList(indexDirectory)))
       // data filenames to data
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new FilenameToContents(basedir)))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.DATA, new FilenameToContents(basedir)))
       // transform documents (e.g., remove email headers, transform emoticons)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.documentVectorToArray()))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.arrayToSparseFeatureVector()))
     ;
+    ArrayList<Map<String, Object>> instances = Lists.newArrayList(stream); // cache results
 
     // feature selection
-    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(stream);
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(instances);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
-    indexers.setWordIndexer(Indexers.indexerOfStrings(getNumFeatures(stream))); // identity feature-mapping
+    indexers.setWordIndexer(Indexers.indexerOfStrings(getNumFeatures(instances))); // identity feature-mapping
       
     // convert data to vectors and labels to numbers
-    stream = stream.
-      transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
+    stream = DataStream.withSource(indexDirectory.toString(), instances)
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
       ;
+    instances = Lists.newArrayList(stream); // cache results
 
     // convert FlatInstances to a Dataset
-    return Datasets.convert(stream.getName(), stream, indexers, true);
+    return Datasets.convert(stream.getName(), instances, indexers, true);
   }
 
   private int getNumFeatures(Iterable<Map<String,Object>> sentenceData) {

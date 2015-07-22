@@ -51,13 +51,17 @@ public class DataStreams {
         }
       };
     }
+
+    public static OneToMany oneToManyByFieldValue(final String field, final Function fieldSplitterFunction){
+      return oneToManyByFieldValue(field, field, fieldSplitterFunction);
+    }
     /**
      * Use one-to-many function that operates on an attribute value. Replicate the whole item 
      * once for each resulting value. Items that do not have in indicated field are 
      * ommitted from the resulting stream.
      */
     @SuppressWarnings("rawtypes")
-    public static OneToMany oneToManyByFieldValue(final String field, final Function fieldSplitterFunction){
+    public static OneToMany oneToManyByFieldValue(final String field, final String targetField, final Function fieldSplitterFunction){
       return new OneToMany(){
         @SuppressWarnings("unchecked")
         @Override
@@ -70,7 +74,7 @@ public class DataStreams {
               @Override
               public Map<String, Object> apply(Object value) {
                 HashMap<String, Object> clone = Maps.newHashMap(input); // clone to avoid side effects
-                clone.put(field, value);
+                clone.put(targetField, value);
                 return clone;
               }
             });

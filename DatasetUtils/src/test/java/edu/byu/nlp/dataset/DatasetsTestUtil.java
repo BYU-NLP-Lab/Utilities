@@ -53,18 +53,17 @@ public class DatasetsTestUtil {
 		SparseFeatureVector data3 = new BasicSparseFeatureVector(new int[]{0,1,2,3,4}, new double[]{0,1,28,24,22});
 
 		// add labels 
-		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 1", data1, "ClassA", false));
-		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 2", data2, "ClassB", false));
-		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 3", data3, "ClassA", false));
+		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 1",null, data1, "ClassA", false));
+		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 2",null, data2, "ClassB", false));
+		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 3",null, data3, "ClassA", false));
 		
 		// add annotations
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1", "john", "ClassA", 0, 1, null));
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1", "john", "ClassB", 1, 2, null));
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 2", "john", "ClassB", 2, 3, null));
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 3", "penny", "ClassA", 4, 5, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1",null, "john", "ClassA", 0L, 1L, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1",null, "john", "ClassB", 1L, 2L, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 2",null, "john", "ClassB", 2L, 3L, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 3",null, "penny", "ClassA", 4L, 5L, null));
 		
 		// populate indices
-		String datasetSource = "dummy source";
 		final Indexer<String> featureIndex = new Indexer<String>();
 		Indexer<String> labelIndex = new Indexer<String>();
 		Indexer<String> instanceIdIndex = new Indexer<String>();

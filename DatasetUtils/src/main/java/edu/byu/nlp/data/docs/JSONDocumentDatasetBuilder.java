@@ -15,6 +15,8 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 import org.apache.commons.vfs2.FileSystemException;
 
@@ -28,7 +30,6 @@ import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
 import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
-import edu.byu.nlp.data.types.DatasetInstance;
 import edu.byu.nlp.dataset.Datasets;
 import edu.byu.nlp.util.Indexers;
 import edu.byu.nlp.util.Maps2;
@@ -118,15 +119,16 @@ public class JSONDocumentDatasetBuilder {
       // transform tokens (e.g., remove stopwords, stemmer, remove short words)
       .transform(DataStreams.Transforms.transformIterableIterableFieldValues(DataStreamInstance.DATA, tokenTransform))
     ;
+    ArrayList<Map<String, Object>> instances = Lists.newArrayList(stream); // cache results
 
     // feature selection
-    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(stream);
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(instances);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
-    indexers.setWordIndexer(DocPipes.selectFeatures(stream, featureSelectorFactory, indexers.getWordIndexer()));
+    indexers.setWordIndexer(DocPipes.selectFeatures(instances, featureSelectorFactory, indexers.getWordIndexer()));
       
     // convert data to vectors and labels to numbers
-    stream = stream.
-      transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
+    stream = DataStream.withSource(jsonAnnotationStream.toString(), instances)
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
@@ -134,9 +136,10 @@ public class JSONDocumentDatasetBuilder {
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(indexers.getWordIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountNormalizer(featureNormalizationConstant)))
       ;
+    instances = Lists.newArrayList(stream); // cache results
 
     // convert FlatInstances to a Dataset
-    return Datasets.convert(stream.getName(), stream, indexers, true);
+    return Datasets.convert(stream.getName(), instances, indexers, true);
     
   }
   

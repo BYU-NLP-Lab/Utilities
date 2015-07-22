@@ -15,6 +15,7 @@ package edu.byu.nlp.data.docs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.apache.commons.vfs2.FileSystemException;
@@ -69,24 +70,26 @@ public class JSONVectorDocumentDatasetBuilder {
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.documentVectorToArray()))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, DocPipes.arrayToSparseFeatureVector()))
     ;
+    ArrayList<Map<String, Object>> instances = Lists.newArrayList(stream); // cache results
 
     // create indexers 
-    IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(stream);
+    IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(instances);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
-    int numFeatures = getNumFeatures(stream);
+    int numFeatures = getNumFeatures(instances);
     indexers.setWordIndexer(Indexers.indexerOfStrings(numFeatures)); // identity feature-mapping
       
     // convert labels, annotators, and instances to numbers
-    stream = stream.
-      transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
+    stream = DataStream.withSource(jsonAnnotationStream.toString(), instances)
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
       .transform(DataStreams.Transforms.renameField(DataStreamInstance.SOURCE, DataStreamInstance.RAW_SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.RAW_SOURCE, DataStreamInstance.SOURCE, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       ;
+    instances = Lists.newArrayList(stream); // cache results
 
     // convert FlatInstances to a Dataset
-    return Datasets.convert(stream.getName(), stream, indexers, true);
+    return Datasets.convert(stream.getName(), instances, indexers, true);
   }
 
   private int getNumFeatures(Iterable<Map<String,Object>> sentenceData) {

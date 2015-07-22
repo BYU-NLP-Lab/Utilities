@@ -53,11 +53,11 @@ public class JSONDocumentTest {
     // check labeled data
     Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(3);
     for (DatasetInstance inst: labeledData){
-      Assertions.assertThat(Sets.newHashSet("1","2","3").contains(instanceIndexer.get(inst.getInfo().getSource())));
+      Assertions.assertThat(Sets.newHashSet("1","2","3").contains(inst.getInfo().getRawSource()));
       Assertions.assertThat(
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("1") && inst.getInfo().getNumAnnotations()==2) ||
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("2") && inst.getInfo().getNumAnnotations()==0) ||
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("3") && inst.getInfo().getNumAnnotations()==0)  
+          (inst.getInfo().getRawSource().equals("1") && inst.getInfo().getNumAnnotations()==2) ||
+          (inst.getInfo().getRawSource().equals("2") && inst.getInfo().getNumAnnotations()==0) ||
+          (inst.getInfo().getRawSource().equals("3") && inst.getInfo().getNumAnnotations()==0)  
           );
       Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
       Assertions.assertThat(inst.hasObservedLabel()).isTrue();
@@ -67,13 +67,13 @@ public class JSONDocumentTest {
     // check unlabeled data
     Assertions.assertThat(unlabeledData.getInfo().getNumDocuments()).isEqualTo(5);
     for (DatasetInstance inst: unlabeledData){
-      Assertions.assertThat(Sets.newHashSet("4","five","six","7","8").contains(inst.getInfo().getSource()));
+      Assertions.assertThat(Sets.newHashSet("4","five","six","7","8").contains(inst.getInfo().getRawSource()));
       Assertions.assertThat(
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("4") && inst.getInfo().getNumAnnotations()==2) ||
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("five") && inst.getInfo().getNumAnnotations()==1) ||
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("six") && inst.getInfo().getNumAnnotations()==0) ||
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("7") && inst.getInfo().getNumAnnotations()==1) ||
-          (instanceIndexer.get(inst.getInfo().getSource()).equals("8") && inst.getInfo().getNumAnnotations()==1)   
+          (inst.getInfo().getRawSource().equals("4") && inst.getInfo().getNumAnnotations()==2) ||
+          (inst.getInfo().getRawSource().equals("five") && inst.getInfo().getNumAnnotations()==1) ||
+          (inst.getInfo().getRawSource().equals("six") && inst.getInfo().getNumAnnotations()==0) ||
+          (inst.getInfo().getRawSource().equals("7") && inst.getInfo().getNumAnnotations()==1) ||
+          (inst.getInfo().getRawSource().equals("8") && inst.getInfo().getNumAnnotations()==1)   
           );
       
       Assertions.assertThat(inst.asFeatureVector().sum()).isEqualTo(1);

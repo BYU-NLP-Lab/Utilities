@@ -21,13 +21,16 @@ import java.util.Map;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileType;
+import org.apache.commons.vfs2.VFS;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.UnmodifiableIterator;
 
 import edu.byu.nlp.io.AbstractIterable;
+import edu.byu.nlp.util.Maps2;
 
 /**
  * @author rah67
@@ -57,9 +60,7 @@ public class DirectoryReader implements DataStreamSource {
 		public Map<String,Object> next() {
 			try {
 				String indexFilename = directory.getName().getRelativeName(files[i++].getName());
-				Map<String,Object> item = Maps.newHashMap();
-				item.put(fieldname, indexFilename);
-				return item;
+				return Maps2.<String,Object>hashmapOf(fieldname, indexFilename);
 			} catch (FileSystemException e) {
 				throw new RuntimeException(e);
 			}
@@ -110,4 +111,5 @@ public class DirectoryReader implements DataStreamSource {
 		return source;
 	}
 
+	
 }

@@ -40,7 +40,7 @@ public class CountCutoffFeatureSelectorFactoryTest {
     Integer label = 1;
     Boolean labelObserved = false;
     builder.add(
-        DataStreamInstance.fromLabel(source, 
+        DataStreamInstance.fromLabel(source, ""+source,
             (SparseFeatureVector) new BasicSparseFeatureVector(new int[] { 0, 1, 2 }, new double[] { 1.0, 0.0, 2.0 }), 
             label, labelObserved)
         );
@@ -49,7 +49,7 @@ public class CountCutoffFeatureSelectorFactoryTest {
     label = 1;
     labelObserved = false;
     builder.add(
-          DataStreamInstance.fromLabel(source, 
+          DataStreamInstance.fromLabel(source, ""+source,
               (SparseFeatureVector)new BasicSparseFeatureVector(new int[] {0, 3, 4}, new double[] {1.0, 1.0, 1.0}), 
               label, labelObserved)
         );

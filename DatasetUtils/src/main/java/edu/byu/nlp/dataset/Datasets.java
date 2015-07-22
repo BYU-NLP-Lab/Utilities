@@ -34,8 +34,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
-import edu.byu.nlp.data.FlatClassificationInstance;
 import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.FlatInstances;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators.ClusteringMethod;
 import edu.byu.nlp.data.streams.IndexerCalculator;
@@ -155,7 +155,7 @@ public class Datasets {
 		// referring to the same instance. In a Dataset object, all of these are 
 		// aggregated into a single instance.
 		for (Map<String, Object> rawInst: flatInstances){
-		  FlatClassificationInstance inst = FlatClassificationInstance.fromStream(rawInst);
+		  FlatInstance<SparseFeatureVector, Integer> inst = FlatInstances.fromStreamClassificationInstance(rawInst);
 		  
 		  int source = inst.getInstanceId();
 		  
@@ -428,7 +428,7 @@ public class Datasets {
 		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
 				+ "that is unknown to the dataset recorder (not in the dataset).");
 		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
-				"The source of the instance that was looked up ("+inst.getInfo().getSource()+
+				"The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
 				") doesn't match the src of the annotation ("+source+").");
 		
 		// increment previous annotation value for this annotator
@@ -452,7 +452,7 @@ public class Datasets {
 	public static List<FlatInstance<SparseFeatureVector,Integer>> instancesIn(Dataset dataset) {
 		List<FlatInstance<SparseFeatureVector,Integer>> instances = Lists.newArrayList();
 		for (DatasetInstance inst: dataset){
-		  instances.add(FlatClassificationInstance.fromDatasetInstance(inst));
+		  instances.add(FlatInstances.fromDatasetLabel(inst));
 		}
 		return instances;
 	}
@@ -506,14 +506,14 @@ public class Datasets {
 
 		// ensure there are no instances NOT in the index map
 		for (int i = instances.size() - 1; i >= 0; i--) {
-			Preconditions.checkArgument(instanceIndices.containsKey(instances.get(i).getInfo().getSource()),
+			Preconditions.checkArgument(instanceIndices.containsKey(instances.get(i).getInfo().getRawSource()),
 							"Something is wrong. All instances must be in the instance index map.");
 		}
 
 		// extract labels (in order defined by instanceIndices)
 		int[] gold = IntArrays.repeat(-1, instances.size());
 		for (DatasetInstance inst : instances) {
-			gold[instanceIndices.get(inst.getInfo().getSource())] = (inst.getLabel()!=null)? inst.getLabel(): -1;
+			gold[instanceIndices.get(inst.getInfo().getRawSource())] = (inst.getLabel()!=null)? inst.getLabel(): -1;
 		}
 
 		return gold;
@@ -531,14 +531,14 @@ public class Datasets {
 
 		// ensure there are no instances NOT in the index map
 		for (int i = instances.size() - 1; i >= 0; i--) {
-			Preconditions.checkArgument(instanceIndices.containsKey(instances.get(i).getInfo().getSource()),
+			Preconditions.checkArgument(instanceIndices.containsKey(instances.get(i).getInfo().getRawSource()),
 							"Something is wrong. All instances must be in the instance index map.");
 		}
 
 		// extract labels (in order defined by instanceIndices)
 		int[] gold = IntArrays.repeat(-1, instances.size());
 		for (DatasetInstance inst : instances) {
-			gold[instanceIndices.get(inst.getInfo().getSource())] = inst.getObservedLabel();
+			gold[instanceIndices.get(inst.getInfo().getRawSource())] = inst.getObservedLabel();
 		}
 
 		return gold;
@@ -556,7 +556,7 @@ public class Datasets {
 		final Indexer<String> labelIndex = dataset.getInfo().getLabelIndexer();
 		for (DatasetInstance inst : labeledData) {
 			// name
-			bw.write(inst.getInfo().getSource());
+			bw.write(inst.getInfo().getRawSource());
 			bw.write(' ');
 
 			// label
@@ -779,14 +779,14 @@ public class Datasets {
 	 * that is a post-hoc process that is different from directly inferring a
 	 * label.
 	 */
-	public static Map<Integer, Integer> instanceIndices(Dataset data) {
-		Map<Integer, Integer> map = Maps.newHashMap();
+	public static Map<String, Integer> instanceIndices(Dataset data) {
+		Map<String, Integer> map = Maps.newHashMap();
 		int i = 0;
 		for (DatasetInstance instance : data) {
 			Preconditions.checkState(
-							!map.containsKey(instance.getInfo().getSource()),
+							!map.containsKey(instance.getInfo().getRawSource()),
 							"Dataset contains the same instance (same instance source) twice. This is not allowed!");
-			map.put(instance.getInfo().getSource(), i++);
+			map.put(instance.getInfo().getRawSource(), i++);
 		}
 		return map;
 	}
@@ -923,12 +923,20 @@ public class Datasets {
     Collections.sort(instances, new Comparator<DatasetInstance>() {
   		@Override
   		public int compare(DatasetInstance o1, DatasetInstance o2) {
-  			return Integer.compare(o1.getInfo().getSource(), o2.getInfo().getSource());
+  			return o1.getInfo().getRawSource().compareTo(o2.getInfo().getRawSource());
   		}
   	});
     return new BasicDataset(instances, data.getInfo());
 	}
 
+  public static String[] docRawSourcesIn(Dataset data) {
+    List<String> sources = Lists.newArrayList();
+    for (DatasetInstance inst: data){
+      sources.add(inst.getInfo().getRawSource());
+    }
+    return sources.toArray(new String[]{});
+  }
+  
 	public static int[] docSourcesIn(Dataset data) {
 		List<Integer> sources = Lists.newArrayList();
 		for (DatasetInstance inst: data){
@@ -949,7 +957,7 @@ public class Datasets {
 			@Override
 			public boolean apply(DatasetInstance inst) {
 				if (inst.asFeatureVector().sum()==0){
-					logger.warn("Filtering empty document: " + inst.getInfo().getSource());
+					logger.warn("Filtering empty document: " + inst.getInfo().getRawSource());
 					return false;
 				}
 				else{
@@ -1059,7 +1067,7 @@ public class Datasets {
 			for (FlatInstance<SparseFeatureVector,Integer> ann: inst.getAnnotations().getRawAnnotations()){
 			  // copy the annotation, but change the annotator
 			  Map<String, Object> xann = 
-			      DataStreamInstance.fromAnnotation(ann.getInstanceId(), 
+			      DataStreamInstance.fromAnnotation(ann.getInstanceId(), ann.getSource(), 
 			          clusterAssignments[ ann.getAnnotator() ], // map annotators to their clusters 
 			          ann.getAnnotation(), ann.getStartTimestamp(), ann.getEndTimestamp(), ann.getMeasurement());
 				transformedFlatInstances.add(xann);

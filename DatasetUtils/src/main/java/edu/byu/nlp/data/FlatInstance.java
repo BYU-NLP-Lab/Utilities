@@ -62,19 +62,19 @@ public interface FlatInstance<D, L> {
   /**
    * The moment at which the instance was first presented to the annotator.
    */
-  long getStartTimestamp();
+  Long getStartTimestamp();
 
   /**
    * The moment at which the instance annotation was finished.
    */
-  long getEndTimestamp();
+  Long getEndTimestamp();
 
   /**
    * The id of the annotator (automatic or otherwise) that produced either the
    * annotation or automatic value. For accepted gold-standard labels, this
    * value should be equal to Constants.GOLD_AUTOMATIC_ANNOTATOR_ID
    */
-  int getAnnotator();
+  Integer getAnnotator();
 
   /**
    * Returns a number that uniquely identifies the instance annotated or labeled

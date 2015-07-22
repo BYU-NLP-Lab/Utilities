@@ -54,10 +54,10 @@ public class DatasetsTest {
 	    for (DatasetInstance inst: labeledData){
 	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getRawSource());
 	      Assertions.assertThat(
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("1") && inst.getInfo().getNumAnnotations()==2) ||
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("2") && inst.getInfo().getNumAnnotations()==2) ||
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("3") && inst.getInfo().getNumAnnotations()==0) ||
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("4") && inst.getInfo().getNumAnnotations()==2) 
+	          (inst.getInfo().getRawSource().equals("1") && inst.getInfo().getNumAnnotations()==2) ||
+	          (inst.getInfo().getRawSource().equals("2") && inst.getInfo().getNumAnnotations()==2) ||
+	          (inst.getInfo().getRawSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+	          (inst.getInfo().getRawSource().equals("4") && inst.getInfo().getNumAnnotations()==2) 
 	          ).isTrue();
 	      Assertions.assertThat(dataset.getInfo().getNullLabel() == dataset.getInfo().getLabelIndexer().indexOf(null));
 	      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
@@ -195,12 +195,12 @@ public class DatasetsTest {
 	    // check labeled data
 	    Assertions.assertThat(labeledData.getInfo().getNumDocuments()).isEqualTo(4);
 	    for (DatasetInstance inst: labeledData){
-	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(instanceIndexer.get(inst.getInfo().getSource()));
+	      Assertions.assertThat(Sets.newHashSet("1","2","3","4")).contains(inst.getInfo().getRawSource());
 	      Assertions.assertThat(
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("1") && inst.getInfo().getNumAnnotations()==3) ||
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("2") && inst.getInfo().getNumAnnotations()==3) ||
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("3") && inst.getInfo().getNumAnnotations()==0) ||
-	          (instanceIndexer.get(inst.getInfo().getSource()).equals("4") && inst.getInfo().getNumAnnotations()==3) 
+	          (inst.getInfo().getRawSource().equals("1") && inst.getInfo().getNumAnnotations()==3) ||
+	          (inst.getInfo().getRawSource().equals("2") && inst.getInfo().getNumAnnotations()==3) ||
+	          (inst.getInfo().getRawSource().equals("3") && inst.getInfo().getNumAnnotations()==0) ||
+	          (inst.getInfo().getRawSource().equals("4") && inst.getInfo().getNumAnnotations()==3) 
 	          ).isTrue();
 	      Assertions.assertThat(inst.getObservedLabel()).isNotEqualTo(dataset.getInfo().getLabelIndexer().indexOf(null));
 	      Assertions.assertThat(inst.hasObservedLabel()).isTrue();
