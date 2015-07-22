@@ -16,10 +16,10 @@ import com.google.common.collect.Maps;
  */
 public class MutableSum {
   
-  Map<Integer,Double> summands = Maps.newHashMap();
-  double sum = 0.0;
+  private Map<Integer,Double> summands = Maps.newHashMap();
+  private double sum = 0.0;
   
-  void setSummand(int index, double value){
+  public void setSummand(int index, double value){
     Preconditions.checkArgument(index>=0,"indexes must be non-negative (not "+index+")");
     
     // remove (if necessary) the old value for this entry
@@ -41,8 +41,15 @@ public class MutableSum {
     
   }
   
-  double getSum(){
+  public double getSum(){
     return sum;
+  }
+
+  public MutableSum copy() {
+	MutableSum copy = new MutableSum();
+	copy.summands = Maps.newHashMap(summands);
+	copy.sum = sum;
+	return copy;
   }
 
 }
