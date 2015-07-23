@@ -63,7 +63,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 
 	// simple deserialization pojo
 	private static class JSONAnnotation {
-		private String annotator, label, data, source, annotation, datapath, measurement;
+    private String annotator, label, data, source, annotation, datapath, measurement;
 		private long starttime = -1, endtime = -1;
 		private boolean labelobserved;
 

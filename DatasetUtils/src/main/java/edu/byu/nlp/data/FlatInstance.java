@@ -25,7 +25,7 @@ public interface FlatInstance<D, L> {
   /**
    * Get the measurement value. Could be null if this is an annotation or label.
    */
-  Measurement<L> getMeasurement();
+  Measurement getMeasurement();
   
   /**
    * Get the label value. Could be null if this is an annotation.

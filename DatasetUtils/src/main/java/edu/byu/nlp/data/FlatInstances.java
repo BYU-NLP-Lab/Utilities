@@ -25,7 +25,7 @@ public class FlatInstances {
         (Boolean)DataStreamInstance.getLabelObserved(instance), 
         (Integer)DataStreamInstance.getAnnotator(instance), 
         (Integer)DataStreamInstance.getAnnotation(instance), 
-        (Measurement<Integer>)DataStreamInstance.getMeasurement(instance), 
+        (Measurement)DataStreamInstance.getMeasurement(instance), 
         (Long)DataStreamInstance.getStartTime(instance), 
         (Long)DataStreamInstance.getEndTime(instance)
         );

@@ -10,14 +10,14 @@ public class BasicFlatInstance<D,L> extends AbstractFlatInstance<D,L> {
   private L label;
   private Integer annotator;
   private L annotation;
-  private Measurement<L> measurement;
+  private Measurement measurement;
   private Long starttime;
   private Long endtime;
   private Boolean labelObserved;
 
   public BasicFlatInstance(int source, String rawSource, 
       D data, L label, Boolean labelObserved, 
-      Integer annotator, L annotation, Measurement<L> measurement,
+      Integer annotator, L annotation, Measurement measurement,
       Long starttime, Long endtime){
     this.source=source;
     this.rawSource=rawSource;
@@ -37,7 +37,7 @@ public class BasicFlatInstance<D,L> extends AbstractFlatInstance<D,L> {
   }
 
   public BasicFlatInstance(int source, String rawSource, 
-      Integer annotator, L annotation, Measurement<L> measurement,
+      Integer annotator, L annotation, Measurement measurement,
       Long starttime, Long endtime){
     this(source, rawSource, null, null, null, annotator, annotation, measurement, starttime, endtime);
   }
@@ -48,7 +48,7 @@ public class BasicFlatInstance<D,L> extends AbstractFlatInstance<D,L> {
   }
 
   @Override
-  public Measurement<L> getMeasurement() {
+  public Measurement getMeasurement() {
     return measurement;
   }
 

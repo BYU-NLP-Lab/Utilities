@@ -13,7 +13,7 @@ public class ClassificationMeasurementParser<X,Y> {
   public static final String TYPE = "type";
   
   
-  public static Measurement<Integer> parse(String rawValue, int annotator, IndexerCalculator<String,String> indexes){
+  public static Measurement parse(String rawValue, int annotator, IndexerCalculator<String,String> indexes){
     Gson gson = new Gson();
     String type = gson.fromJson(rawValue, MeasurementPojo.class).type;
     
@@ -22,14 +22,16 @@ public class ClassificationMeasurementParser<X,Y> {
       ClassificationAnnotationMeasurementPojo pojo = gson.fromJson(rawValue, ClassificationAnnotationMeasurementPojo.class);
       int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
       int instanceIndex = indexes.getInstanceIdIndexer().indexOf(pojo.source);
-      return new ClassificationAnnotationMeasurement(annotator, instanceIndex, labelIndex, pojo.value, pojo.confidence); 
+
+      return new ClassificationAnnotationMeasurement(annotator, pojo.value, pojo.confidence, instanceIndex, labelIndex);
     }
     
     // classification label proportion 
     else if (type.equals("cls_lprp")){
       ClassificationLabelProportionMeasurementPojo pojo = gson.fromJson(rawValue, ClassificationLabelProportionMeasurementPojo.class);
       int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
-      return new ClassificationLabelProportionMeasurement(annotator, labelIndex, pojo.value, pojo.confidence); 
+      return new ClassificationLabelProportionMeasurement(annotator, pojo.value, pojo.confidence, labelIndex);
+//      return new ClassificationLabelProportionMeasurement(annotator, labelIndex, pojo.value, pojo.confidence); 
     }
     
     else{

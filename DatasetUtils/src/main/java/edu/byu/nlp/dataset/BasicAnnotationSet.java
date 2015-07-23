@@ -87,7 +87,7 @@ public class BasicAnnotationSet implements AnnotationSet{
 		return ""+labelAnnotations;
 	}
   @Override
-  public Iterable<Measurement<Integer>> getMeasurements() {
+  public Iterable<Measurement> getMeasurements() {
     // TODO Auto-generated method stub
     return null;
   }

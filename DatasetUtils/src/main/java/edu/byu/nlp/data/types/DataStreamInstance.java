@@ -105,7 +105,7 @@ public class DataStreamInstance {
   }
   
   public static Map<String, Object> fromFull(int source, String rawSource, SparseFeatureVector data, Integer label, Boolean labelObserved, 
-      String datapath, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
+      String datapath, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement measurement){
     return fromFullRaw(source, rawSource, data, label, labelObserved, datapath, annotator, annotation, starttime, endtime, measurement);
   }
 
@@ -113,7 +113,7 @@ public class DataStreamInstance {
     return fromFullRaw(source, rawSource, null, null, null, null, annotator, annotation, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromAnnotation(int source, String rawSource, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement<Integer> measurement){
+  public static Map<String, Object> fromAnnotation(int source, String rawSource, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement measurement){
     return fromAnnotationRaw(source, rawSource, annotator, annotation, starttime, endtime, measurement);
   }
 

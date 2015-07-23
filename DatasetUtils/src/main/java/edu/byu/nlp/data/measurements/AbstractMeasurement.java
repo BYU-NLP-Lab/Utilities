@@ -1,34 +1,36 @@
 package edu.byu.nlp.data.measurements;
 
-import edu.byu.nlp.data.types.Dataset;
+import com.google.common.base.Preconditions;
+
 import edu.byu.nlp.data.types.Measurement;
 
-/**
- * 
- * @author plf1
- *
- * A reference to a dataset is formed and instances are assumed to 
- * be defined by an <Integer> index reference.  
- */
-public abstract class AbstractMeasurement<Y> implements Measurement<Y>{
+public abstract class AbstractMeasurement implements Measurement {
 
-  private Dataset dataset;
   private int annotator;
+  private double value;
+  private double confidence;
 
-  
-  public AbstractMeasurement(int annotator, Dataset dataset){
+  public AbstractMeasurement(int annotator, double value, double confidence){
+    Preconditions.checkArgument(-1 <= value && value <= 1, "'binary' annotation values must be between -1 and 1 (not "+value+")");
     this.annotator=annotator;
-    this.dataset=dataset;
+    this.value=value;
+    this.confidence=confidence;
   }
   
   @Override
   public int getAnnotator() {
     return annotator;
   }
-
+  
   @Override
-  public Dataset getDataset() {
-    return dataset;
+  public double getValue() {
+    return value;
+  }
+  
+  @Override
+  public double getConfidence() {
+    return confidence;
   }
   
 }
+
