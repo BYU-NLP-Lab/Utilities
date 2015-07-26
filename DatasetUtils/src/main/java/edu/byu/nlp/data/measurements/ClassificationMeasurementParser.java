@@ -23,14 +23,14 @@ public class ClassificationMeasurementParser<X,Y> {
       int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
       int instanceIndex = indexes.getInstanceIdIndexer().indexOf(pojo.source);
 
-      return new ClassificationAnnotationMeasurement(annotator, pojo.value, pojo.confidence, instanceIndex, labelIndex);
+      return new BasicClassificationAnnotationMeasurement(annotator, pojo.value, pojo.confidence, instanceIndex, labelIndex);
     }
     
     // classification label proportion 
     else if (type.equals("cls_lprp")){
       ClassificationLabelProportionMeasurementPojo pojo = gson.fromJson(rawValue, ClassificationLabelProportionMeasurementPojo.class);
       int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
-      return new ClassificationLabelProportionMeasurement(annotator, pojo.value, pojo.confidence, labelIndex);
+      return new BasicClassificationLabelProportionMeasurement(annotator, pojo.value, pojo.confidence, labelIndex);
 //      return new ClassificationLabelProportionMeasurement(annotator, labelIndex, pojo.value, pojo.confidence); 
     }
     
