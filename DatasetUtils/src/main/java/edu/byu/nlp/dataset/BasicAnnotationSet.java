@@ -1,5 +1,7 @@
 package edu.byu.nlp.dataset;
 
+import java.util.Collection;
+
 import org.apache.commons.math3.linear.OpenMapRealMatrix;
 import org.apache.commons.math3.linear.SparseRealMatrix;
 import org.apache.commons.math3.linear.SparseRealVector;
@@ -25,21 +27,25 @@ public class BasicAnnotationSet implements AnnotationSet{
 	private SparseRealMatrix labelAnnotations;
 	private SparseRealVector regressandMeans;
 	private SparseRealVector regressandVariances;
-	private Iterable<FlatInstance<SparseFeatureVector,Integer>> rawLabelAnnotations;
+	private Collection<FlatInstance<SparseFeatureVector,Integer>> rawLabelAnnotations;
+	private Collection<Measurement> measurements;
 
-	public BasicAnnotationSet(int numAnnotators, int numClasses, Iterable<FlatInstance<SparseFeatureVector,Integer>> rawLabelAnnotations){
+	public BasicAnnotationSet(int numAnnotators, int numClasses, 
+	    Collection<FlatInstance<SparseFeatureVector,Integer>> rawLabelAnnotations, Collection<Measurement> measurements){
 		this(
 				((numAnnotators==0 || numClasses==0)? 
 						SparseRealMatrices.nullRowSparseMatrix(numClasses): 
 							new OpenMapRealMatrix(numAnnotators, numClasses)), 
-						rawLabelAnnotations, null, null);
+						rawLabelAnnotations, measurements, null, null);
 	}
 	public BasicAnnotationSet(
 	    SparseRealMatrix labelAnnotations, 
-			Iterable<FlatInstance<SparseFeatureVector,Integer>> rawLabelAnnotations, 
+	    Collection<FlatInstance<SparseFeatureVector,Integer>> rawLabelAnnotations, 
+	    Collection<Measurement> measurements,
 			SparseRealVector regressandMeans, SparseRealVector regressandVariances){
 		this.labelAnnotations=labelAnnotations;
 		this.rawLabelAnnotations=rawLabelAnnotations;
+		this.measurements=measurements;
 		this.regressandMeans=regressandMeans;
 		this.regressandVariances=regressandVariances;
 	}
@@ -50,8 +56,8 @@ public class BasicAnnotationSet implements AnnotationSet{
 	 * for a single row instanceId
 	 */
 	public static AnnotationSet fromCountTable(Integer instanceIndex, int numAnnotators, int numClasses, TableCounter<Integer, Integer, Integer> table, 
-			Iterable<FlatInstance<SparseFeatureVector,Integer>> rawAnnotationValues){
-		final BasicAnnotationSet annotationSet = new BasicAnnotationSet(numAnnotators, numClasses, rawAnnotationValues);
+	    Collection<FlatInstance<SparseFeatureVector,Integer>> rawAnnotationValues, Collection<Measurement> measurements){
+		final BasicAnnotationSet annotationSet = new BasicAnnotationSet(numAnnotators, numClasses, rawAnnotationValues, measurements);
 		table.visitRowEntriesSparsely(instanceIndex, new SparseTableVisitor<Integer, Integer, Integer>() {
 			@Override
 			public void visitEntry(Integer row, Integer col, Integer item, int count) {
@@ -78,7 +84,7 @@ public class BasicAnnotationSet implements AnnotationSet{
 	}
 	
 	@Override
-	public Iterable<FlatInstance<SparseFeatureVector,Integer>> getRawAnnotations() {
+	public Collection<FlatInstance<SparseFeatureVector,Integer>> getRawAnnotations() {
 		return rawLabelAnnotations;
 	}
 	
@@ -87,9 +93,8 @@ public class BasicAnnotationSet implements AnnotationSet{
 		return ""+labelAnnotations;
 	}
   @Override
-  public Iterable<Measurement> getMeasurements() {
-    // TODO Auto-generated method stub
-    return null;
+  public Collection<Measurement> getMeasurements() {
+    return measurements;
   }
 	
 }

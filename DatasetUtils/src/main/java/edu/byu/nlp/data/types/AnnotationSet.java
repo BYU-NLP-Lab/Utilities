@@ -1,5 +1,7 @@
 package edu.byu.nlp.data.types;
 
+import java.util.Collection;
+
 import org.apache.commons.math3.linear.SparseRealMatrix;
 import org.apache.commons.math3.linear.SparseRealVector;
 
@@ -24,13 +26,13 @@ public interface AnnotationSet {
 	 * Get all of the measurements submitted by this annotator. 
 	 * Indexed by [annotator, measurement].
 	 */
-  Iterable<Measurement> getMeasurements();	
+	Collection<Measurement> getMeasurements();	
 	
 	/**
 	 * Get the set of raw annotations from which this set was 
 	 * generated. 
 	 */
-	Iterable<FlatInstance<SparseFeatureVector, Integer>> getRawAnnotations();
+  Collection<FlatInstance<SparseFeatureVector, Integer>> getRawAnnotations();
 	
 	/**
 	 * Gets the mean annotation value for each annotator's

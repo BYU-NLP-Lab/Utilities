@@ -34,6 +34,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
+import edu.byu.nlp.data.BasicFlatInstance;
 import edu.byu.nlp.data.FlatInstance;
 import edu.byu.nlp.data.FlatInstances;
 import edu.byu.nlp.data.app.AnnotationStream2Annotators;
@@ -44,6 +45,7 @@ import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.Measurement;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 import edu.byu.nlp.data.types.SparseFeatureVector.EntryVisitor;
 import edu.byu.nlp.math.AbstractRealMatrixPreservingVisitor;
@@ -143,7 +145,8 @@ public class Datasets {
 			boolean preserveRawAnnotations) {
 		
 		TableCounter<Integer, Integer, Integer> annotationCounter = TableCounter.create();
-		Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
+    Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
+    Multimap<Integer, Measurement> measurementsMap = HashMultimap.create(); 
 		Set<Integer> instanceIndices = Sets.newHashSet();
 		Set<Integer> indicesWithObservedLabel = Sets.newHashSet();
     Map<Integer,Integer> labelMap = Maps.newHashMap();
@@ -173,7 +176,13 @@ public class Datasets {
 				if (preserveRawAnnotations){
 					rawAnnotationMap.put(source, inst);
 				}
-				Preconditions.checkArgument(inst.getData()==null,"by convention, annotations have no data. Create a flatlabeledinstance (even if it has no label)");
+				
+				Preconditions.checkArgument(inst.getData()==null,"by convention, annotations have no data. Create a separate flatinstance to encode the data");
+			}
+			else if (inst.isMeasurement()){
+			  // record measurement
+			  measurementsMap.put(source, inst.getMeasurement());
+        Preconditions.checkArgument(inst.getData()==null,"by convention, measurements have no data. Create a separate flatinstance to encode the data");
 			}
 			// labels
 			else{
@@ -204,7 +213,7 @@ public class Datasets {
 			
 			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
-					instanceIndex, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
+					instanceIndex, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(instanceIndex), measurementsMap.get(instanceIndex));
 			
 			// dataset instance
 			DatasetInstance inst = new BasicDatasetInstance(
@@ -430,6 +439,12 @@ public class Datasets {
 		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
 				"The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
 				") doesn't match the src of the annotation ("+source+").");
+
+		// add the raw annotations and measurments
+		inst.getAnnotations().getMeasurements().add(ann.getMeasurement());
+		inst.getAnnotations().getRawAnnotations().add(new BasicFlatInstance<SparseFeatureVector, Integer>(
+		    ann.getInstanceId(), ann.getSource(), ann.getAnnotator(), ann.getAnnotation(), ann.getMeasurement(), 
+		    ann.getStartTimestamp(), ann.getEndTimestamp()));
 		
 		// increment previous annotation value for this annotator
 		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
@@ -681,7 +696,7 @@ public class Datasets {
 	}
 
 	public static AnnotationSet emptyAnnotationSet(){
-		return new BasicAnnotationSet(0, 0, null);
+		return new BasicAnnotationSet(0, 0, null, null);
 	}
 	public static Dataset emptyDataset(DatasetInfo info){
 		return new BasicDataset( // full labeled data
@@ -888,8 +903,10 @@ public class Datasets {
 		List<DatasetInstance> instances = Lists.newArrayList();
 		
 		for (DatasetInstance inst: dataset){
-			// copy all instances but without annotations
-			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), Lists.<FlatInstance<SparseFeatureVector,Integer>>newArrayList());
+			// copy all instances but without annotations (or measurements)
+			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), 
+			    Lists.<FlatInstance<SparseFeatureVector,Integer>>newArrayList(),
+			    Lists.<Measurement>newArrayList());
 			// instance with the new annotationset
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
 					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 

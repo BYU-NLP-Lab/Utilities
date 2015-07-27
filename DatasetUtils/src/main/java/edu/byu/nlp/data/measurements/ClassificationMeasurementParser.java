@@ -5,6 +5,8 @@ import com.google.gson.Gson;
 import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojos.ClassificationAnnotationMeasurementPojo;
 import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojos.ClassificationLabelProportionMeasurementPojo;
 import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojos.MeasurementPojo;
+import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationAnnotationMeasurement;
+import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationLabelProportionMeasurement;
 import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.Measurement;
 
