@@ -11,7 +11,7 @@ public class ClassificationMeasurements {
   public interface ClassificationAnnotationMeasurement{
     int getDocumentIndex();
     int getLabel();
-    int getValue();
+    double getValue();
   }
 
   public interface ClassificationProportionMeasurement{
@@ -62,7 +62,7 @@ public class ClassificationMeasurements {
   
   
   
-  public static class BasicClassificationAnnotationMeasurement extends AbstractMeasurement{
+  public static class BasicClassificationAnnotationMeasurement extends AbstractMeasurement implements ClassificationAnnotationMeasurement{
 
     private int index;
     private int label;
@@ -80,7 +80,8 @@ public class ClassificationMeasurements {
       this.label=label;
     }
 
-    public int getIndex() {
+    @Override
+    public int getDocumentIndex() {
       return index;
     }
 
@@ -96,7 +97,7 @@ public class ClassificationMeasurements {
   
   
   
-  public class BasicClassificationLabelProportionMeasurement extends AbstractMeasurement{
+  public static class BasicClassificationLabelProportionMeasurement extends AbstractMeasurement implements ClassificationProportionMeasurement{
 
     private int label;
 

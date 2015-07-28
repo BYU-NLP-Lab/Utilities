@@ -31,4 +31,48 @@ public class MutableSumTest {
     
   }
 
+  @Test
+  public void testActive() {
+
+    MutableSum sum = new MutableSum();
+    for (int i=0; i<20; i++){
+      sum.setSummand(i, 2);
+    }
+    assertEquals(40,sum.getSum(),THRESHOLD);
+
+    sum.setSummandActive(0, false);
+    assertEquals(38,sum.getSum(),THRESHOLD);
+
+    sum.setSummandActive(0, true);
+    assertEquals(40,sum.getSum(),THRESHOLD);
+
+    for (int i=0; i<20; i+=2){
+      sum.setSummandActive(i, false);
+    }
+    assertEquals(20,sum.getSum(),THRESHOLD);
+
+    // summands that haven't been set may be inactivated
+    sum.setSummandActive(9999, false);
+    assertEquals(20,sum.getSum(),THRESHOLD);
+    sum.setSummand(9999, 321498237);
+    assertEquals(20,sum.getSum(),THRESHOLD);
+
+    // setting unset summands has no effect
+    sum.setSummandActive(98982398, true);
+    assertEquals(20,sum.getSum(),THRESHOLD);
+    
+    // change inactive summands
+    for (int i=0; i<20; i+=2){
+      sum.setSummand(i, 1);
+    }
+    // no change
+    assertEquals(20,sum.getSum(),THRESHOLD);
+
+    // now activate the changed summands
+    for (int i=0; i<20; i+=2){
+      sum.setSummandActive(i, true);
+    }
+    assertEquals(30,sum.getSum(),THRESHOLD);
+  }
+
 }
