@@ -8,14 +8,16 @@ import edu.byu.nlp.data.types.Measurement;
 
 public class ClassificationMeasurements {
 
-  public interface ClassificationAnnotationMeasurement{
-    int getDocumentIndex();
+  public interface ClassificationMeasurement{
     int getLabel();
+  }
+  
+  public interface ClassificationAnnotationMeasurement extends ClassificationMeasurement{
+    String getDocumentSource();
     double getValue();
   }
 
-  public interface ClassificationProportionMeasurement{
-    int getLabel();
+  public interface ClassificationProportionMeasurement extends ClassificationMeasurement{
   }
 
   public interface ClassificationRelativeProportionMeasurement{
@@ -23,8 +25,7 @@ public class ClassificationMeasurements {
     int getLabel2();
   }
   
-  public interface ClassificationLabeledPredicateMeasurement{
-    int getLabel();
+  public interface ClassificationLabeledPredicateMeasurement extends ClassificationMeasurement{
     Matcher getPredicate();
   }
   
@@ -64,25 +65,26 @@ public class ClassificationMeasurements {
   
   public static class BasicClassificationAnnotationMeasurement extends AbstractMeasurement implements ClassificationAnnotationMeasurement{
 
-    private int index;
     private int label;
+    private String source;
 
     /**
      * Represents a subjective human annotation judgment of a hypothesis label. 
      * The annotation itself is a binary judgment encoded as a double. Usually it 
      * will be 1 (the label is correct), or -1 (the label is incorrect), but it 
      * could be anywhere in the range. 
+     * @param source 
      * 
      */
-    public BasicClassificationAnnotationMeasurement(int annotator, double value, Double confidence, int index, int label){
+    public BasicClassificationAnnotationMeasurement(int annotator, double value, Double confidence, String source, int label){
       super(annotator, value, confidence);
-      this.index=index;
+      this.source=source;
       this.label=label;
     }
 
     @Override
-    public int getDocumentIndex() {
-      return index;
+    public String getDocumentSource() {
+      return source;
     }
 
     public int getLabel() {

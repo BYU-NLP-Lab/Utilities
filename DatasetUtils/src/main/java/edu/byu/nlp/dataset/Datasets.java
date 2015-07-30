@@ -429,7 +429,7 @@ public class Datasets {
 		Preconditions.checkArgument(annotator < dataset.getInfo().getAnnotatorIdIndexer().size(),
 				"cannot add annotation with invalid annotator id "+annotator+"."
 						+ " Must be between 0 and "+dataset.getInfo().getAnnotatorIdIndexer().size());
-		Preconditions.checkArgument(annotation < dataset.getInfo().getLabelIndexer().size(),
+		Preconditions.checkArgument(annotation==null || annotation < dataset.getInfo().getLabelIndexer().size(),
 				"cannot add annotation with invalid label "+annotation+"."
 						+ " Must be between 0 and "+dataset.getInfo().getLabelIndexer().size());
 		
@@ -440,20 +440,26 @@ public class Datasets {
 				"The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
 				") doesn't match the src of the annotation ("+source+").");
 
-		// add the raw annotations and measurments
-		inst.getAnnotations().getMeasurements().add(ann.getMeasurement());
+    // add measurements
+		if (ann.getMeasurement()!=null){
+		  inst.getAnnotations().getMeasurements().add(ann.getMeasurement());
+		}
+		
+		// add the raw annotation
+		if (ann.getAnnotation()!=null){
 		inst.getAnnotations().getRawAnnotations().add(new BasicFlatInstance<SparseFeatureVector, Integer>(
 		    ann.getInstanceId(), ann.getSource(), ann.getAnnotator(), ann.getAnnotation(), ann.getMeasurement(), 
 		    ann.getStartTimestamp(), ann.getEndTimestamp()));
-		
-		// increment previous annotation value for this annotator
-		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
-				(int)annotator, annotation, 1);
+  		// increment previous annotation value for this annotator
+  		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
+  				(int)annotator, annotation, 1);
 
-		// update instance info
-		inst.getInfo().annotationsChanged();
-		// update dataset info
-		dataset.getInfo().annotationsChanged();
+  		// update instance info
+  		inst.getInfo().annotationsChanged();
+  		// update dataset info
+  		dataset.getInfo().annotationsChanged();
+		}
+
 	}
 	
 	public static synchronized void addAnnotationsToDataset(

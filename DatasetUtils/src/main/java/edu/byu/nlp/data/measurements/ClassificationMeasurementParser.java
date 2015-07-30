@@ -23,9 +23,8 @@ public class ClassificationMeasurementParser<X,Y> {
     if (type.equals("cls_ann")){
       ClassificationAnnotationMeasurementPojo pojo = gson.fromJson(rawValue, ClassificationAnnotationMeasurementPojo.class);
       int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
-      int instanceIndex = indexes.getInstanceIdIndexer().indexOf(pojo.source);
 
-      return new BasicClassificationAnnotationMeasurement(annotator, pojo.value, pojo.confidence, instanceIndex, labelIndex);
+      return new BasicClassificationAnnotationMeasurement(annotator, pojo.value, pojo.confidence, pojo.source, labelIndex);
     }
     
     // classification label proportion 
