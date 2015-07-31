@@ -2,6 +2,7 @@ package edu.byu.nlp.data.measurements;
 
 import java.util.regex.Matcher;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.data.types.Measurement;
@@ -58,28 +59,54 @@ public class ClassificationMeasurements {
     public double getConfidence() {
       return confidence;
     }
-    
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(ClassificationMeasurement.class)
+          .add("annotator", getAnnotator())
+          .add("value", getValue())
+          .add("confidence", getConfidence())
+          .toString();
+    }
+  }
+  
+
+  public static abstract class AbstractClassificationMeasurement extends AbstractMeasurement implements ClassificationMeasurement {
+    private int label;
+    public AbstractClassificationMeasurement(int annotator, double value, double confidence, int label){
+      super(annotator, value, confidence);
+      this.label=label;
+    }
+    @Override
+    public int getLabel() {
+      return label;
+    }
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(ClassificationMeasurement.class)
+          .add("annotator", getAnnotator())
+          .add("value", getValue())
+          .add("confidence", getConfidence())
+          .add("label", getLabel())
+          .toString();
+    }
   }
   
   
-  
-  public static class BasicClassificationAnnotationMeasurement extends AbstractMeasurement implements ClassificationAnnotationMeasurement{
+  /**
+   * Represents a subjective human annotation judgment of a hypothesis label. 
+   * The annotation itself is a binary judgment encoded as a double. Usually it 
+   * will be 1 (the label is correct), or -1 (the label is incorrect), but it 
+   * could be anywhere in the range. 
+   * @param source 
+   * 
+   */
+  public static class BasicClassificationAnnotationMeasurement extends AbstractClassificationMeasurement implements ClassificationAnnotationMeasurement{
 
-    private int label;
     private String source;
 
-    /**
-     * Represents a subjective human annotation judgment of a hypothesis label. 
-     * The annotation itself is a binary judgment encoded as a double. Usually it 
-     * will be 1 (the label is correct), or -1 (the label is incorrect), but it 
-     * could be anywhere in the range. 
-     * @param source 
-     * 
-     */
     public BasicClassificationAnnotationMeasurement(int annotator, double value, Double confidence, String source, int label){
-      super(annotator, value, confidence);
+      super(annotator, value, confidence, label);
       this.source=source;
-      this.label=label;
     }
 
     @Override
@@ -87,36 +114,33 @@ public class ClassificationMeasurements {
       return source;
     }
 
-    public int getLabel() {
-      return label;
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(ClassificationAnnotationMeasurement.class)
+          .add("annotator", getAnnotator())
+          .add("value", getValue())
+          .add("confidence", getConfidence())
+          .add("label", getLabel())
+          .add("source", getDocumentSource())
+          .toString();
     }
-
-    public void setLabel(int label) {
-      this.label = label;
-    }
-
   }
   
   
   
-  public static class BasicClassificationLabelProportionMeasurement extends AbstractMeasurement implements ClassificationProportionMeasurement{
-
-    private int label;
-
-    /**
-     * Represents a subjective human annotation judgment of 
-     * how prevalent a given label will be. 
-     * 
-     */
+  public static class BasicClassificationLabelProportionMeasurement extends AbstractClassificationMeasurement implements ClassificationProportionMeasurement{
     public BasicClassificationLabelProportionMeasurement(int annotator, double value, double confidence, int label){
-      super(annotator, value, confidence);
-      this.label=label;
+      super(annotator, value, confidence, label);
     }
-
-    public int getLabel() {
-      return label;
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(ClassificationProportionMeasurement.class)
+          .add("annotator", getAnnotator())
+          .add("value", getValue())
+          .add("confidence", getConfidence())
+          .add("label", getLabel())
+          .toString();
     }
-
   }
   
   
