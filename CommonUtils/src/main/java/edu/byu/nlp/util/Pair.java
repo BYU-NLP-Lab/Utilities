@@ -84,7 +84,7 @@ public class Pair<F, S> implements Serializable {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(Triple.class)
+    return MoreObjects.toStringHelper(Pair.class)
       .add("first", getFirst())
       .add("second", getSecond())
       .toString();

@@ -42,7 +42,7 @@ public class EmpiricalAnnotations<D,L> {
     this.info=info;
   }
   
-  public Multimap<Integer, FlatInstance<D,L>> getAnnotationsFor(int source, D data){
+  public Multimap<Integer, FlatInstance<D,L>> getAnnotationsFor(String source, D data){
     if (annotations.containsKey(source)){
       return annotations.get(source);
     }

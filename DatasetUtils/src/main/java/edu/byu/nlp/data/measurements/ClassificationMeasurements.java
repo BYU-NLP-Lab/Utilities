@@ -1,9 +1,6 @@
 package edu.byu.nlp.data.measurements;
 
-import java.util.regex.Matcher;
-
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.data.types.Measurement;
 
@@ -27,7 +24,11 @@ public class ClassificationMeasurements {
   }
   
   public interface ClassificationLabeledPredicateMeasurement extends ClassificationMeasurement{
-    Matcher getPredicate();
+    /**
+     * returns the predicate this measurement uses to match documents 
+     * (document source is passed in via the generic String parameter)
+     */
+    String getPredicate();
   }
   
   
@@ -39,7 +40,6 @@ public class ClassificationMeasurements {
     private double confidence;
 
     public AbstractMeasurement(int annotator, double value, double confidence){
-      Preconditions.checkArgument(-1 <= value && value <= 1, "'binary' annotation values must be between -1 and 1 (not "+value+")");
       this.annotator=annotator;
       this.value=value;
       this.confidence=confidence;
@@ -95,7 +95,7 @@ public class ClassificationMeasurements {
   /**
    * Represents a subjective human annotation judgment of a hypothesis label. 
    * The annotation itself is a binary judgment encoded as a double. Usually it 
-   * will be 1 (the label is correct), or -1 (the label is incorrect), but it 
+   * will be 1 (the label is correct), or 0 (the label is incorrect), but it 
    * could be anywhere in the range. 
    * @param source 
    * 
@@ -142,6 +142,24 @@ public class ClassificationMeasurements {
           .toString();
     }
   }
-  
+
+
+  /**
+   * A Labeled Predicate associates a given feature (a predicate fires on give data) 
+   * with a particular label. The predicate is encoded as a string.
+   */
+  public static class BasicClassificationLabeledPredicateMeasurement extends AbstractClassificationMeasurement implements ClassificationLabeledPredicateMeasurement{
+
+    private String predicate;
+    public BasicClassificationLabeledPredicateMeasurement(int annotator, double value, double confidence, int label, String predicate){
+      super(annotator, value, confidence, label);
+      this.predicate=predicate;
+    }
+    @Override
+    public String getPredicate() {
+      return predicate;
+    }
+    
+  }
   
 }

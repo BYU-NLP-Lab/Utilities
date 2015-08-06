@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.math3.linear.OpenMapRealVector;
 import org.apache.commons.math3.linear.SparseRealVector;
 
@@ -404,4 +405,19 @@ public class BasicSparseFeatureVector implements SparseFeatureVector {
 			}
 		};
 	}
+
+  @Override
+  public Double getValue(final int targetIndex) {
+    final MutableDouble retval = new MutableDouble(Double.NaN);
+    visitSparseEntries(new EntryVisitor() {
+      @Override
+      public void visitEntry(int index, double value) {
+        if (index==targetIndex){
+          retval.setValue(value);
+          return;
+        }
+      }
+    });
+    return (Double.isNaN(retval.getValue()))? null: retval.getValue();
+  }
 }

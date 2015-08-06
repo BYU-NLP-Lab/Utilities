@@ -93,5 +93,7 @@ public interface SparseFeatureVector {
 	int length();
 	
 	void transformValues(ValueFunction f);
+
+  Double getValue(int index);
 	
 }
