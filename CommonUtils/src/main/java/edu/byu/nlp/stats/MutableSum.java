@@ -89,5 +89,12 @@ public class MutableSum {
 	return copy;
   }
 
+  public double getSummand(int i) {
+    if (inactive.contains(i) || !summands.containsKey(i)){
+      return 0.0;
+    }
+    return summands.get(i);
+  }
+
 
 }

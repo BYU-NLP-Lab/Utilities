@@ -178,4 +178,10 @@ public class BasicDatasetInstance implements DatasetInstance {
 	}
 
 
+  @Override
+  public boolean hasMeasurements() {
+    return getAnnotations().getMeasurements()!=null && getAnnotations().getMeasurements().size()>0; 
+  }
+
+
 }

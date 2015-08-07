@@ -355,6 +355,7 @@ public class Datasets {
 		
 		for (DatasetInstance inst: data){
 			SparseRealMatrices.clear(inst.getAnnotations().getLabelAnnotations());
+			inst.getAnnotations().getMeasurements().clear();
 			inst.getInfo().annotationsChanged();
 		}
 		data.getInfo().annotationsChanged();

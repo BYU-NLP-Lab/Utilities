@@ -33,10 +33,10 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
  */
 public class EmpiricalAnnotations<D,L> {
   
-  private Map<Integer, Multimap<Integer, FlatInstance<D,L>>> annotations;
+  private Map<String, Multimap<Integer, FlatInstance<D,L>>> annotations;
   private DatasetInfo info;
   
-  public EmpiricalAnnotations(Map<Integer, Multimap<Integer, FlatInstance<D,L>>> annotations,
+  public EmpiricalAnnotations(Map<String, Multimap<Integer, FlatInstance<D,L>>> annotations,
        DatasetInfo info){
     this.annotations=annotations;
     this.info=info;
@@ -60,12 +60,12 @@ public class EmpiricalAnnotations<D,L> {
    * indexed by <instanceIndex,annotatorIndex>  
    */
   public static EmpiricalAnnotations<SparseFeatureVector, Integer> fromDataset(Dataset dataset){
-	Map<Integer, Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>>> annotations = Maps.newHashMap();
+	Map<String, Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>>> annotations = Maps.newHashMap();
     
     for (DatasetInstance inst: dataset){
     
       // make sure an annotation multimap exists, if this instance has any annotations
-    	int source = inst.getInfo().getSource();
+    	String source = inst.getInfo().getRawSource();
       if (inst.getInfo().getNumAnnotations()>0 && !annotations.containsKey(source)){
         annotations.put(source, HashMultimap.<Integer,FlatInstance<SparseFeatureVector,Integer>>create());
       }
