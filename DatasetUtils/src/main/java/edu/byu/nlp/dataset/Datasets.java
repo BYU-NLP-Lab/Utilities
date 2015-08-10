@@ -99,7 +99,7 @@ public class Datasets {
 	}
 	
 	/**
-	 * Split by sizes
+	 * Split by sizes. All results inherit the full set of measurements.
 	 * 
 	 * sum(splitSizes) must equal numdocs
 	 */
@@ -115,7 +115,8 @@ public class Datasets {
 			for (int i=0; i<size; i++){
 				instances.add(itr.next());
 			}
-			splits.add(new BasicDataset(instances, infoWithUpdatedCounts(instances, dataset.getInfo())));
+			splits.add(new BasicDataset(instances, dataset.getMeasurements(),
+			    infoWithUpdatedCounts(instances, dataset.getInfo())));
 		}
 		
 		return splits;
@@ -146,7 +147,7 @@ public class Datasets {
 		
 		TableCounter<Integer, Integer, Integer> annotationCounter = TableCounter.create();
     Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
-    Multimap<Integer, Measurement> measurementsMap = HashMultimap.create(); 
+    Set<Measurement> measurements = Sets.newHashSet(); 
 		Set<Integer> instanceIndices = Sets.newHashSet();
 		Set<Integer> indicesWithObservedLabel = Sets.newHashSet();
     Map<Integer,Integer> labelMap = Maps.newHashMap();
@@ -181,7 +182,7 @@ public class Datasets {
 			}
 			else if (inst.isMeasurement()){
 			  // record measurement
-			  measurementsMap.put(source, inst.getMeasurement());
+			  measurements.add(inst.getMeasurement());
         Preconditions.checkArgument(inst.getData()==null,"by convention, measurements have no data. Create a separate flatinstance to encode the data");
 			}
 			// labels
@@ -213,7 +214,7 @@ public class Datasets {
 			
 			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
-					instanceIndex, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(instanceIndex), measurementsMap.get(instanceIndex));
+					instanceIndex, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
 			
 			// dataset instance
 			DatasetInstance inst = new BasicDatasetInstance(
@@ -235,9 +236,13 @@ public class Datasets {
 		DatasetInfo info = new BasicDataset.Info(datasetSource, 0,0,0,0,0,0, indexers, instances);
 		
 		// dataset with correct counts
-		return new BasicDataset(instances, infoWithUpdatedCounts(instances, info));
+		return new BasicDataset(instances, measurements, infoWithUpdatedCounts(instances, info));
 	}
 
+	/**
+	 * Return two datasets. The first contains all of the instances with annotations (as well as all measurments).
+	 * The second contains all base instances with just data. Measurements are also ommitted from this dataset.
+	 */
 	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithAnnotations(Dataset dataset){
 		List<DatasetInstance> annotatedData = Lists.newArrayList();
 		List<DatasetInstance> unannotatedData = Lists.newArrayList();
@@ -250,10 +255,15 @@ public class Datasets {
 			}
 		}
 		
-		return Pair.of(new BasicDataset(annotatedData, infoWithUpdatedCounts(annotatedData, dataset.getInfo())),
-				new BasicDataset(unannotatedData, infoWithUpdatedCounts(unannotatedData, dataset.getInfo())));
+		return Pair.of(new BasicDataset(annotatedData, dataset.getMeasurements(), infoWithUpdatedCounts(annotatedData, dataset.getInfo())),
+				new BasicDataset(unannotatedData, Sets.newHashSet(), infoWithUpdatedCounts(unannotatedData, dataset.getInfo())));
 	}
 	
+	/**
+   * Return two datasets. The first contains all of the instances with gold standard labels.
+   * The second contains all instances without (whether they have annotations or not). 
+   * Both sets get all measurements.
+	 */
 	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithLabels(Dataset dataset){
 		// can't take a shortcut here because cached values don't take into account concealed labels into account
 		
@@ -268,10 +278,16 @@ public class Datasets {
 			}
 		}
 		
-		return Pair.of(new BasicDataset(labeledData, infoWithUpdatedCounts(labeledData, dataset.getInfo())),
-				new BasicDataset(unlabeledData, infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
+		return Pair.of(new BasicDataset(labeledData, dataset.getMeasurements(), infoWithUpdatedCounts(labeledData, dataset.getInfo())),
+				new BasicDataset(unlabeledData, dataset.getMeasurements(), infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
 	}
-	
+
+  /**
+   * Return two datasets. The first contains all of the instances with gold standard labels that are known 
+   * and publically available (observed by annotators for e.g., training purposes).
+   * The second contains all other instances. 
+   * Both sets get all measurements.
+   */
 	public static Pair<? extends Dataset, ? extends Dataset> divideInstancesWithObservedLabels(Dataset dataset){
 		// take a shortcut if all the data is labeled or unlabeled
 		if (dataset.getInfo().getNumDocumentsWithoutObservedLabels()==0){
@@ -296,8 +312,8 @@ public class Datasets {
 			}
 		}
 		
-		return Pair.of(new BasicDataset(labeledData, infoWithUpdatedCounts(labeledData, dataset.getInfo())),
-				new BasicDataset(unlabeledData, infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
+		return Pair.of(new BasicDataset(labeledData, dataset.getMeasurements(), infoWithUpdatedCounts(labeledData, dataset.getInfo())),
+				new BasicDataset(unlabeledData, dataset.getMeasurements(), infoWithUpdatedCounts(unlabeledData, dataset.getInfo())));
 	}
 
 	public static DatasetInfo infoWithCalculatedCounts(Iterable<DatasetInstance> instances, String source, 
@@ -336,26 +352,37 @@ public class Datasets {
 				instances);
 	}
 
+	/**
+	 * Concatenate all instances from the given datasets. 
+	 * The set of unioned unique (based on equals())
+	 * measurements is given to the resulting dataset.
+	 */
 	public static Dataset join(Dataset... datasets){
 		Preconditions.checkNotNull(datasets);
 		Preconditions.checkArgument(datasets.length>0);
 		
 		Iterable<DatasetInstance> instances = Iterables.concat(datasets);
+		Set<Measurement> measurements = Sets.newHashSet();
+		for (Dataset dataset: datasets){
+		  for (Measurement measurement: dataset.getMeasurements()){
+		    measurements.add(measurement);
+		  }
+		}
 		
-		return new BasicDataset(instances, 
+		return new BasicDataset(instances, measurements, 
 				infoWithUpdatedCounts(instances, datasets[0].getInfo()));
 	}
 	
 
 
 	/**
-	 * Mutates the dataset by clearing all annotation matrices
+	 * Mutates the dataset by clearing all annotation matrices and measurements.
 	 */
 	public static void clearAnnotations(Dataset data) {
-		
+
+	  data.getMeasurements().clear();
 		for (DatasetInstance inst: data){
 			SparseRealMatrices.clear(inst.getAnnotations().getLabelAnnotations());
-			inst.getAnnotations().getMeasurements().clear();
 			inst.getInfo().annotationsChanged();
 		}
 		data.getInfo().annotationsChanged();
@@ -369,6 +396,7 @@ public class Datasets {
 	/**
 	 * Returns a dataset in which only instances with either a 
 	 * label or at least one annotation are retained. 
+	 * All measurements are retained.
 	 */
 	public static Dataset removeDataWithoutAnnotationsOrObservedLabels(Dataset data) {
 		List<DatasetInstance> instances = Lists.newArrayList();
@@ -380,7 +408,7 @@ public class Datasets {
 			}
 		}
 		
-		return new BasicDataset(instances, infoWithUpdatedCounts(instances, data.getInfo()));
+		return new BasicDataset(instances, data.getMeasurements(), infoWithUpdatedCounts(instances, data.getInfo()));
 	}
 
 	public static DatasetInstance copy(DatasetInstance inst){
@@ -442,8 +470,8 @@ public class Datasets {
 				") doesn't match the src of the annotation ("+source+").");
 
     // add measurements
-		if (ann.getMeasurement()!=null){
-		  inst.getAnnotations().getMeasurements().add(ann.getMeasurement());
+		if (ann.isMeasurement()){
+		  dataset.getMeasurements().add(ann.getMeasurement());
 		}
 		
 		// add the raw annotation
@@ -658,7 +686,7 @@ public class Datasets {
 		br.close();
 
 		String source = inPath;
-		return new BasicDataset(instances, infoWithCalculatedCounts(
+		return new BasicDataset(instances, Sets.newHashSet(), infoWithCalculatedCounts(
 		    instances, source, 
 		    new IndexerCalculator<>(wordIndex, labelIndex, instanceIdIndexer, annotatorIdIndexer)));
 	}
@@ -703,11 +731,11 @@ public class Datasets {
 	}
 
 	public static AnnotationSet emptyAnnotationSet(){
-		return new BasicAnnotationSet(0, 0, null, null);
+		return new BasicAnnotationSet(0, 0, null);
 	}
 	public static Dataset emptyDataset(DatasetInfo info){
 		return new BasicDataset( // full labeled data
-				Lists.<DatasetInstance>newArrayList(), 
+				Lists.<DatasetInstance>newArrayList(), Sets.<Measurement>newHashSet(), 
 				infoWithUpdatedCounts(Lists.<DatasetInstance>newArrayList(), info));
 	}
 
@@ -890,7 +918,7 @@ public class Datasets {
 			}
 		}
 		
-		return new BasicDataset(instances, Datasets.infoWithUpdatedCounts(instances, data.getInfo()));
+		return new BasicDataset(instances, data.getMeasurements(), Datasets.infoWithUpdatedCounts(instances, data.getInfo()));
 
 	}
 
@@ -910,10 +938,9 @@ public class Datasets {
 		List<DatasetInstance> instances = Lists.newArrayList();
 		
 		for (DatasetInstance inst: dataset){
-			// copy all instances but without annotations (or measurements)
+			// copy all instances but without annotations 
 			AnnotationSet annotationSet = new BasicAnnotationSet(annotatorIdIndexer.size(), info.getNumClasses(), 
-			    Lists.<FlatInstance<SparseFeatureVector,Integer>>newArrayList(),
-			    Lists.<Measurement>newArrayList());
+			    Lists.<FlatInstance<SparseFeatureVector,Integer>>newArrayList());
 			// instance with the new annotationset
 			instances.add(new BasicDatasetInstance(inst.asFeatureVector(), 
 					inst.getLabel(), DatasetInstances.isLabelConcealed(inst), 
@@ -922,9 +949,9 @@ public class Datasets {
 		}
 		
 		// dataset with the new instances and the new annotatorIdIndexer
-		BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
+		BasicDataset newdataset = new BasicDataset(instances, Sets.newHashSet(), new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
 						new IndexerCalculator<>(info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), annotatorIdIndexer), instances));
-		return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
+		return new BasicDataset(newdataset, newdataset.getMeasurements(), infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
 	}
 
 	/**
@@ -950,7 +977,7 @@ public class Datasets {
   			return o1.getInfo().getRawSource().compareTo(o2.getInfo().getRawSource());
   		}
   	});
-    return new BasicDataset(instances, data.getInfo());
+    return new BasicDataset(instances, data.getMeasurements(), data.getInfo());
 	}
 
   public static String[] docRawSourcesIn(Dataset data) {
@@ -972,7 +999,7 @@ public class Datasets {
 
 	public static Dataset filteredDataset(Dataset data, Predicate<DatasetInstance> predicate) {
 		Iterable<DatasetInstance> filteredInstances = Lists.newArrayList(Iterables.filter(data, predicate));
-		return new BasicDataset(filteredInstances, infoWithUpdatedCounts(filteredInstances, data.getInfo()));
+		return new BasicDataset(filteredInstances, data.getMeasurements(), infoWithUpdatedCounts(filteredInstances, data.getInfo()));
 	}
 
 	
@@ -1209,9 +1236,9 @@ public class Datasets {
     }
     
     // dataset with the new instances and the new annotatorIdIndexer
-    BasicDataset newdataset = new BasicDataset(instances, new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
+    BasicDataset newdataset = new BasicDataset(instances, dataset.getMeasurements(), new BasicDataset.Info(info.getSource(), 0,0,0,0,0,0, 
             new IndexerCalculator<>(info.getFeatureIndexer(), info.getLabelIndexer(), info.getInstanceIdIndexer(), info.getAnnotatorIdIndexer()), instances));
-    return new BasicDataset(newdataset, infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
+    return new BasicDataset(newdataset, newdataset.getMeasurements(), infoWithUpdatedCounts(newdataset, newdataset.getInfo())); // update annotation counts
   }
 
   public static double minFeatureValue(Dataset data) {

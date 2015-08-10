@@ -2,65 +2,58 @@ package edu.byu.nlp.data.measurements;
 
 import com.google.gson.Gson;
 
-import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojos.ClassificationAnnotationMeasurementPojo;
-import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojos.ClassificationLabelProportionMeasurementPojo;
-import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojos.MeasurementPojo;
 import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationAnnotationMeasurement;
 import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationLabelProportionMeasurement;
+import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationLabeledPredicateMeasurement;
 import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.Measurement;
 
-public class ClassificationMeasurementParser<X,Y> {
+public class ClassificationMeasurementParser {
 
   public static final String TYPE = "type";
-  
-  
-  public static Measurement parse(String rawValue, int annotator, IndexerCalculator<String,String> indexes){
-    Gson gson = new Gson();
-    String type = gson.fromJson(rawValue, MeasurementPojo.class).type;
-    
-    // classification annotation
-    if (type.equals("cls_ann")){
-      ClassificationAnnotationMeasurementPojo pojo = gson.fromJson(rawValue, ClassificationAnnotationMeasurementPojo.class);
-      int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
 
-      return new BasicClassificationAnnotationMeasurement(annotator, pojo.value, pojo.confidence, pojo.source, labelIndex);
+  public static Measurement stringToMeasurement(String rawValue, String annotator, String source, long startTimestamp, long endTimestamp, IndexerCalculator<String,String> indexes){
+    return pojoToMeasurement(stringToPojo(rawValue), annotator, source, startTimestamp, endTimestamp, indexes);
+  }
+
+  public static MeasurementPojo stringToPojo(String rawValue){
+    Gson gson = new Gson();
+    return gson.fromJson(rawValue, MeasurementPojo.class);
+  }
+  
+  public static Measurement pojoToMeasurement(MeasurementPojo pojo, String annotator, String source, long startTimestamp, long endTimestamp, IndexerCalculator<String,String> indexes){
+
+    int annotatorId = indexes.getAnnotatorIdIndexer().indexOf(annotator);
+    int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
+
+    // classification annotation
+    if (pojo.type.equals("cls_ann")){
+      return new BasicClassificationAnnotationMeasurement(annotatorId, pojo.value, pojo.confidence, source, labelIndex, startTimestamp, endTimestamp);
     }
-    
+
     // classification label proportion 
-    else if (type.equals("cls_lprp")){
-      ClassificationLabelProportionMeasurementPojo pojo = gson.fromJson(rawValue, ClassificationLabelProportionMeasurementPojo.class);
-      int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
-      return new BasicClassificationLabelProportionMeasurement(annotator, pojo.value, pojo.confidence, labelIndex);
-//      return new ClassificationLabelProportionMeasurement(annotator, labelIndex, pojo.value, pojo.confidence); 
+    else if (pojo.type.equals("cls_lprop")){
+      return new BasicClassificationLabelProportionMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, startTimestamp, endTimestamp);
+    }
+
+    // classification labeled predicate 
+    else if (pojo.type.equals("cls_lpred")){
+      return new BasicClassificationLabeledPredicateMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.predicate, startTimestamp, endTimestamp);
     }
     
     else{
-      throw new IllegalArgumentException("unknown measurement type: "+rawValue);
+      throw new IllegalArgumentException("unknown measurement type: "+pojo.type);
     }
     
   }
   
   
-  public static class MeasurementPojos{
-
-    public static class MeasurementPojo {
-      private String type;
-    }
-
-    public static class ClassificationAnnotationMeasurementPojo extends MeasurementPojo{
-      private String label;
-      private String source;
-      private double value;
-      private Double confidence;
-    }
-
-    public static class ClassificationLabelProportionMeasurementPojo extends MeasurementPojo{
-      private String label;
-      private double value;
-      private Double confidence;
-    }
-
+  public static class MeasurementPojo {
+    private String type;
+    private String label;
+    private double value;
+    private Double confidence;
+    private String predicate;
   }
-  
+
 }

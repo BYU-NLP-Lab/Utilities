@@ -2,6 +2,7 @@ package edu.byu.nlp.data;
 
 import edu.byu.nlp.data.types.Measurement;
 
+
 /**
  * 
  * @author plf1
@@ -23,11 +24,6 @@ public interface FlatInstance<D, L> {
   D getData();
 
   /**
-   * Get the measurement value. Could be null if this is an annotation or label.
-   */
-  Measurement getMeasurement();
-  
-  /**
    * Get the label value. Could be null if this is an annotation.
    */
   L getLabel();
@@ -42,11 +38,6 @@ public interface FlatInstance<D, L> {
    * false.
    */
   boolean isAnnotation();
-
-  /**
-   * Returns true if this instance represents a measurement; otherwise false
-   */
-  boolean isMeasurement();
 
   /**
    * Returns true if this instance represents a labeled instance; otherwise false
@@ -87,6 +78,16 @@ public interface FlatInstance<D, L> {
    * file path. Should be a human-readable stand-in for instanceId.
    */
   String getSource();
+  
+  /**
+   * Get the measurement object 
+   */
+  Measurement getMeasurement();
+
+  /**
+   * Returns true if this instance represents a measurement; otherwise false
+   */
+  boolean isMeasurement();
 
 
 }

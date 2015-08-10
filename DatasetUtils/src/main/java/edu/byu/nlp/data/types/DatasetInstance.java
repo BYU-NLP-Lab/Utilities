@@ -69,8 +69,4 @@ public interface DatasetInstance {
 	 */
 	boolean hasAnnotations();
 
-	/**
-	 * Does this instance have any measurements of any kind?
-	 */
-	boolean hasMeasurements();
 }

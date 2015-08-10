@@ -28,6 +28,7 @@ import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.FieldIndexer;
 import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
+import edu.byu.nlp.data.streams.StringToMeasurementPojo;
 import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.dataset.Datasets;
@@ -130,6 +131,9 @@ public class JSONDocumentDatasetBuilder {
     stream = DataStream.withSource(jsonAnnotationStream.toString(), instances)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.MEASUREMENT, new StringToMeasurementPojo()))
+      .transform(new MeasurementPojoToMeasurement(DataStreamInstance.MEASUREMENT, 
+          DataStreamInstance.ANNOTATOR, DataStreamInstance.SOURCE, DataStreamInstance.STARTTIME, DataStreamInstance.ENDTIME, indexers))
       .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.INSTANCE_ID, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))

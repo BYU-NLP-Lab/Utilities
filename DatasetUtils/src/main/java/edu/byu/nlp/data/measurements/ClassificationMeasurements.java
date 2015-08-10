@@ -1,5 +1,7 @@
 package edu.byu.nlp.data.measurements;
 
+import java.util.Objects;
+
 import com.google.common.base.MoreObjects;
 
 import edu.byu.nlp.data.types.Measurement;
@@ -36,13 +38,15 @@ public class ClassificationMeasurements {
   public static abstract class AbstractMeasurement implements Measurement {
 
     private int annotator;
-    private double value;
-    private double confidence;
+    private double value, confidence;
+    private long startTimestamp, endTimestamp;
 
-    public AbstractMeasurement(int annotator, double value, double confidence){
+    public AbstractMeasurement(int annotator, double value, double confidence, long startTimestamp, long endTimestamp){
       this.annotator=annotator;
       this.value=value;
       this.confidence=confidence;
+      this.startTimestamp=startTimestamp;
+      this.endTimestamp=endTimestamp;
     }
     
     @Override
@@ -60,6 +64,14 @@ public class ClassificationMeasurements {
       return confidence;
     }
     @Override
+    public long getStartTimestamp() {
+      return startTimestamp;
+    }
+    @Override
+    public long getEndTimestamp() {
+      return endTimestamp;
+    }
+    @Override
     public String toString() {
       return MoreObjects.toStringHelper(ClassificationMeasurement.class)
           .add("annotator", getAnnotator())
@@ -67,13 +79,30 @@ public class ClassificationMeasurements {
           .add("confidence", getConfidence())
           .toString();
     }
+    @Override
+    public int hashCode() {
+      return Objects.hash(annotator,value,confidence,startTimestamp,endTimestamp);
+    }
+    @Override
+    public boolean equals(Object obj) {
+      if (obj==null || !(obj instanceof Measurement)){
+        return false;
+      }
+      Measurement other = (Measurement) obj;
+      return annotator == other.getAnnotator()
+          && value == other.getValue()
+          && confidence == other.getConfidence()
+          && startTimestamp == other.getStartTimestamp()
+          && endTimestamp == other.getEndTimestamp()
+      ;
+    }
   }
   
 
   public static abstract class AbstractClassificationMeasurement extends AbstractMeasurement implements ClassificationMeasurement {
     private int label;
-    public AbstractClassificationMeasurement(int annotator, double value, double confidence, int label){
-      super(annotator, value, confidence);
+    public AbstractClassificationMeasurement(int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
+      super(annotator, value, confidence, startTimestamp, endTimestamp);
       this.label=label;
     }
     @Override
@@ -104,8 +133,8 @@ public class ClassificationMeasurements {
 
     private String source;
 
-    public BasicClassificationAnnotationMeasurement(int annotator, double value, Double confidence, String source, int label){
-      super(annotator, value, confidence, label);
+    public BasicClassificationAnnotationMeasurement(int annotator, double value, Double confidence, String source, int label, long startTimestamp, long endTimestamp){
+      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.source=source;
     }
 
@@ -129,8 +158,8 @@ public class ClassificationMeasurements {
   
   
   public static class BasicClassificationLabelProportionMeasurement extends AbstractClassificationMeasurement implements ClassificationProportionMeasurement{
-    public BasicClassificationLabelProportionMeasurement(int annotator, double value, double confidence, int label){
-      super(annotator, value, confidence, label);
+    public BasicClassificationLabelProportionMeasurement(int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
+      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
     }
     @Override
     public String toString() {
@@ -151,8 +180,8 @@ public class ClassificationMeasurements {
   public static class BasicClassificationLabeledPredicateMeasurement extends AbstractClassificationMeasurement implements ClassificationLabeledPredicateMeasurement{
 
     private String predicate;
-    public BasicClassificationLabeledPredicateMeasurement(int annotator, double value, double confidence, int label, String predicate){
-      super(annotator, value, confidence, label);
+    public BasicClassificationLabeledPredicateMeasurement(int annotator, double value, double confidence, int label, String predicate, long startTimestamp, long endTimestamp){
+      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.predicate=predicate;
     }
     @Override

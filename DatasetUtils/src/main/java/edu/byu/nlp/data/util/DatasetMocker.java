@@ -81,7 +81,8 @@ public class DatasetMocker {
 		}
 
 		// Create Dataset
-		return new BasicDataset("", instances, new IndexerCalculator<>(featureIndexer, labelIndexer, instanceIdIndexer, annotatorIdIndexer));
+		return new BasicDataset("", instances, null, 
+		    new IndexerCalculator<>(featureIndexer, labelIndexer, instanceIdIndexer, annotatorIdIndexer));
 	}
 	
 

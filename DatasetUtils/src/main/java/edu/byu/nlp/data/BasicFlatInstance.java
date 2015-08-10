@@ -71,7 +71,7 @@ public class BasicFlatInstance<D,L> extends AbstractFlatInstance<D,L> {
   public boolean isMeasurement() {
     return getMeasurement()!=null;
   }
-
+  
   @Override
   public boolean isLabel() {
     return getLabel()!=null;

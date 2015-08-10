@@ -1,5 +1,6 @@
 package edu.byu.nlp.dataset;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -8,13 +9,16 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.Measurement;
 import edu.byu.nlp.util.Collections3;
 import edu.byu.nlp.util.Indexer;
 
@@ -23,9 +27,11 @@ public class BasicDataset implements Dataset {
 
 	private List<DatasetInstance> instances;
 	private DatasetInfo info;
+  private Collection<Measurement> measurements;
 
 	public BasicDataset(Dataset other){
 		this.instances = Lists.newArrayList(other);
+		this.measurements = Sets.newHashSet(other.getMeasurements());
 		this.info = other.getInfo();
 	}
 	
@@ -34,20 +40,20 @@ public class BasicDataset implements Dataset {
 	 * (rather than transforming an existing dataset). 
 	 * Creates a dataset with info calculated from instances.
 	 */
-	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
+	public BasicDataset(String source, Iterable<DatasetInstance> instances, Collection<Measurement> measurements,
 	    IndexerCalculator<String, String> indexers){
-		this(instances, Datasets.infoWithCalculatedCounts(instances, source, indexers));
+		this(instances, measurements, Datasets.infoWithCalculatedCounts(instances, source, indexers));
 	}
 
 	/**
 	 * Creates a dataset with an info from provided stats. This method trusts that you got it right, 
 	 * and does not double-check your work.
 	 */
-	public BasicDataset(String source, Iterable<DatasetInstance> instances, 
+	public BasicDataset(String source, Iterable<DatasetInstance> instances, Collection<Measurement> measurements,
 			int numDocuments, int numDocumentsWithLabels, int numDocumentsWithObservedLabels, 
 		int numTokens, int numTokensWithAnnotations, int numTokensWithLabels, int numTokensWithObservedLabels, int numAnnotations,
     IndexerCalculator<String, String> indexers){
-		this(instances, new Info(source, 
+		this(instances, measurements, new Info(source, 
 				numDocuments, numDocumentsWithLabels, numDocumentsWithObservedLabels, 
 				numTokens, numTokensWithLabels, numTokensWithObservedLabels,  
 				indexers, instances));
@@ -57,8 +63,11 @@ public class BasicDataset implements Dataset {
 	 * Creates a dataset with the given info. Trusts that the stats in the info 
 	 * are correct, and does not double-check your work.
 	 */
-	public BasicDataset(Iterable<DatasetInstance> instances, DatasetInfo info){
+	public BasicDataset(Iterable<DatasetInstance> instances, Collection<Measurement> measurements, DatasetInfo info){
+	  Preconditions.checkNotNull(instances);
+	  Preconditions.checkNotNull(measurements);
 		this.instances = Lists.newArrayList(instances);
+		this.measurements=Sets.newHashSet(measurements);
 		this.info=info;
 	}
 
@@ -288,6 +297,11 @@ public class BasicDataset implements Dataset {
 		}
 		return this.instanceMap.get(source);
 	}
+
+  @Override
+  public Collection<Measurement> getMeasurements() {
+    return measurements;
+  }
 
 	
 }

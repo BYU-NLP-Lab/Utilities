@@ -22,4 +22,14 @@ public interface Measurement {
   
   double getConfidence();
   
+  /**
+   * The moment at which the measurement was first asked of the annotator.
+   */
+  long getStartTimestamp();
+
+  /**
+   * The moment at which the measurement was finished.
+   */
+  long getEndTimestamp();
+  
 }

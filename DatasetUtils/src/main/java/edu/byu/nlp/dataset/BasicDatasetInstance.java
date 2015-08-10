@@ -115,7 +115,8 @@ public class BasicDatasetInstance implements DatasetInstance {
 
 	@Override
 	public boolean hasAnnotations() {
-		return SparseRealMatrices.sum(getAnnotations().getLabelAnnotations())>0 ||
+		return 
+		    SparseRealMatrices.sum(getAnnotations().getLabelAnnotations())>0 ||
 				SparseRealVectors.sum(getAnnotations().getRegressandAnnotationMeans())>0;
 	}
 
@@ -123,7 +124,7 @@ public class BasicDatasetInstance implements DatasetInstance {
 	public AnnotationSet getAnnotations() {
 		return annotations;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "("+info.toString()+" label="+label+" regressand="+regressand+" annotations="+annotations+")";
@@ -177,11 +178,6 @@ public class BasicDatasetInstance implements DatasetInstance {
 		
 	}
 
-
-  @Override
-  public boolean hasMeasurements() {
-    return getAnnotations().getMeasurements()!=null && getAnnotations().getMeasurements().size()>0; 
-  }
 
 
 }

@@ -15,7 +15,6 @@ public class FlatInstances {
     return fromStreamClassificationInstance(DataStreamInstance.fromLabel(instance));
   }
   
-  @SuppressWarnings("unchecked")
   public static FlatInstance<SparseFeatureVector, Integer> fromStreamClassificationInstance(Map<String,Object> instance){
     return new BasicFlatInstance<SparseFeatureVector, Integer>(
         (Integer)DataStreamInstance.getInstanceId(instance),
