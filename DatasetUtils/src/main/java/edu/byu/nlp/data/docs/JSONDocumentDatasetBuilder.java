@@ -127,16 +127,18 @@ public class JSONDocumentDatasetBuilder {
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
     indexers.setWordIndexer(DocPipes.selectFeatures(instances, featureSelectorFactory, indexers.getWordIndexer()));
       
-    // convert data to vectors and labels to numbers
+    // processing that relies on indexers
     stream = DataStream.withSource(jsonAnnotationStream.toString(), instances)
+      // handle measurements
+      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.MEASUREMENT, new StringToMeasurementPojo()))
+      .transform(new MeasurementPojoToMeasurement(indexers)) // creates from annotations if no explicit measurement exists
+      // index fields (strings to numbers)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.MEASUREMENT, new StringToMeasurementPojo()))
-      .transform(new MeasurementPojoToMeasurement(DataStreamInstance.MEASUREMENT, 
-          DataStreamInstance.ANNOTATOR, DataStreamInstance.SOURCE, DataStreamInstance.STARTTIME, DataStreamInstance.ENDTIME, indexers))
       .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.INSTANCE_ID, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
+      // data to vectors
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(indexers.getWordIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountNormalizer(featureNormalizationConstant)))
       ;

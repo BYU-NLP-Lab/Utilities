@@ -188,6 +188,16 @@ public class ClassificationMeasurements {
     public String getPredicate() {
       return predicate;
     }
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(ClassificationLabeledPredicateMeasurement.class)
+          .add("annotator", getAnnotator())
+          .add("value", getValue())
+          .add("confidence", getConfidence())
+          .add("label", getLabel())
+          .add("predicate", getPredicate())
+          .toString();
+    }
     
   }
   

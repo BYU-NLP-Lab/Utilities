@@ -925,14 +925,19 @@ public class Datasets {
 	
 	/**
 	 * Get a dataset that's been transformed to accomodate a larger (or smaller) set 
-	 * of annotators, determined by annotatoridIndexer. It is assumed that although 
+	 * of annotators, determined by annotatoridIndexer. 
+	 * 
+	 * paul note: in retrospect, I'm not sure why I insisted on the following. I've 
+	 * commented out the code that enforces the following constraint, but am leaving in 
+	 * the note in case there is some problem later that I didn't anticipate. 
+	 * It is assumed that although 
 	 * there may be more of fewer annotators in annotatorIdIndexer than in the dataset, 
 	 * existing annotator identity has not changed. That is, the 0th annotator 
 	 * in the dataset must be the 0th in the annotatorIdIndexer, etc. 
 	 */
 	public static Dataset withNewAnnotators(Dataset dataset, Indexer<String> annotatorIdIndexer){
-		Preconditions.checkArgument(Indexers.agree(dataset.getInfo().getAnnotatorIdIndexer(), annotatorIdIndexer),
-				"Annotator id indexers conflict");
+//		Preconditions.checkArgument(Indexers.agree(dataset.getInfo().getAnnotatorIdIndexer(), annotatorIdIndexer),
+//				"Annotator id indexers conflict");
 		
 		DatasetInfo info = dataset.getInfo();
 		List<DatasetInstance> instances = Lists.newArrayList();

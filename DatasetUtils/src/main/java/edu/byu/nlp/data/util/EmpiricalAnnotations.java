@@ -57,7 +57,7 @@ public class EmpiricalAnnotations<D,L> {
 
   /**
    * Create a collection of Empirical annotations of <SparseFeatureVector, Integer> 
-   * indexed by <instanceIndex,annotatorIndex>  
+   * indexed by <instanceSrc,annotatorIndex>  
    */
   public static EmpiricalAnnotations<SparseFeatureVector, Integer> fromDataset(Dataset dataset){
 	Map<String, Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>>> annotations = Maps.newHashMap();
