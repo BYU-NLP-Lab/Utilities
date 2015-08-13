@@ -6,9 +6,9 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.data.measurements.ClassificationMeasurementParser;
-import edu.byu.nlp.data.measurements.ClassificationMeasurementParser.MeasurementPojo;
 import edu.byu.nlp.data.measurements.ClassificationMeasurements;
 import edu.byu.nlp.data.streams.IndexerCalculator;
+import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList.MeasurementPojo;
 import edu.byu.nlp.data.types.DataStreamInstance;
 
 public class MeasurementPojoToMeasurement implements Function<Map<String, Object>, Map<String, Object>> {

@@ -62,10 +62,18 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	}
 
 	// simple deserialization pojo
-	private static class JSONAnnotation {
-    private String annotator, label, data, source, annotation, datapath, measurement;
-		private long starttime = -1, endtime = -1;
-		private boolean labelobserved;
+	public static class MeasurementPojo {
+	  public String type;
+	  public String label;
+	  public double value;
+	  public Double confidence;
+	  public String predicate;
+	}
+	private static class AnnotationPojo {
+	  public String annotator, label, data, source, annotation, datapath;
+	  public MeasurementPojo measurement;
+	  public long starttime = -1, endtime = -1;
+	  public boolean labelobserved;
 
 		@Override
 		public String toString() {
@@ -73,7 +81,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 		}
 		
 		@SuppressWarnings("unused")
-		public JSONAnnotation() {
+		public AnnotationPojo() {
 		}
 	}
 
@@ -97,15 +105,15 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 
 		// parse json
 		Gson gson = new Gson();
-		Type collectiontype = new TypeToken<List<JSONAnnotation>>(){}.getType();
+		Type collectiontype = new TypeToken<List<AnnotationPojo>>(){}.getType();
 
-		List<JSONAnnotation> jsonData = gson.fromJson(jsonReader, collectiontype);
+		List<AnnotationPojo> jsonData = gson.fromJson(jsonReader, collectiontype);
 
 		// translate annotations into flatInstances 
 		// and gather instance data 
 		Map<String,InstancePojo> instanceData = Maps.newHashMap();
 		List<Map<String,Object>> transformedAnnotations = Lists.newArrayList();
-		for (JSONAnnotation ann : jsonData) {
+		for (AnnotationPojo ann : jsonData) {
 			
 			// annotation
 			if (ann.annotation != null) {
@@ -140,7 +148,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 			
 			// read data from disk (if necessary)
 			String instData = pojo.data;
-			if (instData == null) {
+			if (instData == null && pojo.datapath!=null) {
 				List<String> lines;
 				File jsonpath = new File(jsonReferencedDataDir, pojo.datapath);
 				try {

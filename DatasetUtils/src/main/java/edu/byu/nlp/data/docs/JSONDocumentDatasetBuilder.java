@@ -28,7 +28,6 @@ import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.FieldIndexer;
 import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList;
-import edu.byu.nlp.data.streams.StringToMeasurementPojo;
 import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.dataset.Datasets;
@@ -130,8 +129,7 @@ public class JSONDocumentDatasetBuilder {
     // processing that relies on indexers
     stream = DataStream.withSource(jsonAnnotationStream.toString(), instances)
       // handle measurements
-      .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.MEASUREMENT, new StringToMeasurementPojo()))
-      .transform(new MeasurementPojoToMeasurement(indexers)) // creates from annotations if no explicit measurement exists
+      .transform(new MeasurementPojoToMeasurement(indexers)) // also creates from annotations if no explicit measurement exists
       // index fields (strings to numbers)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))

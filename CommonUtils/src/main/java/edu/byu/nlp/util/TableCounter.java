@@ -6,6 +6,8 @@ import java.util.Map.Entry;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
+import edu.byu.nlp.util.Integers.MutableInteger;
+
 public class TableCounter<R,C,I> {
 
 	private Table<R, C, Counter<I>> table = HashBasedTable.create();
@@ -36,6 +38,17 @@ public class TableCounter<R,C,I> {
 			return table.get(row, col).getCount(item);
 		}
 		return 0;
+	}
+	
+	public int totalCount(){
+	  final MutableInteger retval = MutableInteger.from(0);
+	  visitEntriesSparsely(new SparseTableVisitor<R, C, I>() {
+      @Override
+      public void visitEntry(R row, C col, I item, int count) {
+        retval.setValue(retval.getValue()+count);
+      }
+    });
+	  return retval.getValue();
 	}
 
 	public void visitRowEntriesSparsely(R row, SparseTableVisitor<R,C,I> visitor){

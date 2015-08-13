@@ -163,36 +163,27 @@ public class Datasets {
 		  
 		  int source = inst.getInstanceId();
 		  
-			// record instance
-			instanceIndices.add(source);
-			rawSourceMap.put(source, inst.getSource());
+			// record instance (if source is specified)
+		  if (indexers.getInstanceIdIndexer().get(source)!=null){
+  			instanceIndices.add(source);
+  			rawSourceMap.put(source, inst.getSource());
+		  }
 
-			// annotations
+			// record annotations
 			if (inst.isAnnotation()){
-				Integer annotator = inst.getAnnotator();
-				Integer annotation = inst.getAnnotation();
-
 				// record annotation
-				annotationCounter.incrementCount(source, annotator, annotation);
+				annotationCounter.incrementCount(source, inst.getAnnotator(), inst.getAnnotation());
 				if (preserveRawAnnotations){
 					rawAnnotationMap.put(source, inst);
 				}
-				
-				Preconditions.checkArgument(inst.getData()==null,"by convention, annotations have no data. Create a separate flatinstance to encode the data");
 			}
-			else if (inst.isMeasurement()){
-			  // record measurement
+			// record measurements
+			if (inst.isMeasurement()){
 			  measurements.add(inst.getMeasurement());
-        Preconditions.checkArgument(inst.getData()==null,"by convention, measurements have no data. Create a separate flatinstance to encode the data");
 			}
-			// labels
-			else{
-				// record instance features (the last non-null occurrence gets the last say) 
-			  SparseFeatureVector data = inst.getData();
-        Integer label = inst.getLabel();
-				if (data!=null){
-					featureMap.put(source, data);
-				}
+			// record labels
+			if (inst.isLabel()){
+			  Integer label = inst.getLabel();
 				// record label
 				if (inst.isLabel()){
 					// this is a trusted gold label
@@ -200,9 +191,16 @@ public class Datasets {
 				}
 				// mark gold labels
 				if (inst.isLabelObserved()){
-					// this is a publically known annotation (available as training data)
-					indicesWithObservedLabel.add(source);
+				  // this is a publically known annotation (available as training data)
+				  indicesWithObservedLabel.add(source);
 				}
+			}
+			// record data (the last non-null occurrence gets the last say) 
+			if (inst.getData()!=null){
+  			SparseFeatureVector data = inst.getData();
+  			if (data!=null){
+  			  featureMap.put(source, data);
+  			}
 			}
 		}
 		

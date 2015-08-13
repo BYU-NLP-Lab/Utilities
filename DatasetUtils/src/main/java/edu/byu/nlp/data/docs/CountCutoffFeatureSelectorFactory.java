@@ -60,7 +60,7 @@ public class CountCutoffFeatureSelectorFactory<L> implements FeatureSelectorFact
     private double[] countFeatures(Iterable<Map<String, Object>> docs) {
       double[] counts = new double[numFeatures];
       for (Map<String, Object> doc : docs) {
-    	  if (!DataStreamInstance.isAnnotation(doc)){ // ignore annotations; no data
+    	  if (DataStreamInstance.isLabel(doc)){ // ignore annotations; no data
 	        for (Entry e : ((SparseFeatureVector)DataStreamInstance.getData(doc)).sparseEntries()) {
 	          counts[e.getIndex()] += e.getValue();
 	        }

@@ -110,6 +110,18 @@ public class ClassificationMeasurements {
       return label;
     }
     @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), label);
+    }
+    @Override
+    public boolean equals(Object obj) {
+      if (obj==null || !(obj instanceof ClassificationMeasurement)){
+        return false;
+      }
+      return super.equals(obj)
+          && Objects.equals(((ClassificationMeasurement)obj).getLabel(), label);
+    }
+    @Override
     public String toString() {
       return MoreObjects.toStringHelper(ClassificationMeasurement.class)
           .add("annotator", getAnnotator())
@@ -133,16 +145,26 @@ public class ClassificationMeasurements {
 
     private String source;
 
-    public BasicClassificationAnnotationMeasurement(int annotator, double value, Double confidence, String source, int label, long startTimestamp, long endTimestamp){
+    public BasicClassificationAnnotationMeasurement(int annotator, double value, double confidence, String source, int label, long startTimestamp, long endTimestamp){
       super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.source=source;
     }
-
     @Override
     public String getDocumentSource() {
       return source;
     }
-
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), source);
+    }
+    @Override
+    public boolean equals(Object obj) {
+      if (obj==null || !(obj instanceof ClassificationAnnotationMeasurement)){
+        return false;
+      }
+      return super.equals(obj)
+          && Objects.equals(((ClassificationAnnotationMeasurement)obj).getDocumentSource(), source);
+    }
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(ClassificationAnnotationMeasurement.class)
@@ -183,6 +205,18 @@ public class ClassificationMeasurements {
     public BasicClassificationLabeledPredicateMeasurement(int annotator, double value, double confidence, int label, String predicate, long startTimestamp, long endTimestamp){
       super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.predicate=predicate;
+    }
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), predicate);
+    }
+    @Override
+    public boolean equals(Object obj) {
+      if (obj==null || !(obj instanceof ClassificationLabeledPredicateMeasurement)){
+        return false;
+      }
+      return super.equals(obj)
+          && Objects.equals(((ClassificationLabeledPredicateMeasurement)obj).getPredicate(), predicate);
     }
     @Override
     public String getPredicate() {
