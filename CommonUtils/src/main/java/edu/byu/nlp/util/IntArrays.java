@@ -18,6 +18,9 @@ package edu.byu.nlp.util;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+
+import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -101,14 +104,14 @@ public class IntArrays {
     return seq;
   }
   
-  public static int[] shuffled(int[] arr){
+  public static int[] shuffled(int[] arr, RandomGenerator rnd){
     // int[] -> List
     List<Integer> tmp = Lists.newArrayListWithCapacity(arr.length);
     for (int i=0; i<arr.length; i++){
       tmp.add(arr[i]);
     } 
     // shuffle
-    Collections.shuffle(tmp);
+    Collections.shuffle(tmp, new Random(rnd.nextLong()));
     // List -> int[] (wish there were a better way to do this)
     int[] arr2 = new int[tmp.size()];
     for (int i=0; i<tmp.size(); i++){

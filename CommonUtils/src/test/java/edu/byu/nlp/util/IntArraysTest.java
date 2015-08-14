@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 
 import java.util.Set;
 
+import org.apache.commons.math3.random.MersenneTwister;
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
@@ -72,7 +73,7 @@ public class IntArraysTest {
   
   @Test
   public void testShuffled(){
-    int[] s = IntArrays.shuffled(IntArrays.sequence(0, 3));
+    int[] s = IntArrays.shuffled(IntArrays.sequence(0, 3), new MersenneTwister());
     Set<Integer> answers = Sets.newHashSet(0,1,2);
     assertThat(s.length).isEqualTo(3);
     assertThat(answers.contains(s[0])).isTrue();

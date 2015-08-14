@@ -20,6 +20,9 @@ import java.util.Map.Entry;
 
 import org.apache.commons.math3.random.RandomGenerator;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+
 /**
  * @author rah67
  *
@@ -82,5 +85,20 @@ public abstract class AbstractCounter<E> implements Counter<E> {
             sum += entry.getValue();
         }
         return sum;
+    }
+    
+    @Override
+    public String toString() {
+      StringBuilder b = new StringBuilder();
+      b.append("Counter {");
+      
+      List<String> parts = Lists.newArrayList();
+      for (Entry<E, Integer> e: entrySet()){
+        parts.add(e.getKey()+"="+e.getValue());
+      }
+      Joiner.on(", ").appendTo(b, parts);
+      b.append("}");
+        
+      return b.toString();
     }
 }

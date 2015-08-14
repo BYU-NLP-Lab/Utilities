@@ -21,11 +21,11 @@ public abstract class AbstractFlatInstance<D,L> implements FlatInstance<D, L> {
    */
   @Override
   public boolean equals(Object obj) {
-    // for annotations, use object equality (all are unique)
+    // for annotations and measurements, use object equality (all are unique)
     if (isAnnotation() || isMeasurement()){
       return super.equals(obj);
     }
-    // for instances, use raw source equality
+    // for instances, use source 
     if (obj==null || !(obj instanceof FlatInstance<?,?>)){
             return false;
     }

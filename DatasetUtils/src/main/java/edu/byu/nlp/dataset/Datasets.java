@@ -461,11 +461,13 @@ public class Datasets {
 						+ " Must be between 0 and "+dataset.getInfo().getLabelIndexer().size());
 		
 		DatasetInstance inst = dataset.lookupInstance(source);
-		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
-				+ "that is unknown to the dataset recorder (not in the dataset).");
-		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
-				"The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
-				") doesn't match the src of the annotation ("+source+").");
+		if (source!=null){
+  		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
+  				+ "that is unknown to the dataset recorder (not in the dataset).");
+  		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
+  		    "The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
+  		    ") doesn't match the src of the annotation ("+source+").");
+		}
 
     // add measurements
 		if (ann.isMeasurement()){
@@ -474,7 +476,7 @@ public class Datasets {
 		
 		// add the raw annotation
 		if (ann.getAnnotation()!=null){
-		inst.getAnnotations().getRawAnnotations().add(new BasicFlatInstance<SparseFeatureVector, Integer>(
+		  inst.getAnnotations().getRawAnnotations().add(new BasicFlatInstance<SparseFeatureVector, Integer>(
 		    ann.getInstanceId(), ann.getSource(), ann.getAnnotator(), ann.getAnnotation(), ann.getMeasurement(), 
 		    ann.getStartTimestamp(), ann.getEndTimestamp()));
   		// increment previous annotation value for this annotator
@@ -516,7 +518,7 @@ public class Datasets {
 	/**
 	 * Sorts first by end timestamp, then start timestamp, then annotator, then source
 	 */
-	public static <D,L> void sortAnnotations(List<FlatInstance<D,L>> annotations) {
+	public static <D,L> void sortAnnotationsInPlace(List<FlatInstance<D,L>> annotations) {
 		annotations.sort(new Comparator<FlatInstance<D,L>>() {
 			@Override
 			public int compare(FlatInstance<D,L> o1, FlatInstance<D,L> o2) {
@@ -1207,7 +1209,7 @@ public class Datasets {
 
 		// body
 		List<FlatInstance<SparseFeatureVector,Integer>> annotations = annotationsIn(data);
-		sortAnnotations(annotations);
+		sortAnnotationsInPlace(annotations);
 		for (FlatInstance<SparseFeatureVector,Integer> ann: annotations){
 			Preconditions.checkState(ann.isAnnotation());
 			bld.append(join.join(Lists.newArrayList(

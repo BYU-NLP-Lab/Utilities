@@ -15,16 +15,21 @@
  */
 package edu.byu.nlp.data.util;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
+import edu.byu.nlp.data.BasicFlatInstance;
 import edu.byu.nlp.data.FlatInstance;
+import edu.byu.nlp.data.measurements.ClassificationMeasurements.ClassificationAnnotationMeasurement;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.data.types.DatasetInfo;
 import edu.byu.nlp.data.types.DatasetInstance;
+import edu.byu.nlp.data.types.Measurement;
 import edu.byu.nlp.data.types.SparseFeatureVector;
 
 /**
@@ -32,21 +37,39 @@ import edu.byu.nlp.data.types.SparseFeatureVector;
  *
  */
 public class EmpiricalAnnotations<D,L> {
-  
+
   private Map<String, Multimap<Integer, FlatInstance<D,L>>> annotations;
   private DatasetInfo info;
+  private Collection<FlatInstance<D,L>> measurements;
+  private Multimap<Integer, FlatInstance<D,L>> perAnnotatorMeasurements;
   
   public EmpiricalAnnotations(Map<String, Multimap<Integer, FlatInstance<D,L>>> annotations,
-       DatasetInfo info){
+       Collection<FlatInstance<D,L>> measurements, DatasetInfo info){
     this.annotations=annotations;
+    this.measurements=measurements;
+    this.perAnnotatorMeasurements = HashMultimap.create();
+    for (FlatInstance<D, L> meas: measurements){
+      this.perAnnotatorMeasurements.put(meas.getAnnotator(), meas);
+    }
     this.info=info;
   }
   
   public Multimap<Integer, FlatInstance<D,L>> getAnnotationsFor(String source, D data){
-    if (annotations.containsKey(source)){
+    if (source==null){
+      // measurement request (not attached to any specific document)
+      return getPerAnnotatorMeasurements();
+    }
+    else if (annotations.containsKey(source)){
       return annotations.get(source);
     }
     return HashMultimap.create();
+  }
+
+  public Multimap<Integer, FlatInstance<D,L>> getPerAnnotatorMeasurements(){
+    return perAnnotatorMeasurements;
+  }
+  public Collection<FlatInstance<D,L>> getMeasurements(){
+    return measurements;
   }
   
   public DatasetInfo getDataInfo(){
@@ -77,7 +100,15 @@ public class EmpiricalAnnotations<D,L> {
     	
     }
     
-    return new EmpiricalAnnotations<SparseFeatureVector, Integer>(annotations, dataset.getInfo());
+    // filter all annotation measurements (they are taken care of in the annotations)
+    Collection<FlatInstance<SparseFeatureVector, Integer>> measurements = Lists.newArrayList();
+    for (Measurement meas: dataset.getMeasurements()){
+      if (!(meas instanceof ClassificationAnnotationMeasurement)){
+        measurements.add(new BasicFlatInstance<SparseFeatureVector, Integer>(-1, null, meas.getAnnotator(), null, meas, meas.getStartTimestamp(), meas.getEndTimestamp()));
+      }
+    }
+    
+    return new EmpiricalAnnotations<SparseFeatureVector, Integer>(annotations, measurements, dataset.getInfo());
   }
 
 }
