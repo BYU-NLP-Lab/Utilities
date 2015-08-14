@@ -66,7 +66,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	  public String type;
 	  public String label;
 	  public double value;
-	  public Double confidence;
+	  public double confidence;
 	  public String predicate;
 	}
 	private static class AnnotationPojo {
