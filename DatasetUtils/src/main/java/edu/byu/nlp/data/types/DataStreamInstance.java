@@ -109,12 +109,20 @@ public class DataStreamInstance {
     return fromFullRaw(source, rawSource, data, label, labelObserved, datapath, annotator, annotation, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromAnnotationRaw(Object source, Object rawSource, Object annotator, Object annotation, Object starttime, Object endtime, Object measurement){
-    return fromFullRaw(source, rawSource, null, null, null, null, annotator, annotation, starttime, endtime, measurement);
+  public static Map<String, Object> fromMeasurementRaw(Object source, Object rawSource, Object annotator, Object measurement, Object starttime, Object endtime){
+    return fromFullRaw(source, rawSource, null, null, null, null, annotator, null, starttime, endtime, measurement);
   }
 
-  public static Map<String, Object> fromAnnotation(int source, String rawSource, Integer annotator, Integer annotation,  Long starttime, Long endtime, Measurement measurement){
-    return fromAnnotationRaw(source, rawSource, annotator, annotation, starttime, endtime, measurement);
+  public static Map<String, Object> fromMeasurement(int source, String rawSource, Integer annotator, Measurement measurement,  Long starttime, Long endtime){
+    return fromMeasurementRaw(source, rawSource, annotator, measurement, starttime, endtime);
+  }
+
+  public static Map<String, Object> fromAnnotationRaw(Object source, Object rawSource, Object annotator, Object annotation, Object starttime, Object endtime){
+    return fromFullRaw(source, rawSource, null, null, null, null, annotator, annotation, starttime, endtime, null);
+  }
+  
+  public static Map<String, Object> fromAnnotation(int source, String rawSource, Integer annotator, Integer annotation,  Long starttime, Long endtime){
+    return fromAnnotationRaw(source, rawSource, annotator, annotation, starttime, endtime);
   }
 
   public static Map<String, Object> fromLabelRaw(Object source, Object rawSource, Object data, Object label, Object labelObserved){

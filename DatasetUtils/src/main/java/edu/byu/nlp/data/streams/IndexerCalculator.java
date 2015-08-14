@@ -74,7 +74,7 @@ public class IndexerCalculator<D, L>  {
     Indexer<D> wordIndexer = indexers.getWordIndexer();
     
     for (Map<String, Object> inst: data){
-      if (DataStreamInstance.isLabel(inst)){
+      if (DataStreamInstance.getData(inst)!=null){
         // only record data if it's a label
         @SuppressWarnings("unchecked")
         Iterable<Iterable<D>> sentences = (Iterable<Iterable<D>>) DataStreamInstance.getRaw(inst, DataStreamInstance.DATA);

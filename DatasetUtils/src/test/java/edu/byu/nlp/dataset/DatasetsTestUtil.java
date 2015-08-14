@@ -58,10 +58,10 @@ public class DatasetsTestUtil {
 		rawData.add(DataStreamInstance.fromLabelRaw("dummy source 3",null, data3, "ClassA", false));
 		
 		// add annotations
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1",null, "john", "ClassA", 0L, 1L, null));
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1",null, "john", "ClassB", 1L, 2L, null));
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 2",null, "john", "ClassB", 2L, 3L, null));
-    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 3",null, "penny", "ClassA", 4L, 5L, null));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1",null, "john", "ClassA", 0L, 1L));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 1",null, "john", "ClassB", 1L, 2L));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 2",null, "john", "ClassB", 2L, 3L));
+    rawData.add(DataStreamInstance.fromAnnotationRaw("dummy source 3",null, "penny", "ClassA", 4L, 5L));
 		
 		// populate indices
 		final Indexer<String> featureIndex = new Indexer<String>();

@@ -197,10 +197,7 @@ public class Datasets {
 			}
 			// record data (the last non-null occurrence gets the last say) 
 			if (inst.getData()!=null){
-  			SparseFeatureVector data = inst.getData();
-  			if (data!=null){
-  			  featureMap.put(source, data);
-  			}
+			  featureMap.put(source, inst.getData());
 			}
 		}
 		
@@ -1123,11 +1120,19 @@ public class Datasets {
 			  Map<String, Object> xann = 
 			      DataStreamInstance.fromAnnotation(ann.getInstanceId(), ann.getSource(), 
 			          clusterAssignments[ ann.getAnnotator() ], // map annotators to their clusters 
-			          ann.getAnnotation(), ann.getStartTimestamp(), ann.getEndTimestamp(), ann.getMeasurement());
+			          ann.getAnnotation(), ann.getStartTimestamp(), ann.getEndTimestamp());
 				transformedFlatInstances.add(xann);
 			}
 			
 		}
+		
+		// This shouldn't be too hard to do, but I'm not going to use it so I'm not going to bother implementing/debugging it.
+		if (data.getMeasurements().size()>0){
+		  throw new IllegalArgumentException("annotator clustering not yet implemented for measurement data");
+		}
+		
+		
+		
 		return convert(data.getInfo().getSource(), transformedFlatInstances,
 		    new IndexerCalculator<>(data.getInfo().getFeatureIndexer(), data.getInfo().getLabelIndexer(), data.getInfo().getInstanceIdIndexer(), 
 		        Indexers.indexerOfStrings(numAnnotatorClusters)), // annotator id indexer (one annotator per cluster)
@@ -1151,6 +1156,7 @@ public class Datasets {
 	    bld.append("\n"+indent+"Number of documents without annotations = " + data.getInfo().getNumDocumentsWithoutAnnotations());
 	    bld.append("\n"+indent+"Number of annotations = " + data.getInfo().getNumAnnotations());
 	    bld.append("\n"+indent+"Average annotations per document = " + ((double)data.getInfo().getNumAnnotations())/(double)data.getInfo().getNumDocumentsWithAnnotations());
+	    bld.append("\n"+indent+"Number of measurements = " + data.getMeasurements().size());
 	    bld.append("\n"+indent+"Number of tokens = " + data.getInfo().getNumTokens());
 	    bld.append("\n"+indent+"Number of features = " + data.getInfo().getNumFeatures());
 	    bld.append("\n"+indent+"Number of classes = " + data.getInfo().getNumClasses());

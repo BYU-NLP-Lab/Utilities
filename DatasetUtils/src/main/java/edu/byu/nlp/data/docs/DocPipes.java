@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.Map;
+import java.util.Set;
 
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
@@ -27,8 +28,10 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import edu.byu.nlp.data.streams.DataStreams;
 import edu.byu.nlp.data.streams.DataStreams.Transform;
@@ -57,6 +60,7 @@ public class DocPipes {
 	}
 
 
+	
 	/**
 	 * Do feature selection (on the wordIndex itself)
 	 */
@@ -64,8 +68,19 @@ public class DocPipes {
 			FeatureSelectorFactory featureSelectorFactory, Indexer<String> wordIndex) {
 		
 		if (featureSelectorFactory != null) {
-			// Index before feature selection (we'll need to do it again later
-			// after deciding which features to keep)
+		  // we don't want to double-count some document when it comes to calculating feature selection
+		  data = Iterables.filter(data, new Predicate<Map<String, Object>>() {
+		    Set<String> usedSources = Sets.newHashSet();
+		    @Override
+		    public boolean apply(Map<String, Object> input) {
+		      String source = (String) DataStreamInstance.getSource(input);
+		      if (usedSources.contains(source)){
+		        return false;
+		      }
+		      usedSources.add(source);
+		      return true;
+		    }
+		  });
 			// Create count vectors
 		  Transform vectorizer = DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(wordIndex));
 		  Iterable<Map<String, Object>> countVectors = Iterables.transform(data, vectorizer);
