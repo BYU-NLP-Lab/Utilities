@@ -59,7 +59,7 @@ public class IndexerCalculator<D, L>  {
     Indexer<String> instanceIndexer = indexers.getInstanceIdIndexer();
     
     for (Map<String, Object> inst: data){
-      if (DataStreamInstance.isAnnotation(inst)){
+      if (DataStreamInstance.isAnnotation(inst) || DataStreamInstance.isMeasurement(inst)){
         // only record annotation id of annotations
         // (this avoids adding automatic annotator to the indexer)
         annotatorIndexer.add((String)inst.get(DataStreamInstance.ANNOTATOR));

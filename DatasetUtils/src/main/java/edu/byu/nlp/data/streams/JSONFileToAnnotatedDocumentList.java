@@ -68,18 +68,20 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	  public double value;
 	  public double confidence;
 	  public String predicate;
+    @Override
+    public String toString() {
+      return getClass().getName()+new Gson().toJson(this);
+    }
 	}
 	private static class AnnotationPojo {
 	  public String annotator, label, data, source, annotation, datapath;
 	  public MeasurementPojo measurement;
 	  public long starttime = -1, endtime = -1;
 	  public boolean labelobserved;
-
 		@Override
 		public String toString() {
-			return getClass().getName()+" src="+source;
+			return getClass().getName()+new Gson().toJson(this);
 		}
-		
 		@SuppressWarnings("unused")
 		public AnnotationPojo() {
 		}
@@ -145,7 +147,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 			}
 			
 		}
-
+		
 		// create exactly 1 labeled instance for each unique source (even if the label is null)
 		List<Map<String,Object>> transformedInstances = Lists.newArrayList();
 		for (InstancePojo pojo: instanceData.values()){

@@ -1,5 +1,7 @@
 package edu.byu.nlp.data.measurements;
 
+import com.google.common.base.Preconditions;
+
 import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationAnnotationMeasurement;
 import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationLabelProportionMeasurement;
 import edu.byu.nlp.data.measurements.ClassificationMeasurements.BasicClassificationLabeledPredicateMeasurement;
@@ -14,7 +16,9 @@ public class ClassificationMeasurementParser {
   public static Measurement pojoToMeasurement(MeasurementPojo pojo, String annotator, String source, long startTimestamp, long endTimestamp, IndexerCalculator<String,String> indexes){
 
     int annotatorId = indexes.getAnnotatorIdIndexer().indexOf(annotator);
+    Preconditions.checkState(annotatorId>=0, "unknown annotator "+annotator+" for measurement "+pojo);
     int labelIndex = indexes.getLabelIndexer().indexOf(pojo.label);
+    Preconditions.checkState(annotatorId>=0, "unknown label "+annotator+" in measurement "+pojo);
 
     // classification annotation
     if (pojo.type.equals("cls_ann")){

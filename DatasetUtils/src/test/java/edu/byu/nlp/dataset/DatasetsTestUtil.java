@@ -71,7 +71,7 @@ public class DatasetsTestUtil {
 		for (Map<String,Object> instance: rawData){
 			instanceIdIndex.add((String)DataStreamInstance.getInstanceId(instance));
 			labelIndex.add((String)DataStreamInstance.getLabel(instance));
-			if (DataStreamInstance.isAnnotation(instance)){
+			if (DataStreamInstance.isAnnotation(instance) || DataStreamInstance.isMeasurement(instance)){
 				annotatorIdIndex.add((String)DataStreamInstance.getAnnotator(instance));
 			}
 			if (DataStreamInstance.getData(instance)!=null){

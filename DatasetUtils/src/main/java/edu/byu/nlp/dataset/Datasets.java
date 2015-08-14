@@ -179,6 +179,9 @@ public class Datasets {
 			}
 			// record measurements
 			if (inst.isMeasurement()){
+			  if (measurements.contains(inst.getMeasurement())){
+			    System.out.println(inst.getMeasurement());
+			  }
 			  measurements.add(inst.getMeasurement());
 			}
 			// record labels
