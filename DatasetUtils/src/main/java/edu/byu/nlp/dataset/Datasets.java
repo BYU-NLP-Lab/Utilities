@@ -526,7 +526,7 @@ public class Datasets {
 					.compare(o1.getEndTimestamp(), o2.getEndTimestamp())
 					.compare(o1.getStartTimestamp(), o2.getStartTimestamp())
 					.compare(o1.getAnnotator(), o2.getAnnotator())
-					.compare(o1.getInstanceId(), o2.getInstanceId())
+          .compare(o1.getInstanceId(), o2.getInstanceId())
 					.result();
 			}
 		});

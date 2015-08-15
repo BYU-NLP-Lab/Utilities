@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.math3.ml.clustering.CentroidCluster;
@@ -27,6 +26,7 @@ import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 import org.apache.commons.math3.ml.distance.EuclideanDistance;
 import org.apache.commons.math3.random.MersenneTwister;
+import org.apache.commons.math3.random.RandomAdaptor;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +185,7 @@ public class AnnotationStream2Annotators {
       break;
     case RANDOM:
       // shuffle, then assign in equal blocks 
-      Collections.shuffle(annotators, new Random(rnd.nextLong()));
+      Collections.shuffle(annotators, new RandomAdaptor(rnd));
       for (int c=0; c<k; c++){
         int start = (int)Math.floor(c*uniformClusterSize);
         int end = (int)Math.floor(c*uniformClusterSize+uniformClusterSize);

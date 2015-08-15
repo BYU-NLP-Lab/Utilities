@@ -20,9 +20,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.math3.random.RandomAdaptor;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.collect.Lists;
@@ -70,7 +70,7 @@ public class Counters {
     List<Entry<E, V>> entries = Lists.newArrayList(entrySet);
     // shuffle to ensure that ties are broken randomly
     if (rnd!=null){
-      Collections.shuffle(entries, new Random(rnd.nextLong()));
+      Collections.shuffle(entries, new RandomAdaptor(rnd));
     }
     // sort to ensure most voted-for options are at the beginning
     Collections.sort(entries,new Comparator<Entry<E, V>>() {

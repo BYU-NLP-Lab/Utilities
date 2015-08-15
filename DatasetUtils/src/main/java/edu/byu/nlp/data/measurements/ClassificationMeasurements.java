@@ -1,14 +1,13 @@
 package edu.byu.nlp.data.measurements;
 
-import java.util.Objects;
-
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.ComparisonChain;
 
 import edu.byu.nlp.data.types.Measurement;
 
 public class ClassificationMeasurements {
 
-  public interface ClassificationMeasurement{
+  public interface ClassificationMeasurement extends Measurement{
     int getLabel();
   }
   
@@ -79,22 +78,42 @@ public class ClassificationMeasurements {
           .add("confidence", getConfidence())
           .toString();
     }
+    // let equality be determined just by object ref
     @Override
-    public int hashCode() {
-      return Objects.hash(annotator,value,confidence,startTimestamp,endTimestamp);
+    public final int hashCode() {
+      return super.hashCode();
     }
     @Override
-    public boolean equals(Object obj) {
-      if (obj==null || !(obj instanceof Measurement)){
-        return false;
-      }
-      Measurement other = (Measurement) obj;
-      return annotator == other.getAnnotator()
-          && value == other.getValue()
-          && confidence == other.getConfidence()
-          && startTimestamp == other.getStartTimestamp()
-          && endTimestamp == other.getEndTimestamp()
-      ;
+    public final boolean equals(Object obj) {
+      return super.equals(obj);
+    }
+//    @Override
+//    public int hashCode() {
+//      return Objects.hash(annotator,value,confidence,startTimestamp,endTimestamp);
+//    }
+//    @Override
+//    public boolean equals(Object obj) {
+//      if (obj==null || !(obj instanceof Measurement)){
+//        return false;
+//      }
+//      Measurement other = (Measurement) obj;
+//      return annotator == other.getAnnotator()
+//          && value == other.getValue()
+//          && confidence == other.getConfidence()
+//          && startTimestamp == other.getStartTimestamp()
+//          && endTimestamp == other.getEndTimestamp()
+//      ;
+//    }
+    @Override
+    public int compareTo(Measurement o) {
+      return ComparisonChain.start()
+          .compare(getAnnotator(), o.getAnnotator())
+          .compare(getConfidence(), o.getConfidence())
+          .compare(getValue(), o.getValue())
+          .compare(getEndTimestamp(), o.getEndTimestamp())
+          .compare(getStartTimestamp(), o.getStartTimestamp())
+          .compare(getClass().getName(), o.getClass().getName())
+          .result();
     }
   }
   
@@ -109,17 +128,26 @@ public class ClassificationMeasurements {
     public int getLabel() {
       return label;
     }
+//    @Override
+//    public int hashCode() {
+//      return Objects.hash(super.hashCode(), label);
+//    }
+//    @Override
+//    public boolean equals(Object obj) {
+//      if (obj==null || !(obj instanceof ClassificationMeasurement)){
+//        return false;
+//      }
+//      return super.equals(obj)
+//          && Objects.equals(((ClassificationMeasurement)obj).getLabel(), label);
+//    }
     @Override
-    public int hashCode() {
-      return Objects.hash(super.hashCode(), label);
-    }
-    @Override
-    public boolean equals(Object obj) {
-      if (obj==null || !(obj instanceof ClassificationMeasurement)){
-        return false;
+    public int compareTo(Measurement o) {
+      if (super.compareTo(o)!=0){
+        return super.compareTo(o);
       }
-      return super.equals(obj)
-          && Objects.equals(((ClassificationMeasurement)obj).getLabel(), label);
+      return ComparisonChain.start()
+          .compare(getLabel(), ((ClassificationMeasurement)o).getLabel())
+          .result();
     }
     @Override
     public String toString() {
@@ -153,17 +181,26 @@ public class ClassificationMeasurements {
     public String getDocumentSource() {
       return source;
     }
+//    @Override
+//    public int hashCode() {
+//      return Objects.hash(super.hashCode(), source);
+//    }
+//    @Override
+//    public boolean equals(Object obj) {
+//      if (obj==null || !(obj instanceof ClassificationAnnotationMeasurement)){
+//        return false;
+//      }
+//      return super.equals(obj)
+//          && Objects.equals(((ClassificationAnnotationMeasurement)obj).getDocumentSource(), source);
+//    }
     @Override
-    public int hashCode() {
-      return Objects.hash(super.hashCode(), source);
-    }
-    @Override
-    public boolean equals(Object obj) {
-      if (obj==null || !(obj instanceof ClassificationAnnotationMeasurement)){
-        return false;
+    public int compareTo(Measurement o) {
+      if (super.compareTo(o)!=0){
+        return super.compareTo(o);
       }
-      return super.equals(obj)
-          && Objects.equals(((ClassificationAnnotationMeasurement)obj).getDocumentSource(), source);
+      return ComparisonChain.start()
+          .compare(getDocumentSource(), ((ClassificationAnnotationMeasurement)o).getDocumentSource())
+          .result();
     }
     @Override
     public String toString() {
@@ -206,21 +243,30 @@ public class ClassificationMeasurements {
       super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.predicate=predicate;
     }
-    @Override
-    public int hashCode() {
-      return Objects.hash(super.hashCode(), predicate);
-    }
-    @Override
-    public boolean equals(Object obj) {
-      if (obj==null || !(obj instanceof ClassificationLabeledPredicateMeasurement)){
-        return false;
-      }
-      return super.equals(obj)
-          && Objects.equals(((ClassificationLabeledPredicateMeasurement)obj).getPredicate(), predicate);
-    }
+//    @Override
+//    public int hashCode() {
+//      return Objects.hash(super.hashCode(), predicate);
+//    }
+//    @Override
+//    public boolean equals(Object obj) {
+//      if (obj==null || !(obj instanceof ClassificationLabeledPredicateMeasurement)){
+//        return false;
+//      }
+//      return super.equals(obj)
+//          && Objects.equals(((ClassificationLabeledPredicateMeasurement)obj).getPredicate(), predicate);
+//    }
     @Override
     public String getPredicate() {
       return predicate;
+    }
+    @Override
+    public int compareTo(Measurement o) {
+      if (super.compareTo(o)!=0){
+        return super.compareTo(o);
+      }
+      return ComparisonChain.start()
+          .compare(getPredicate(), ((ClassificationLabeledPredicateMeasurement)o).getPredicate())
+          .result();
     }
     @Override
     public String toString() {

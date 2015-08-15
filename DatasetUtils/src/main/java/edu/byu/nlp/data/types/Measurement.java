@@ -14,7 +14,7 @@ package edu.byu.nlp.data.types;
  * Each type of measurement shares some common information (annotator, value, confidence)
  * Type-specific information is encoded in sub-interfaces. 
  */
-public interface Measurement {
+public interface Measurement extends Comparable<Measurement> {
 
   int getAnnotator();
   

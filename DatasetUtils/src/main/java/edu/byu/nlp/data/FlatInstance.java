@@ -13,7 +13,7 @@ import edu.byu.nlp.data.types.Measurement;
  *         parsed and processed) 
  *
  */
-public interface FlatInstance<D, L> {
+public interface FlatInstance<D, L> extends Comparable<FlatInstance<D, L>>{
 
   public static long NULL_TIMESTAMP = -1;
   public static long NULL_ID = -1;

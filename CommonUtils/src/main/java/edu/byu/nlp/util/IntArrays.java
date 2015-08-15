@@ -18,8 +18,8 @@ package edu.byu.nlp.util;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
+import org.apache.commons.math3.random.RandomAdaptor;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.base.Preconditions;
@@ -111,7 +111,7 @@ public class IntArrays {
       tmp.add(arr[i]);
     } 
     // shuffle
-    Collections.shuffle(tmp, new Random(rnd.nextLong()));
+    Collections.shuffle(tmp, new RandomAdaptor(rnd));
     // List -> int[] (wish there were a better way to do this)
     int[] arr2 = new int[tmp.size()];
     for (int i=0; i<tmp.size(); i++){

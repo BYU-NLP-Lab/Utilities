@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
+import org.apache.commons.math3.random.RandomAdaptor;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +130,7 @@ public class Iterables2 {
 
 	public static <E> Iterable<E> shuffled(final Iterable<E> iterable, RandomGenerator rnd) {
 		ArrayList<E> retval = Lists.newArrayList(iterable);
-		Collections.shuffle(retval, new Random(rnd.nextLong()));
+		Collections.shuffle(retval, new RandomAdaptor(rnd));
 		return retval;
 	}
 	
