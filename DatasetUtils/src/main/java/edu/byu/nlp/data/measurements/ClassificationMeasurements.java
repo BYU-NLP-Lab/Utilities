@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ComparisonChain;
 
 import edu.byu.nlp.data.types.Measurement;
+import edu.byu.nlp.util.DoubleArrays;
 
 public class ClassificationMeasurements {
 
@@ -16,7 +17,7 @@ public class ClassificationMeasurements {
     double getValue();
   }
 
-  public interface ClassificationProportionMeasurement extends ClassificationMeasurement{
+  public interface ClassificationLabelProportionMeasurement extends ClassificationMeasurement{
   }
 
   public interface ClassificationRelativeProportionMeasurement{
@@ -32,6 +33,10 @@ public class ClassificationMeasurements {
     String getPredicate();
   }
   
+  public interface ClassificationLabeledLocationMeasurement extends ClassificationMeasurement{
+    double[] getLocation();
+    String getSource();
+  }
   
   
   public static abstract class AbstractMeasurement implements Measurement {
@@ -87,23 +92,6 @@ public class ClassificationMeasurements {
     public final boolean equals(Object obj) {
       return super.equals(obj);
     }
-//    @Override
-//    public int hashCode() {
-//      return Objects.hash(annotator,value,confidence,startTimestamp,endTimestamp);
-//    }
-//    @Override
-//    public boolean equals(Object obj) {
-//      if (obj==null || !(obj instanceof Measurement)){
-//        return false;
-//      }
-//      Measurement other = (Measurement) obj;
-//      return annotator == other.getAnnotator()
-//          && value == other.getValue()
-//          && confidence == other.getConfidence()
-//          && startTimestamp == other.getStartTimestamp()
-//          && endTimestamp == other.getEndTimestamp()
-//      ;
-//    }
     @Override
     public int compareTo(Measurement o) {
       return ComparisonChain.start()
@@ -128,18 +116,6 @@ public class ClassificationMeasurements {
     public int getLabel() {
       return label;
     }
-//    @Override
-//    public int hashCode() {
-//      return Objects.hash(super.hashCode(), label);
-//    }
-//    @Override
-//    public boolean equals(Object obj) {
-//      if (obj==null || !(obj instanceof ClassificationMeasurement)){
-//        return false;
-//      }
-//      return super.equals(obj)
-//          && Objects.equals(((ClassificationMeasurement)obj).getLabel(), label);
-//    }
     @Override
     public int compareTo(Measurement o) {
       if (super.compareTo(o)!=0){
@@ -181,18 +157,6 @@ public class ClassificationMeasurements {
     public String getDocumentSource() {
       return source;
     }
-//    @Override
-//    public int hashCode() {
-//      return Objects.hash(super.hashCode(), source);
-//    }
-//    @Override
-//    public boolean equals(Object obj) {
-//      if (obj==null || !(obj instanceof ClassificationAnnotationMeasurement)){
-//        return false;
-//      }
-//      return super.equals(obj)
-//          && Objects.equals(((ClassificationAnnotationMeasurement)obj).getDocumentSource(), source);
-//    }
     @Override
     public int compareTo(Measurement o) {
       if (super.compareTo(o)!=0){
@@ -216,13 +180,13 @@ public class ClassificationMeasurements {
   
   
   
-  public static class BasicClassificationLabelProportionMeasurement extends AbstractClassificationMeasurement implements ClassificationProportionMeasurement{
+  public static class BasicClassificationLabelProportionMeasurement extends AbstractClassificationMeasurement implements ClassificationLabelProportionMeasurement{
     public BasicClassificationLabelProportionMeasurement(int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
       super(annotator, value, confidence, label, startTimestamp, endTimestamp);
     }
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(ClassificationProportionMeasurement.class)
+      return MoreObjects.toStringHelper(ClassificationLabelProportionMeasurement.class)
           .add("annotator", getAnnotator())
           .add("value", getValue())
           .add("confidence", getConfidence())
@@ -243,18 +207,6 @@ public class ClassificationMeasurements {
       super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.predicate=predicate;
     }
-//    @Override
-//    public int hashCode() {
-//      return Objects.hash(super.hashCode(), predicate);
-//    }
-//    @Override
-//    public boolean equals(Object obj) {
-//      if (obj==null || !(obj instanceof ClassificationLabeledPredicateMeasurement)){
-//        return false;
-//      }
-//      return super.equals(obj)
-//          && Objects.equals(((ClassificationLabeledPredicateMeasurement)obj).getPredicate(), predicate);
-//    }
     @Override
     public String getPredicate() {
       return predicate;
@@ -279,6 +231,53 @@ public class ClassificationMeasurements {
           .toString();
     }
     
+  }
+  
+
+  /**
+   * A Labeled Predicate associates a given feature (a predicate fires on give data) 
+   * with a particular label. The predicate is encoded as a string.
+   * The location can either be transmitted via a double array (location) or 
+   * via source, assuming that the location of the source referred to is in the dataset 
+   * that this measurement exists inside of.
+   */
+  public static class BasicClassificationLabeledLocationMeasurement extends AbstractClassificationMeasurement implements ClassificationLabeledLocationMeasurement{
+
+    private double[] location;
+    private String source;
+
+    public BasicClassificationLabeledLocationMeasurement(int annotator, double value, double confidence,
+        int label, double[] location, String source, long startTimestamp, long endTimestamp) {
+      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
+      this.location=location;
+      this.source=source;
+    }
+    @Override
+    public double[] getLocation() {
+      return location;
+    }
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(ClassificationLabeledLocationMeasurement.class)
+          .add("annotator", getAnnotator())
+          .add("value", getValue())
+          .add("confidence", getConfidence())
+          .add("label", getLabel())
+          .add("location", DoubleArrays.toString(getLocation()))
+          .toString();
+    }
+    @Override
+    public int compareTo(Measurement o) {
+      if (super.compareTo(o)!=0){
+        return super.compareTo(o);
+      }
+      return DoubleArrays.compareTo(getLocation(), ((ClassificationLabeledLocationMeasurement)o).getLocation());
+    }
+    @Override
+    public String getSource() {
+      return source;
+    }
+
   }
   
 }

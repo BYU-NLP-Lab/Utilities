@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -572,6 +573,35 @@ public class DoubleArrays {
 		}
 		return result;
 	}
+
+  public static boolean isFinite(double[] arr) {
+    for (int i=0; i<arr.length; i++){
+      if (!Double.isFinite(arr[i])){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static int compareTo(double[] arr1, double[] arr2) {
+    ComparisonChain chain = ComparisonChain.start().compare(arr1.length, arr2.length);
+    for (int i=0; i<arr1.length; i++){
+      chain = chain.compare(arr1[i], arr2[i]);
+    }
+    return chain.result();
+  }
+
+  public static void powToSelf(double[] arr, int power) {
+    for (int i=0; i<arr.length; i++){
+      arr[i] = Math.pow(arr[i],power);
+    }
+  }
+
+  public static double[] pow(double[] arr, int power) {
+    double[] newarr = arr.clone();
+    powToSelf(newarr, power);
+    return newarr;
+  }
 
     
 }

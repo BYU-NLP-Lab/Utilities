@@ -19,6 +19,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -63,6 +64,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 
 	// simple deserialization pojo
 	public static class MeasurementPojo {
+	  public double[] location;
 	  public String type;
 	  public String label;
 	  public double value;
@@ -100,10 +102,11 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	@Override
   public Iterable<Map<String, Object>> apply(Map<String, Object> input) {
 	  // this should be the only thing the input has
-	  String indexFilename = (String)input.get(fieldname);
+	  String indexFilepath = (String)input.get(fieldname);
 	  
-		logger.info("Processing " + indexFilename);
-		Reader jsonReader = readerOf(indexFilename);
+		logger.info("Processing " + indexFilepath);
+		Preconditions.checkArgument(new File(indexFilepath).exists(), "Json dataset does not exist: "+indexFilepath);
+		Reader jsonReader = readerOf(indexFilepath);
 
 		// parse json
 		Gson gson = new Gson();

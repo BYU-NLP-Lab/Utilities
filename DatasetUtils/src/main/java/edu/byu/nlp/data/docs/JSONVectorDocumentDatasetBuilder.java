@@ -80,6 +80,7 @@ public class JSONVectorDocumentDatasetBuilder {
       
     // convert labels, annotators, and instances to numbers
     stream = DataStream.withSource(jsonAnnotationStream.toString(), instances)
+      .transform(new MeasurementPojoToMeasurement(indexers)) // also creates from annotations if no explicit measurement exists
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))

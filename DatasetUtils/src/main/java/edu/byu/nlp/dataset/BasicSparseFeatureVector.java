@@ -380,7 +380,7 @@ public class BasicSparseFeatureVector implements SparseFeatureVector {
 	 */
 	@Override
 	public SparseRealVector asApacheSparseRealVector() {
-		SparseRealVector retval = new OpenMapRealVector();
+		SparseRealVector retval = new OpenMapRealVector(length());
 		for (int i = 0; i < indices.length; i++) {
 			retval.setEntry(indices[i], values[i]);
 		}

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
+import org.apache.commons.math3.linear.SparseRealVector;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,9 +180,7 @@ public class Datasets {
 			}
 			// record measurements
 			if (inst.isMeasurement()){
-			  if (measurements.contains(inst.getMeasurement())){
-			    System.out.println(inst.getMeasurement());
-			  }
+			  Preconditions.checkState(!measurements.contains(inst.getMeasurement()));
 			  measurements.add(inst.getMeasurement());
 			}
 			// record labels
@@ -1261,6 +1260,31 @@ public class Datasets {
       tracker.offer(inst.asFeatureVector().sum());
     }
     return tracker.min();
+  }
+  
+  /**
+   * Expensive. Calculates all pairwise cosine distances 
+   * between documents in a dataset based on their sparsefeaturevectors.
+   * location indexed by (source1,source2) 
+   */
+  public static Map<Pair<String,String>,Double> calculateCosineAdjacencyMatrix(Dataset dataset){
+    Map<Pair<String,String>,Double> matrix = Maps.newHashMap();
+    for (DatasetInstance inst1: dataset){
+      for (DatasetInstance inst2: dataset){
+        String src1 = inst1.getInfo().getRawSource();
+        String src2 = inst2.getInfo().getRawSource();
+        if (matrix.containsKey(Pair.of(src2, src1))){
+          // we've already calculated the symmetric counterpart. Re-use it
+          matrix.put(Pair.of(src1, src2), matrix.get(Pair.of(src2, src1)));
+        }
+        else{
+          SparseRealVector v1 = inst1.asFeatureVector().asApacheSparseRealVector();
+          SparseRealVector v2 = inst2.asFeatureVector().asApacheSparseRealVector();
+          matrix.put(Pair.of(src1, src2), v1.cosine(v2));
+        }
+      }
+    }
+    return matrix;
   }
 
 }
