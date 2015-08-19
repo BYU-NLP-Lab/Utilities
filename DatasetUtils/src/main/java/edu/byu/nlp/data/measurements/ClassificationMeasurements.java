@@ -36,6 +36,7 @@ public class ClassificationMeasurements {
   public interface ClassificationLabeledLocationMeasurement extends ClassificationMeasurement{
     double[] getLocation();
     String getSource();
+    int getNeighbors();
   }
   
   
@@ -245,12 +246,14 @@ public class ClassificationMeasurements {
 
     private double[] location;
     private String source;
+    private int neighbors;
 
     public BasicClassificationLabeledLocationMeasurement(int annotator, double value, double confidence,
-        int label, double[] location, String source, long startTimestamp, long endTimestamp) {
+        int label, double[] location, String source, int neighbors, long startTimestamp, long endTimestamp) {
       super(annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.location=location;
       this.source=source;
+      this.neighbors=neighbors;
     }
     @Override
     public double[] getLocation() {
@@ -263,6 +266,7 @@ public class ClassificationMeasurements {
           .add("value", getValue())
           .add("confidence", getConfidence())
           .add("label", getLabel())
+          .add("neighbors", neighbors)
           .add("location", DoubleArrays.toString(getLocation()))
           .toString();
     }
@@ -276,6 +280,10 @@ public class ClassificationMeasurements {
     @Override
     public String getSource() {
       return source;
+    }
+    @Override
+    public int getNeighbors() {
+      return neighbors;
     }
 
   }

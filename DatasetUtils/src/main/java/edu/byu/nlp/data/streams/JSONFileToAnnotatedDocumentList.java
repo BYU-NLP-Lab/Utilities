@@ -70,6 +70,7 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 	  public double value;
 	  public double confidence;
 	  public String predicate;
+	  public int neighbors;
     @Override
     public String toString() {
       return getClass().getName()+new Gson().toJson(this);

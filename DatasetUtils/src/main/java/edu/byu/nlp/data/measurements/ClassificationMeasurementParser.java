@@ -38,7 +38,7 @@ public class ClassificationMeasurementParser {
 
     // classification labeled locations
     else if (pojo.type.equals("cls_loc")){
-      return new BasicClassificationLabeledLocationMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.location, source, startTimestamp, endTimestamp);
+      return new BasicClassificationLabeledLocationMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.location, source, pojo.neighbors, startTimestamp, endTimestamp);
     }
     
     else{
