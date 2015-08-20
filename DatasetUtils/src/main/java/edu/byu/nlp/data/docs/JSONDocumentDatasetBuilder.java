@@ -123,6 +123,7 @@ public class JSONDocumentDatasetBuilder {
 
     // feature selection
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(instances);
+    indexers.setInstanceIdIndexer(Indexers.removeNullLabel(indexers.getInstanceIdIndexer()));
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
     indexers.setWordIndexer(DocPipes.selectFeatures(instances, featureSelectorFactory, indexers.getWordIndexer()));
       
@@ -133,7 +134,6 @@ public class JSONDocumentDatasetBuilder {
       // index fields (strings to numbers)
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
-      .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.INSTANCE_ID, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
       // data to vectors

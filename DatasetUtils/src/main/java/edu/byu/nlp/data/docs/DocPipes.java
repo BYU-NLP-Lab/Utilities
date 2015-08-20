@@ -44,6 +44,7 @@ import edu.byu.nlp.io.Files2;
 import edu.byu.nlp.util.DoubleArrays;
 import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.IntArrays;
+import edu.byu.nlp.util.Integers.MutableInteger;
 
 /**
  * Creates a dataset from a data source of documents. This includes creating
@@ -69,21 +70,22 @@ public class DocPipes {
 		
 		if (featureSelectorFactory != null) {
 		  // we don't want to double-count some document when it comes to calculating feature selection
-		  data = Iterables.filter(data, new Predicate<Map<String, Object>>() {
+		  // only include 1 document (with data) per source
+		  Iterable<Map<String, Object>> filtered = Lists.newArrayList(Iterables.filter(data, new Predicate<Map<String, Object>>() {
 		    Set<String> usedSources = Sets.newHashSet();
 		    @Override
 		    public boolean apply(Map<String, Object> input) {
 		      String source = (String) DataStreamInstance.getSource(input);
-		      if (usedSources.contains(source)){
+		      if (DataStreamInstance.getData(input)==null || usedSources.contains(source)){
 		        return false;
 		      }
 		      usedSources.add(source);
 		      return true;
 		    }
-		  });
+		  }));
 			// Create count vectors
 		  Transform vectorizer = DataStreams.Transforms.transformFieldValue(DataStreamInstance.DATA, new CountVectorizer<String>(wordIndex));
-		  Iterable<Map<String, Object>> countVectors = Iterables.transform(data, vectorizer);
+		  Iterable<Map<String, Object>> countVectors = Iterables.transform(filtered, vectorizer);
 		  
 			// Feature selection
 			int numFeatures = wordIndex.size();

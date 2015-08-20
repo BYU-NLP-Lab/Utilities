@@ -31,6 +31,11 @@ public class Integers {
 		public Integer getValue(){
 			return this.val;
 		}
+		@Override
+		public String toString() {
+		  return ""+getValue();
+		}
 	}
+	
 
 }

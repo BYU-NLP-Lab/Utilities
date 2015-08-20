@@ -123,12 +123,12 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
 			
 			// annotation
 			if (ann.annotation != null) {
-				transformedAnnotations.add(DataStreamInstance.fromAnnotationRaw(ann.source, ann.source, ann.annotator, ann.annotation, 
+				transformedAnnotations.add(DataStreamInstance.fromAnnotationRaw(null, ann.source, ann.annotator, ann.annotation, 
 				    ann.starttime * 1000 * 1000, ann.endtime * 1000 * 1000));
 			}
 			// measurement
 			if (ann.measurement != null){
-        transformedAnnotations.add(DataStreamInstance.fromMeasurementRaw(ann.source, ann.source, ann.annotator, ann.measurement, 
+        transformedAnnotations.add(DataStreamInstance.fromMeasurementRaw(null, ann.source, ann.annotator, ann.measurement, 
             ann.starttime * 1000 * 1000, ann.endtime * 1000 * 1000));
 			}
 			

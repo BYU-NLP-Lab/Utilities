@@ -66,7 +66,7 @@ public class IndexerCalculator<D, L>  {
       }
       labelIndexer.add((L)DataStreamInstance.getRaw(inst, DataStreamInstance.LABEL));
       labelIndexer.add((L)DataStreamInstance.getRaw(inst, DataStreamInstance.ANNOTATION));
-      instanceIndexer.add((String)DataStreamInstance.getRaw(inst, DataStreamInstance.INSTANCE_ID));
+      instanceIndexer.add((String)DataStreamInstance.getRaw(inst, DataStreamInstance.SOURCE));
     }
   }
   

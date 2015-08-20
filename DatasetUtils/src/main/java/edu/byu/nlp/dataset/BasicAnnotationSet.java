@@ -51,12 +51,12 @@ public class BasicAnnotationSet implements AnnotationSet{
 	 * table[instanceId][annotatorId][class] = count
 	 * for a single row instanceId
 	 */
-	public static AnnotationSet fromCountTable(Integer instanceIndex, int numAnnotators, int numClasses, TableCounter<Integer, Integer, Integer> table, 
+	public static AnnotationSet fromCountTable(String source, int numAnnotators, int numClasses, TableCounter<String, Integer, Integer> table, 
 	    Collection<FlatInstance<SparseFeatureVector,Integer>> rawAnnotationValues){
 		final BasicAnnotationSet annotationSet = new BasicAnnotationSet(numAnnotators, numClasses, rawAnnotationValues);
-		table.visitRowEntriesSparsely(instanceIndex, new SparseTableVisitor<Integer, Integer, Integer>() {
+		table.visitRowEntriesSparsely(source, new SparseTableVisitor<String, Integer, Integer>() {
 			@Override
-			public void visitEntry(Integer row, Integer col, Integer item, int count) {
+			public void visitEntry(String src, Integer col, Integer item, int count) {
 				annotationSet.getLabelAnnotations().setEntry((int)(long)col, item, count);
 			}
 		});

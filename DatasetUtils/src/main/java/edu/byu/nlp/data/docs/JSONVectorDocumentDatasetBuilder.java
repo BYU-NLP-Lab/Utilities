@@ -75,6 +75,7 @@ public class JSONVectorDocumentDatasetBuilder {
     // create indexers 
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculateNonFeatureIndexes(instances);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
+    indexers.setInstanceIdIndexer(Indexers.removeNullLabel(indexers.getInstanceIdIndexer()));
     int numFeatures = getNumFeatures(instances);
     indexers.setWordIndexer(Indexers.indexerOfStrings(numFeatures)); // identity feature-mapping
       
@@ -84,7 +85,7 @@ public class JSONVectorDocumentDatasetBuilder {
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.LABEL, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATION, new FieldIndexer<String>(indexers.getLabelIndexer())))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.ANNOTATOR, new FieldIndexer<String>(indexers.getAnnotatorIdIndexer())))
-      .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
+//      .transform(DataStreams.Transforms.renameField(DataStreamInstance.INSTANCE_ID, DataStreamInstance.SOURCE))
       .transform(DataStreams.Transforms.transformFieldValue(DataStreamInstance.SOURCE, DataStreamInstance.INSTANCE_ID, new FieldIndexer<String>(indexers.getInstanceIdIndexer())))
       ;
     instances = Lists.newArrayList(stream); // cache results

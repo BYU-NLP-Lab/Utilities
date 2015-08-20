@@ -146,14 +146,13 @@ public class Datasets {
 			IndexerCalculator<String, String> indexers, 
 			boolean preserveRawAnnotations) {
 		
-		TableCounter<Integer, Integer, Integer> annotationCounter = TableCounter.create();
-    Multimap<Integer, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
+		TableCounter<String, Integer, Integer> annotationCounter = TableCounter.create();
+    Multimap<String, FlatInstance<SparseFeatureVector,Integer>> rawAnnotationMap = HashMultimap.create(); 
     Set<Measurement> measurements = Sets.newHashSet(); 
-		Set<Integer> instanceIndices = Sets.newHashSet();
-		Set<Integer> indicesWithObservedLabel = Sets.newHashSet();
-    Map<Integer,Integer> labelMap = Maps.newHashMap();
-    Map<Integer,String> rawSourceMap = Maps.newHashMap();
-		Map<Integer,SparseFeatureVector> featureMap = Maps.newHashMap();
+		Set<String> instanceIndices = Sets.newHashSet();
+		Set<String> indicesWithObservedLabel = Sets.newHashSet();
+    Map<String,Integer> labelMap = Maps.newHashMap();
+		Map<String,SparseFeatureVector> featureMap = Maps.newHashMap();
 		
 		// calculate maps in order to aggregate FlatInstances into a Dataset
 		// in the FlatInstance representation, a whole list of annotations could be 
@@ -162,12 +161,12 @@ public class Datasets {
 		for (Map<String, Object> rawInst: flatInstances){
 		  FlatInstance<SparseFeatureVector, Integer> inst = FlatInstances.fromStreamClassificationInstance(rawInst);
 		  
-		  int source = inst.getInstanceId();
+//		  int source = inst.getInstanceId();
+		  String source = inst.getSource();
 		  
 			// record instance (if source is specified)
-		  if (indexers.getInstanceIdIndexer().get(source)!=null){
+		  if (indexers.getInstanceIdIndexer().contains(source)){
   			instanceIndices.add(source);
-  			rawSourceMap.put(source, inst.getSource());
 		  }
 
 			// record annotations
@@ -205,24 +204,25 @@ public class Datasets {
 		
 		// build dataset
 		List<DatasetInstance> instances = Lists.newArrayList();
-		for (int instanceIndex: instanceIndices){
-			Preconditions.checkState(featureMap.containsKey(instanceIndex),"one instance had no associated data: "
-			    +indexers.getInstanceIdIndexer().get(instanceIndex)+" (index="+instanceIndex+")");
+		for (String source: instanceIndices){
+		  int instanceIndex = indexers.getInstanceIdIndexer().indexOf(source);
+			Preconditions.checkState(featureMap.containsKey(source),"one instance had no associated data: "
+			    +source+" (index="+instanceIndex+")");
 			
 			// aggregated annotations
 			final AnnotationSet annotationSet = BasicAnnotationSet.fromCountTable(
-					instanceIndex, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(instanceIndex));
+			    source, indexers.getAnnotatorIdIndexer().size(), indexers.getLabelIndexer().size(), annotationCounter, rawAnnotationMap.get(source));
 			
 			// dataset instance
 			DatasetInstance inst = new BasicDatasetInstance(
-					featureMap.get(instanceIndex), 
-					labelMap.get(instanceIndex), 
-					!indicesWithObservedLabel.contains(instanceIndex), // is label concealed
+					featureMap.get(source), 
+					labelMap.get(source), 
+					!indicesWithObservedLabel.contains(source), // is label concealed
 					null, // regressand
-					!indicesWithObservedLabel.contains(instanceIndex), // is regressand concealed
+					!indicesWithObservedLabel.contains(source), // is regressand concealed
 					annotationSet, 
 					instanceIndex, 
-					rawSourceMap.get(instanceIndex),
+					source,
 					indexers.getLabelIndexer());
 			
 			instances.add(inst);
