@@ -41,6 +41,7 @@ import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.types.DataStreamInstance;
 import edu.byu.nlp.data.types.Dataset;
 import edu.byu.nlp.dataset.Datasets;
+import edu.byu.nlp.util.Indexer;
 import edu.byu.nlp.util.Indexers;
 import edu.byu.nlp.util.Nullable;
 
@@ -101,7 +102,7 @@ public class DocumentDatasetBuilder {
     }
     this.basedir = fsManager.resolveFile(basedir);
     Preconditions.checkNotNull(this.basedir, "%s cannot be resolved", basedir);
-    Preconditions.checkArgument(this.basedir.getType() == FileType.FOLDER);
+    Preconditions.checkArgument(this.basedir.getType() == FileType.FOLDER, this.basedir+" must be a folder");
     FileObject indices = this.basedir.getChild("indices");
     Preconditions.checkNotNull(indices, "cannot find indices directory in %s", basedir);
     FileObject datasetDir = indices.getChild(dataset);
@@ -144,7 +145,8 @@ public class DocumentDatasetBuilder {
     IndexerCalculator<String, String> indexers = IndexerCalculator.calculate(instances);
     indexers.setLabelIndexer(Indexers.removeNullLabel(indexers.getLabelIndexer()));
     indexers.setInstanceIdIndexer(Indexers.removeNullLabel(indexers.getInstanceIdIndexer()));
-    indexers.setWordIndexer(DocPipes.selectFeatures(instances, featureSelectorFactory, indexers.getWordIndexer()));
+    Indexer<String> selectedIndexer = DocPipes.selectFeatures(instances, featureSelectorFactory, indexers.getWordIndexer());
+    indexers.setWordIndexer(selectedIndexer);
       
     // convert data to vectors and labels to numbers
     stream = DataStream.withSource(indexDirectory.toString(), instances)

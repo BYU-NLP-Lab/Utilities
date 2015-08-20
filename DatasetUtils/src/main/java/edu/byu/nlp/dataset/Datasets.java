@@ -442,9 +442,9 @@ public class Datasets {
 	 */
 	public static synchronized void addAnnotationToDataset(
 			Dataset dataset, FlatInstance<SparseFeatureVector,Integer> ann){
-    Integer annotation = ann.getAnnotation();
-    Integer annotator = ann.getAnnotator();
-    String source = ann.getSource();
+	    Integer annotation = ann.getAnnotation();
+	    Integer annotator = ann.getAnnotator();
+	    String source = ann.getSource();
 	  
 		Preconditions.checkNotNull(dataset);
 		Preconditions.checkNotNull(ann);
@@ -461,31 +461,31 @@ public class Datasets {
 		
 		DatasetInstance inst = dataset.lookupInstance(source);
 		if (source!=null){
-  		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
-  				+ "that is unknown to the dataset recorder (not in the dataset).");
-  		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
-  		    "The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
-  		    ") doesn't match the src of the annotation ("+source+").");
+	  		Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
+	  				+ "that is unknown to the dataset recorder (not in the dataset).");
+	  		Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
+	  		    "The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
+	  		    ") doesn't match the src of the annotation ("+source+").");
 		}
 
-    // add measurements
+		// add measurements
 		if (ann.isMeasurement()){
 		  dataset.getMeasurements().add(ann.getMeasurement());
 		}
 		
 		// add the raw annotation
 		if (ann.getAnnotation()!=null){
-		  inst.getAnnotations().getRawAnnotations().add(new BasicFlatInstance<SparseFeatureVector, Integer>(
-		    ann.getInstanceId(), ann.getSource(), ann.getAnnotator(), ann.getAnnotation(), ann.getMeasurement(), 
-		    ann.getStartTimestamp(), ann.getEndTimestamp()));
-  		// increment previous annotation value for this annotator
-  		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
-  				(int)annotator, annotation, 1);
-
-  		// update instance info
-  		inst.getInfo().annotationsChanged();
-  		// update dataset info
-  		dataset.getInfo().annotationsChanged();
+			inst.getAnnotations().getRawAnnotations().add(new BasicFlatInstance<SparseFeatureVector, Integer>(
+			    ann.getInstanceId(), ann.getSource(), ann.getAnnotator(), ann.getAnnotation(), ann.getMeasurement(), 
+			    ann.getStartTimestamp(), ann.getEndTimestamp()));
+	  		// increment previous annotation value for this annotator
+	  		SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
+	  				(int)annotator, annotation, 1);
+	
+	  		// update instance info
+	  		inst.getInfo().annotationsChanged();
+	  		// update dataset info
+	  		dataset.getInfo().annotationsChanged();
 		}
 
 	}
