@@ -65,6 +65,9 @@ public class EmpiricalAnnotations<D,L> {
     return HashMultimap.create();
   }
 
+  public Map<String, Multimap<Integer, FlatInstance<D,L>>> getPerInstancePerAnnotatorAnnotations(){
+	  return annotations;
+  }
   public Multimap<Integer, FlatInstance<D,L>> getPerAnnotatorMeasurements(){
     return perAnnotatorMeasurements;
   }
