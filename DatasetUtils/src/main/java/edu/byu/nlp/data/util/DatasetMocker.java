@@ -68,11 +68,11 @@ public class DatasetMocker {
 			instanceIdIndexer.add(""+i);
 		}
 		Indexer<String> featureIndexer = new Indexer<String>();
-		for (long f = 0; f < maxFeatureTracker.max(); f++) {
+		for (long f = 0; f < maxFeatureTracker.max().get(0); f++) {
 			featureIndexer.add("" + f);
 		}
 		Indexer<String> labelIndexer = new Indexer<String>();
-		for (long l = 0; l < maxLabelTracker.max(); l++) {
+		for (long l = 0; l < maxLabelTracker.max().get(0); l++) {
 			labelIndexer.add("" + l);
 		}
 		Indexer<String> annotatorIdIndexer = new Indexer<String>();

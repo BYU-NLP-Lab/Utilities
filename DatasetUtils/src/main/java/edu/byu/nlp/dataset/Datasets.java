@@ -1227,7 +1227,7 @@ public class Datasets {
     for (DatasetInstance inst: dataset){
       tracker.offer(inst.asFeatureVector().sum());
     }
-    final double curMin = tracker.min(), curRange = tracker.max()-tracker.min();
+    final double curMin = tracker.min().get(0), curRange = tracker.max().get(0)-tracker.min().get(0);
     final double targetRange = targetMax-targetMin;
     
     for (DatasetInstance inst: dataset){
@@ -1259,7 +1259,7 @@ public class Datasets {
     for (DatasetInstance inst: data){
       tracker.offer(inst.asFeatureVector().sum());
     }
-    return tracker.min();
+    return tracker.min().get(0);
   }
   
   /**
