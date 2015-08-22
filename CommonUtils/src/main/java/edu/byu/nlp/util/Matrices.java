@@ -36,6 +36,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
 import edu.byu.nlp.math.Math2;
+import edu.byu.nlp.util.ArgMinMaxTracker.MinMaxTracker;
 
 /**
  * @author rah67
@@ -968,39 +969,39 @@ public class Matrices {
 	}
 
 	public static int max(int[][][] matrix){
-		ArgMinMaxTracker<Integer, ?> tracker = new ArgMinMaxTracker<Integer,Integer>();
+	  MinMaxTracker<Integer> tracker = new MinMaxTracker<Integer>();
 		for (int[][] row: matrix){
 			tracker.offer(max(row));
 		}
-		return tracker.max();
+		return tracker.max().get(0);
 	}
 	
 	public static int max(int[][] matrix){
-		ArgMinMaxTracker<Integer, ?> tracker = new ArgMinMaxTracker<Integer,Integer>();
+	  MinMaxTracker<Integer> tracker = new MinMaxTracker<Integer>();
 		for (int[] row: matrix){
 			for (int val: row){
 				tracker.offer(val);
 			}
 		}
-		return tracker.max();
+		return tracker.max().get(0);
 	}
 
 	public static double max(double[][][] matrix){
-		ArgMinMaxTracker<Double, ?> tracker = new ArgMinMaxTracker<Double,Integer>();
+	  MinMaxTracker<Double> tracker = new MinMaxTracker<Double>();
 		for (double[][] row: matrix){
 			tracker.offer(max(row));
 		}
-		return tracker.max();
+		return tracker.max().get(0);
 	}
 	
 	public static double max(double[][] matrix){
-		ArgMinMaxTracker<Double, ?> tracker = new ArgMinMaxTracker<Double,Integer>();
+	  MinMaxTracker<Double> tracker = new MinMaxTracker<Double>();
 		for (double[] row: matrix){
 			for (double val: row){
 				tracker.offer(val);
 			}
 		}
-		return tracker.max();
+		return tracker.max().get(0);
 	}
 
 	/**

@@ -1223,7 +1223,7 @@ public class Datasets {
     DatasetInfo info = dataset.getInfo();
     List<DatasetInstance> instances = Lists.newArrayList();
 
-    MinMaxTracker<Double> tracker = MinMaxTracker.newMinMaxTracker(); 
+    MinMaxTracker<Double> tracker = MinMaxTracker.create(); 
     for (DatasetInstance inst: dataset){
       tracker.offer(inst.asFeatureVector().sum());
     }
@@ -1255,7 +1255,7 @@ public class Datasets {
   }
 
   public static double minFeatureValue(Dataset data) {
-    MinMaxTracker<Double> tracker = MinMaxTracker.newMinMaxTracker(); 
+    MinMaxTracker<Double> tracker = MinMaxTracker.create(); 
     for (DatasetInstance inst: data){
       tracker.offer(inst.asFeatureVector().sum());
     }

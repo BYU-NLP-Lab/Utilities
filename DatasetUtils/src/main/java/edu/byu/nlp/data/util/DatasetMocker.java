@@ -21,8 +21,8 @@ public class DatasetMocker {
 	// instances
 	List<DatasetInstance> instances = Lists.newArrayList();
 	Indexer<String> labelIndexer = new Indexer<String>();
-	MinMaxTracker<Integer> maxLabelTracker = MinMaxTracker.newMinMaxTracker();
-	MinMaxTracker<Integer> maxFeatureTracker = MinMaxTracker.newMinMaxTracker();
+	MinMaxTracker<Integer> maxLabelTracker = MinMaxTracker.create();
+	MinMaxTracker<Integer> maxFeatureTracker = MinMaxTracker.create();
 	int numAnnotators = -1;
 
 	public DatasetMocker addInstance(String source, double[] denseFeatureValues,

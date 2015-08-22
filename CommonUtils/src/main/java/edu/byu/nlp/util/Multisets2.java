@@ -15,13 +15,13 @@
  */
 package edu.byu.nlp.util;
 
-import java.util.Set;
+import java.util.List;
 
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.collect.Multiset;
 
-import edu.byu.nlp.stats.RandomGenerators;
+import edu.byu.nlp.util.ArgMinMaxTracker.MinMaxTracker;
 
 /**
  * @author pfelt
@@ -31,18 +31,17 @@ public class Multisets2 {
 
   /**
    * Return the element(s) with the largest count in a multiset, or else null
-   * if there are no elements
+   * if there are no elements (highest to lowest)
    */
-  public static <T> Set<T> maxElements(Multiset<T> mset){
-    return getArgMinMax(mset).argmax();
+  public static <T> List<T> maxElements(Multiset<T> mset, int topk, RandomGenerator rnd){
+    return getArgMinMax(rnd,topk,mset).argmax();
   }
 
   /**
-   * Choose an arbitrary max element
+   * Choose max element (arbitrary breaking ties)
    */
-  public static <T> T  maxElement(Multiset<T> mset, RandomGenerator rnd){
-	  Set<T> maxElements = maxElements(mset);
-	  return maxElements.size()==0? null: RandomGenerators.sample(maxElements, rnd);
+  public static <T> T maxElement(Multiset<T> mset, RandomGenerator rnd){
+    return getArgMinMax(rnd,1,mset).argmin().get(0);
   }
 
   /**
@@ -50,23 +49,21 @@ public class Multisets2 {
    * the largest number of times
    */
   public static <T> int maxCount(Multiset<T> mset){
-    return getArgMinMax(mset).max();
-  }
-	  
-  /**
-   * Return the element(s) with the smallest count in a multiset, or else null
-   * if there are no elements
-   */
-  public static <T> Set<T> minElements(Multiset<T> mset){
-    return getArgMinMax(mset).argmin();
+    return getMinMax(mset).max().get(0);
   }
 
+  /**
+   * Choose min k elements (arbitrary breaking ties). Ordered low to high.
+   */
+  public static <T> T  minElements(Multiset<T> mset, int topk, RandomGenerator rnd){
+    return getArgMinMax(rnd,topk,mset).argmin().get(0);
+  }
+  
   /**
    * Choose an arbitrary min element
    */
   public static <T> T  minElement(Multiset<T> mset, RandomGenerator rnd){
-	  Set<T> minElements = minElements(mset);
-	  return minElements.size()==0? null: RandomGenerators.sample(minElements, rnd);
+    return getArgMinMax(rnd,1,mset).argmin().get(0);
   }
   
   /**
@@ -74,11 +71,19 @@ public class Multisets2 {
    * the fewest number of times
    */
   public static <T> int minCount(Multiset<T> mset){
-    return getArgMinMax(mset).min();
+    return getMinMax(mset).min().get(0);
+  }
+
+  public static <T> MinMaxTracker<Integer> getMinMax(Multiset<T> mset){
+    MinMaxTracker<Integer> tracker = MinMaxTracker.create();
+    for (com.google.common.collect.Multiset.Entry<T> entry: mset.entrySet()){
+      tracker.offer(entry.getCount(),entry.getElement());
+    }
+    return tracker;
   }
   
-  public static <T> ArgMinMaxTracker<Integer, T> getArgMinMax(Multiset<T> mset){
-	ArgMinMaxTracker<Integer,T> tracker = ArgMinMaxTracker.newArgMinMaxTracker();
+  public static <T> ArgMinMaxTracker<Integer, T> getArgMinMax(RandomGenerator rnd, int topk, Multiset<T> mset){
+	ArgMinMaxTracker<Integer,T> tracker = ArgMinMaxTracker.create(rnd,topk);
     for (com.google.common.collect.Multiset.Entry<T> entry: mset.entrySet()){
     	tracker.offer(entry.getCount(),entry.getElement());
     }

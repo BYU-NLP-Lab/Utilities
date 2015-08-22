@@ -421,10 +421,7 @@ public class DoubleArraysTest {
     double[] arr = DoubleArrays.parseDoubleArray("[1,2,3]");
     assertArrayEquals(new double[]{1,2,3}, arr, 1e-14);
 
-    arr = DoubleArrays.parseDoubleArray("1,2,3");
-    assertArrayEquals(new double[]{1,2,3}, arr, 1e-14);
-
-    arr = DoubleArrays.parseDoubleArray("1.1234123,2.1234,3.2345523");
+    arr = DoubleArrays.parseDoubleArray("[1.1234123,2.1234,3.2345523]");
     assertArrayEquals(new double[]{1.1234123,2.1234,3.2345523}, arr, 1e-14);
   }
 	

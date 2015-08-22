@@ -17,6 +17,8 @@ package edu.byu.nlp.util;
 
 import java.io.FileNotFoundException;
 
+import org.apache.commons.math3.random.MersenneTwister;
+import org.apache.commons.math3.random.RandomGenerator;
 import org.fest.assertions.Assertions;
 import org.junit.Test;
 
@@ -28,6 +30,8 @@ import com.google.common.collect.Multiset;
  *
  */
 public class Multisets2Test {
+  
+  RandomGenerator rnd = new MersenneTwister();
 
   public static Multiset<String> stubMultiset(){
     Multiset<String> mset = HashMultiset.create();
@@ -44,7 +48,7 @@ public class Multisets2Test {
 
   @Test
   public void testMinElement() throws FileNotFoundException{
-    Assertions.assertThat( Multisets2.minElements(stubMultiset())).contains("b");
+    Assertions.assertThat( Multisets2.minElements(stubMultiset(),2,rnd)).contains("b");
   }
   
 }

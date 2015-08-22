@@ -9,13 +9,13 @@ public class Sets {
 	public static double max(Set<Double> set){
 		MinMaxTracker<Double> mt = new MinMaxTracker<Double>();
 		mt.offer(set);
-		return mt.max();
+		return mt.max().get(0);
 	}
 
 	public static double min(Set<Double> set){
 		MinMaxTracker<Double> mt = new MinMaxTracker<Double>();
 		mt.offer(set);
-		return mt.min();
+		return mt.min().get(0);
 	}
 	
 	

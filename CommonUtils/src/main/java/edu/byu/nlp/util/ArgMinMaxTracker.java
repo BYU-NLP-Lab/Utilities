@@ -1,20 +1,39 @@
 package edu.byu.nlp.util;
 
-import java.util.Set;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import org.apache.commons.math3.random.MersenneTwister;
+import org.apache.commons.math3.random.RandomGenerator;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
 public class ArgMinMaxTracker<N extends Comparable<N>, T> {
 
-	private N max = null;
-	private Set<T> argmax = Sets.newHashSet();
+	// the first generic is the value (primary sorting key)
+	// second generic is the object contained in a randomized comparable 
+	// (so that ties are broken randomly)
+  private SortedSet<ComparablePair<N,RandomizedComparableContainer<T>>> argmax = new TreeSet<>();
+  private SortedSet<ComparablePair<N,RandomizedComparableContainer<T>>> argmin = new TreeSet<>();
+  private int topn;
+  private RandomGenerator rnd;
 
-	private N min = null;
-	private Set<T> argmin = Sets.newHashSet();
+  public ArgMinMaxTracker(RandomGenerator rnd){
+    this(rnd,1);
+  }
+	public ArgMinMaxTracker(RandomGenerator rnd, int topn){
+	  this.topn=topn;
+	  this.rnd=rnd;
+	}
 
-	public static <N extends Comparable<N>,T> ArgMinMaxTracker<N,T> newArgMinMaxTracker(){
-		return new ArgMinMaxTracker<N,T>();
+  public static <N extends Comparable<N>,T> ArgMinMaxTracker<N,T> create(RandomGenerator rnd, int topn){
+    return new ArgMinMaxTracker<N,T>(rnd,topn);
+  }
+  
+	public static <N extends Comparable<N>,T> ArgMinMaxTracker<N,T> create(RandomGenerator rnd){
+		return new ArgMinMaxTracker<N,T>(rnd);
 	}
 
 	public void offer(Iterable<N> vals, Iterable<T> items){
@@ -35,43 +54,99 @@ public class ArgMinMaxTracker<N extends Comparable<N>, T> {
 	
 	public void offer(N val, T item){
 		Preconditions.checkNotNull(val);
-		if (max==null || val.compareTo(max)>0){
-			max = val;
-			argmax.clear();
-		}
-		if (val.compareTo(max)>=0){
-			argmax.add(item);
-		}
-		
-		if (min==null || val.compareTo(min)<0){
-			min = val;
-			argmin.clear();
-		}
-		if (val.compareTo(min)<=0){
-			argmin.add(item);
-		}
+		ComparablePair<N, RandomizedComparableContainer<T>> pair = ComparablePair.of(val, RandomizedComparableContainer.of(item, rnd));
+    argmax.add(pair);
+    argmin.add(pair);
+
+    // peel off all entries not in the top n
+    while (argmax.size()>topn){
+      argmax.remove(argmax.first());
+    }
+
+    // peel off all entries not in the bottom n
+    while (argmin.size()>topn){
+      argmin.remove(argmin.last());
+    }
+	}
+
+  /**
+   * ordered from high to low
+   */
+	public List<N> max(){
+    List<N> retval = Lists.newArrayList();
+    for (ComparablePair<N, RandomizedComparableContainer<T>> pair: argmax){
+      retval.add(0,pair.getFirst());
+    }
+    return retval;
 	}
 	
-	public N max(){
-		return max;
+	/**
+	 * ordered from high to low
+	 */
+	public List<T> argmax(){
+	  List<T> retval = Lists.newArrayList();
+	  for (ComparablePair<N, RandomizedComparableContainer<T>> pair: argmax){
+	    retval.add(0,pair.getSecond().getValue());
+	  }
+    return retval;
+	}
+
+  /**
+   * ordered from low to high
+   */
+	public List<N> min(){
+    List<N> retval = Lists.newArrayList();
+    for (ComparablePair<N, RandomizedComparableContainer<T>> pair: argmin){
+      retval.add(pair.getFirst());
+    }
+    return retval;
+	}
+
+  /**
+   * ordered from low to high
+   */
+	public List<T> argmin(){
+    List<T> retval = Lists.newArrayList();
+    for (ComparablePair<N, RandomizedComparableContainer<T>> pair: argmin){
+      retval.add(pair.getSecond().getValue());
+    }
+    return retval;
 	}
 	
-	public Set<T> argmax(){
-		return argmax;
+	
+	private static class RandomizedComparableContainer<T> extends Pair<Double,T> implements Comparable<RandomizedComparableContainer<T>>{
+	  private static final long serialVersionUID = 1L;
+    private RandomizedComparableContainer(Double first, T second) {
+      super(first, second);
+    }
+    public static <T> RandomizedComparableContainer<T> of(T object, RandomGenerator rnd){
+      return new RandomizedComparableContainer<T>(rnd.nextDouble(), object);
+    }
+    @Override
+    public int compareTo(RandomizedComparableContainer<T> o) {
+      return Double.compare(getFirst(), o.getFirst());
+    }
+    public T getValue(){
+      return getSecond();
+    }
 	}
 	
-	public N min(){
-		return min;
-	}
-	
-	public Set<T> argmin(){
-		return argmin;
-	}
-	
-	public static class MinMaxTracker<N extends Comparable<N>> extends ArgMinMaxTracker<N, Object>{
-		public static <N extends Comparable<N>> MinMaxTracker<N> newMinMaxTracker(){
-			return new MinMaxTracker<N>();
-		}
-	}
+
+  /**
+   * Exists soley to remove the extra generic from ArgMinMaxTracker
+   */
+  public static class MinMaxTracker<N extends Comparable<N>> extends ArgMinMaxTracker<N, Object>{
+    public MinMaxTracker() {
+      // don't worry about introducing uncontrolled randomness here, 
+      // since this generator will be ignored
+      this(new MersenneTwister());
+    }
+    public MinMaxTracker(RandomGenerator rnd) {
+      super(rnd);
+    }
+    public static <N extends Comparable<N>> MinMaxTracker<N> create(){
+      return new MinMaxTracker<N>(); 
+    }
+  }
 	
 }

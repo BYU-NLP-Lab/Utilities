@@ -7,11 +7,11 @@ import com.google.common.base.Objects;
 
 public class Triple<F,S,T> implements Serializable{
   private static final long serialVersionUID = 1L;
-  private F first;
-  private S second;
-  private T third;
+  F first;
+  S second;
+  T third;
 
-  private Triple(){}
+  protected Triple(){}
   
   public static<F,S,T> Triple<F,S,T> of(F first, S second, T third){
     Triple<F,S,T> triple = new Triple<F, S, T>();
@@ -59,4 +59,5 @@ public class Triple<F,S,T> implements Serializable{
       .add("third", getThird())
       .toString();
   }
+
 }

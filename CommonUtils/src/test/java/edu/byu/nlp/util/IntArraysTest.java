@@ -42,8 +42,6 @@ public class IntArraysTest {
     int[] arr = IntArrays.parseIntArray("[1,2,3]");
     assertArrayEquals(new int[]{1,2,3}, arr);
 
-    arr = IntArrays.parseIntArray("1,2,3");
-    assertArrayEquals(new int[]{1,2,3}, arr);
   }
   
   @Test
