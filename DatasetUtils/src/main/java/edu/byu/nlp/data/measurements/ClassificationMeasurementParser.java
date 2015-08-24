@@ -23,22 +23,22 @@ public class ClassificationMeasurementParser {
 
     // classification annotation
     if (pojo.type.equals("cls_ann")){
-      return new BasicClassificationAnnotationMeasurement(annotatorId, pojo.value, pojo.confidence, source, labelIndex, startTimestamp, endTimestamp);
+      return new BasicClassificationAnnotationMeasurement(pojo, annotatorId, pojo.value, pojo.confidence, source, labelIndex, startTimestamp, endTimestamp);
     }
 
     // classification label proportion 
     else if (pojo.type.equals("cls_prop")){
-      return new BasicClassificationLabelProportionMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, startTimestamp, endTimestamp);
+      return new BasicClassificationLabelProportionMeasurement(pojo, annotatorId, pojo.value, pojo.confidence, labelIndex, startTimestamp, endTimestamp);
     }
 
     // classification labeled predicate 
     else if (pojo.type.equals("cls_pred")){
-      return new BasicClassificationLabeledPredicateMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.predicate, startTimestamp, endTimestamp);
+      return new BasicClassificationLabeledPredicateMeasurement(pojo, annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.predicate, startTimestamp, endTimestamp);
     }
 
     // classification labeled locations
     else if (pojo.type.equals("cls_loc")){
-      return new BasicClassificationLabeledLocationMeasurement(annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.location, source, pojo.neighbors, startTimestamp, endTimestamp);
+      return new BasicClassificationLabeledLocationMeasurement(pojo, annotatorId, pojo.value, pojo.confidence, labelIndex, pojo.location, source, pojo.neighbors, startTimestamp, endTimestamp);
     }
     
     else{

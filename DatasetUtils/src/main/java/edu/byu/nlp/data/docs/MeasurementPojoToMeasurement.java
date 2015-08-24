@@ -6,7 +6,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
 import edu.byu.nlp.data.measurements.ClassificationMeasurementParser;
-import edu.byu.nlp.data.measurements.ClassificationMeasurements;
 import edu.byu.nlp.data.streams.IndexerCalculator;
 import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList.MeasurementPojo;
 import edu.byu.nlp.data.types.DataStreamInstance;
@@ -38,12 +37,14 @@ public class MeasurementPojoToMeasurement implements Function<Map<String, Object
     }
     // Create a measurement from an annotation value
     else if (DataStreamInstance.isAnnotation(input)){
-      double value = 1, confidence = 1;
       String rawAnnotation = (String) DataStreamInstance.getAnnotation(input);
-      int label = indexers.getLabelIndexer().indexOf(rawAnnotation);
-      int annotatorId = indexers.getAnnotatorIdIndexer().indexOf(annotator);
+      MeasurementPojo pojo = new MeasurementPojo();
+      pojo.type = "cls_ann";
+      pojo.value = 1;
+      pojo.confidence = 1;
+      pojo.label = rawAnnotation;
       input.put(DataStreamInstance.MEASUREMENT, 
-          new ClassificationMeasurements.BasicClassificationAnnotationMeasurement(annotatorId, value, confidence, source, label, startTimestamp, endTimestamp));
+          ClassificationMeasurementParser.pojoToMeasurement(pojo, annotator, source, startTimestamp, endTimestamp, indexers));
     }
     
     return input;

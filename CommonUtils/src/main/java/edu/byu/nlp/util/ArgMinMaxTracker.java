@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -111,6 +112,14 @@ public class ArgMinMaxTracker<N extends Comparable<N>, T> {
       retval.add(pair.getSecond().getValue());
     }
     return retval;
+	}
+	
+	@Override
+	public String toString() {
+	  return MoreObjects.toStringHelper(ArgMinMaxTracker.class)
+	      .add("argmax", argmax)
+	      .add("argmin", argmin)
+	      .toString();
 	}
 	
 	

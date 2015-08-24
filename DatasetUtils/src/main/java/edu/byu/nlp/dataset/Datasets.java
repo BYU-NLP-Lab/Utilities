@@ -496,7 +496,56 @@ public class Datasets {
 			addAnnotationToDataset(dataset, ann);
 		}
 	}
-			
+
+
+  public static void removeAnnotationFromDataset(Dataset dataset,
+      FlatInstance<SparseFeatureVector, Integer> ann) {
+
+    Integer annotation = ann.getAnnotation();
+    Integer annotator = ann.getAnnotator();
+    String source = ann.getSource();
+  
+    Preconditions.checkNotNull(dataset);
+    Preconditions.checkNotNull(ann);
+    // check that values are indexed values
+    Preconditions.checkArgument(ann.getInstanceId() < dataset.getInfo().getInstanceIdIndexer().size(),
+        "cannot add annotation with invalid instance id "+source+"."
+            + " Must be between 0 and "+dataset.getInfo().getInstanceIdIndexer().size());
+    Preconditions.checkArgument(annotator < dataset.getInfo().getAnnotatorIdIndexer().size(),
+        "cannot add annotation with invalid annotator id "+annotator+"."
+            + " Must be between 0 and "+dataset.getInfo().getAnnotatorIdIndexer().size());
+    Preconditions.checkArgument(annotation==null || annotation < dataset.getInfo().getLabelIndexer().size(),
+        "cannot add annotation with invalid label "+annotation+"."
+            + " Must be between 0 and "+dataset.getInfo().getLabelIndexer().size());
+    
+    DatasetInstance inst = dataset.lookupInstance(source);
+    if (source!=null){
+        Preconditions.checkNotNull(inst,"attempted to annotate an instance "+ann.getSource()+" "
+            + "that is unknown to the dataset recorder (not in the dataset).");
+        Preconditions.checkState(Objects.equal(inst.getInfo().getRawSource(),source), 
+            "The source of the instance that was looked up ("+inst.getInfo().getRawSource()+
+            ") doesn't match the src of the annotation ("+source+").");
+    }
+  
+    // remove measurements
+    if (ann.isMeasurement()){
+      dataset.getMeasurements().remove(ann.getMeasurement());
+    }
+    
+    // add the raw annotation
+    if (ann.getAnnotation()!=null){
+      inst.getAnnotations().getRawAnnotations().remove(ann);
+        // decrement previous annotation value for this annotator
+        SparseRealMatrices.incrementValueAt(inst.getAnnotations().getLabelAnnotations(), 
+            (int)annotator, annotation, -1);
+  
+        // update instance info
+        inst.getInfo().annotationsChanged();
+        // update dataset info
+        dataset.getInfo().annotationsChanged();
+    }
+  }
+	
 
 	public static List<FlatInstance<SparseFeatureVector,Integer>> instancesIn(Dataset dataset) {
 		List<FlatInstance<SparseFeatureVector,Integer>> instances = Lists.newArrayList();
@@ -1286,5 +1335,6 @@ public class Datasets {
     }
     return matrix;
   }
+
 
 }

@@ -1,5 +1,7 @@
 package edu.byu.nlp.data.types;
 
+import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList.MeasurementPojo;
+
 
 /**
  * A Measurement generalizes the concept of a label or annotation.
@@ -31,5 +33,7 @@ public interface Measurement extends Comparable<Measurement> {
    * The moment at which the measurement was finished.
    */
   long getEndTimestamp();
+  
+  MeasurementPojo getPojo();
   
 }

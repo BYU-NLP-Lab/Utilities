@@ -75,6 +75,17 @@ public class JSONFileToAnnotatedDocumentList implements OneToMany {
     public String toString() {
       return getClass().getName()+new Gson().toJson(this);
     }
+    public MeasurementPojo copy() {
+      MeasurementPojo copy = new MeasurementPojo();
+      copy.location=this.location;
+      copy.type=this.type;
+      copy.label=this.label;
+      copy.value=this.value;
+      copy.confidence=this.confidence;
+      copy.predicate=this.predicate;
+      copy.neighbors=this.neighbors;
+      return copy;
+    }
 	}
 	private static class AnnotationPojo {
 	  public String annotator, label, data, source, annotation, datapath;

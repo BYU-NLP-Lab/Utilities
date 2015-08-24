@@ -3,6 +3,7 @@ package edu.byu.nlp.data.measurements;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ComparisonChain;
 
+import edu.byu.nlp.data.streams.JSONFileToAnnotatedDocumentList.MeasurementPojo;
 import edu.byu.nlp.data.types.Measurement;
 import edu.byu.nlp.util.DoubleArrays;
 
@@ -45,8 +46,10 @@ public class ClassificationMeasurements {
     private int annotator;
     private double value, confidence;
     private long startTimestamp, endTimestamp;
+    private MeasurementPojo pojo;
 
-    public AbstractMeasurement(int annotator, double value, double confidence, long startTimestamp, long endTimestamp){
+    public AbstractMeasurement(MeasurementPojo pojo, int annotator, double value, double confidence, long startTimestamp, long endTimestamp){
+      this.pojo=pojo;
       this.annotator=annotator;
       this.value=value;
       this.confidence=confidence;
@@ -54,6 +57,9 @@ public class ClassificationMeasurements {
       this.endTimestamp=endTimestamp;
     }
     
+    public MeasurementPojo getPojo() {
+      return pojo;
+    }
     @Override
     public int getAnnotator() {
       return annotator;
@@ -109,8 +115,8 @@ public class ClassificationMeasurements {
 
   public static abstract class AbstractClassificationMeasurement extends AbstractMeasurement implements ClassificationMeasurement {
     private int label;
-    public AbstractClassificationMeasurement(int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
-      super(annotator, value, confidence, startTimestamp, endTimestamp);
+    public AbstractClassificationMeasurement(MeasurementPojo pojo, int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
+      super(pojo, annotator, value, confidence, startTimestamp, endTimestamp);
       this.label=label;
     }
     @Override
@@ -151,7 +157,10 @@ public class ClassificationMeasurements {
     private String source;
 
     public BasicClassificationAnnotationMeasurement(int annotator, double value, double confidence, String source, int label, long startTimestamp, long endTimestamp){
-      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
+      this(null,annotator,value,confidence,source,label,startTimestamp,endTimestamp);
+    }
+    public BasicClassificationAnnotationMeasurement(MeasurementPojo pojo, int annotator, double value, double confidence, String source, int label, long startTimestamp, long endTimestamp){
+      super(pojo, annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.source=source;
     }
     @Override
@@ -182,8 +191,8 @@ public class ClassificationMeasurements {
   
   
   public static class BasicClassificationLabelProportionMeasurement extends AbstractClassificationMeasurement implements ClassificationLabelProportionMeasurement{
-    public BasicClassificationLabelProportionMeasurement(int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
-      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
+    public BasicClassificationLabelProportionMeasurement(MeasurementPojo pojo, int annotator, double value, double confidence, int label, long startTimestamp, long endTimestamp){
+      super(pojo, annotator, value, confidence, label, startTimestamp, endTimestamp);
     }
     @Override
     public String toString() {
@@ -204,8 +213,8 @@ public class ClassificationMeasurements {
   public static class BasicClassificationLabeledPredicateMeasurement extends AbstractClassificationMeasurement implements ClassificationLabeledPredicateMeasurement{
 
     private String predicate;
-    public BasicClassificationLabeledPredicateMeasurement(int annotator, double value, double confidence, int label, String predicate, long startTimestamp, long endTimestamp){
-      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
+    public BasicClassificationLabeledPredicateMeasurement(MeasurementPojo pojo, int annotator, double value, double confidence, int label, String predicate, long startTimestamp, long endTimestamp){
+      super(pojo, annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.predicate=predicate;
     }
     @Override
@@ -248,9 +257,9 @@ public class ClassificationMeasurements {
     private String source;
     private int neighbors;
 
-    public BasicClassificationLabeledLocationMeasurement(int annotator, double value, double confidence,
+    public BasicClassificationLabeledLocationMeasurement(MeasurementPojo pojo, int annotator, double value, double confidence,
         int label, double[] location, String source, int neighbors, long startTimestamp, long endTimestamp) {
-      super(annotator, value, confidence, label, startTimestamp, endTimestamp);
+      super(pojo, annotator, value, confidence, label, startTimestamp, endTimestamp);
       this.location=location;
       this.source=source;
       this.neighbors=neighbors;
